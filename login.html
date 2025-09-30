@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-store, max-age=0">
+  <title>NAVI-SIMS — Secure Login</title>
+  <style>
+/* ===== NAVI-SIMS Design System (enhanced login) ===== */
+:root{
+  --bg: #F6F7FB;
+  --card: #ffffff;
+  --text: #0F172A;
+  --subtle: #64748B;
+  --muted: #94A3B8;
+  --border: #E5E7EB;
+  --ring: #2563EB;
+  --primary: #2563EB;
+  --primary-contrast: #ffffff;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+  --success: #10B981;
+  --shadow: 0 10px 30px rgba(2,6,23,.08);
+  --radius: 16px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0B1220; --card:#111827; --text:#E5E7EB; --subtle:#CBD5E1;
+    --muted:#94A3B8; --border:#1F2937; --ring:#60A5FA;
+    --primary:#60A5FA; --primary-contrast:#0B1220;
+    --shadow: 0 10px 30px rgba(0,0,0,.45);
+  }
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; display:flex; align-items:center; justify-content:center;
+  background:var(--bg); color:var(--text); font:400 16px/1.45 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+}
+.card{
+  width:min(92vw,440px); background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius); padding:32px 28px; box-shadow:var(--shadow);
+}
+.logo-wrap{display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:12px}
+.logo-banner{
+  width:min(80vw,280px); height:auto; display:block; object-fit:contain; background:#fff;
+  border-radius:10px; box-shadow:0 0 0 1px var(--border), 0 4px 14px rgba(0,0,0,.08)
+}
+h1{margin:0;font:700 22px/1.2 ui-sans-serif,system-ui}
+.subtitle{color:var(--subtle);font-size:.92rem;margin-top:2px}
+form{display:flex;flex-direction:column;gap:16px;margin-top:16px}
+label{font-size:.9rem;color:var(--subtle);margin-bottom:6px}
+.input-wrap{position:relative}
+input[type="text"],input[type="password"]{
+  width:100%; height:46px; padding:12px 14px; padding-right:78px;
+  border:1px solid var(--border); border-radius:12px; background:#fff; outline:none;
+  font-size:16px; /* Prevent zoom on iOS */
+}
+@media (prefers-color-scheme: dark){
+  input[type="text"],input[type="password"]{background:#0F172A;color:var(--text)}
+}
+input:focus{border-color:var(--ring); box-shadow:0 0 0 4px color-mix(in oklab, var(--ring) 20%, transparent)}
+.input-wrap.has-strength{padding-bottom:6px}
+.password-strength{
+  position:absolute; bottom:-20px; left:0; right:80px; 
+  height:3px; background:#E5E7EB; border-radius:2px; overflow:hidden;
+}
+.password-strength .bar{height:100%;width:0%;transition:all .3s ease;border-radius:2px}
+.strength-weak .bar{width:33%;background:var(--danger)}
+.strength-medium .bar{width:66%;background:var(--warning)}
+.strength-strong .bar{width:100%;background:var(--success)}
+.toggle-btn{
+  position:absolute; right:8px; top:50%; transform:translateY(-50%);
+  height:32px; padding:0 12px; font-size:.82rem; border:1px solid var(--border);
+  border-radius:10px; background:#F8FAFC; color:#334155; cursor:pointer;
+}
+@media (prefers-color-scheme: dark){ .toggle-btn{background:#111827;color:#E5E7EB} }
+.toggle-btn:active{transform:translateY(-50%) scale(.98)}
+.btn{
+  height:46px; border:none; border-radius:12px; background:var(--primary);
+  color:var(--primary-contrast); font-weight:700; font-size:.95rem; cursor:pointer;
+  transition:filter .12s ease, transform .02s ease;
+}
+.btn:hover{filter:brightness(1.05)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.6; cursor:not-allowed}
+.btn.secondary{background:#6B7280;color:#fff}
+.error{
+  display:none; padding:12px; border-radius:10px; border:1px solid #FCA5A5;
+  background:#FEE2E2; color:#991B1B; font-size:.9rem;
+}
+.warning{
+  display:none; padding:12px; border-radius:10px; border:1px solid #FCD34D;
+  background:#FEF3C7; color:#92400E; font-size:.9rem;
+}
+.info{
+  padding:10px; border-radius:8px; border:1px solid #93C5FD;
+  background:#DBEAFE; color:#1E40AF; font-size:.85rem; margin-top:8px;
+}
+.small{color:var(--muted); font-size:.78rem; text-align:center; margin-top:6px}
+.security-info{margin-top:16px;padding:12px;background:#F8FAFC;border-radius:8px;border:1px solid var(--border)}
+.security-info h3{margin:0 0 8px;font-size:.9rem;color:var(--text)}
+.security-info ul{margin:8px 0;padding-left:18px;font-size:.82rem;color:var(--subtle)}
+.security-info li{margin:3px 0}
+@media (prefers-color-scheme: dark){.security-info{background:#111827}}
+.forgot-password{text-align:center;margin-top:12px}
+.forgot-password a{color:var(--primary);text-decoration:none;font-size:.85rem}
+.forgot-password a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo-wrap">
+      <img class="logo-banner" src="<?!= logoUrl ?>" alt="Logo" onerror="this.style.display='none'">
+      <div style="text-align:center">
+        <h1>Secure Sign In</h1>
+        <div class="subtitle">NAVI-SIMS Maritime Management System</div>
+      </div>
+    </div>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="username">Username</label>
+        <div class="input-wrap">
+          <input id="username" type="text" autocomplete="username" required maxlength="50">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="input-wrap has-strength">
+          <input id="password" type="password" autocomplete="current-password" required maxlength="100">
+          <button id="togglePw" class="toggle-btn" type="button" aria-label="Toggle password visibility">Show</button>
+          <div class="password-strength" id="passwordStrength">
+            <div class="bar"></div>
+          </div>
+        </div>
+      </div>
+
+      <button id="btnLogin" class="btn" type="submit">Sign In</button>
+      
+      <div id="errBox" class="error"></div>
+      <div id="warnBox" class="warning"></div>
+      
+      <div class="small">
+        Protected by advanced security measures
+        <br>Maximum <?= maxAttempts || 5 ?> attempts • <?= lockoutMins || 15 ?> min lockout
+      </div>
+    </form>
+
+    <div class="forgot-password">
+      <a href="#" id="forgotLink">Forgot your password?</a>
+    </div>
+
+    <div class="security-info">
+      <h3>🔒 Security Features</h3>
+      <ul>
+        <li>Password encryption and secure storage</li>
+        <li>Account lockout protection</li>
+        <li>Session timeout and management</li>
+        <li>Activity logging and monitoring</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const $ = (id) => document.getElementById(id);
+      const username = $('username');
+      const password = $('password');
+      const togglePw = $('togglePw');
+      const errBox = $('errBox');
+      const warnBox = $('warnBox');
+      const btn = $('btnLogin');
+      const form = $('loginForm');
+      const strengthIndicator = $('passwordStrength');
+
+      // Password visibility toggle
+      togglePw.addEventListener('click', () => {
+        const hidden = password.type === 'password';
+        password.type = hidden ? 'text' : 'password';
+        togglePw.textContent = hidden ? 'Hide' : 'Show';
+      });
+
+      // Password strength indicator (for user feedback)
+      password.addEventListener('input', () => {
+        const val = password.value;
+        let strength = 'weak';
+        
+        if (val.length >= 8) {
+          const hasUpper = /[A-Z]/.test(val);
+          const hasLower = /[a-z]/.test(val);
+          const hasNumber = /\d/.test(val);
+          const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(val);
+          
+          const score = [hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
+          
+          if (score >= 3 && val.length >= 12) strength = 'strong';
+          else if (score >= 2 && val.length >= 8) strength = 'medium';
+        }
+        
+        strengthIndicator.className = `password-strength strength-${strength}`;
+      });
+
+      function setError(msg) {
+        errBox.textContent = msg || '';
+        errBox.style.display = msg ? 'block' : 'none';
+        warnBox.style.display = 'none';
+      }
+
+      function setWarning(msg) {
+        warnBox.textContent = msg || '';
+        warnBox.style.display = msg ? 'block' : 'none';
+        errBox.style.display = 'none';
+      }
+
+      // Enhanced form submission with security features
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        setError('');
+        setWarning('');
+        
+        const u = username.value.trim();
+        const p = password.value;
+
+        // Basic client-side validation
+        if (!u || !p) {
+          setError('Please enter both username and password.');
+          return;
+        }
+
+        if (u.length > 50) {
+          setError('Username too long.');
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Signing in...';
+
+        API
+          .withSuccessHandler((res) => {
+            btn.disabled = false;
+            btn.textContent = 'Sign In';
+            
+            if (!res || !res.ok) {
+              if (res?.locked) {
+                setWarning(res.msg || 'Account temporarily locked.');
+              } else {
+                setError(res?.msg || 'Login failed.');
+              }
+              
+              // Clear password on failed attempt for security
+              password.value = '';
+              strengthIndicator.className = 'password-strength';
+              return;
+            }
+            
+            const base = "<?= appUrl ?>";
+            window.top.location.href = `${base}?page=dashboard&token=${encodeURIComponent(res.token)}&ts=${Date.now()}`;
+          })
+          .withFailureHandler((err) => {
+            btn.disabled = false;
+            btn.textContent = 'Sign In';
+            setError(err && err.message ? err.message : 'Connection error. Please try again.');
+            password.value = '';
+            strengthIndicator.className = 'password-strength';
+          })
+          .authenticate(u, p);
+      });
+
+      // Handle forgot password link
+      $('forgotLink').addEventListener('click', (e) => {
+        e.preventDefault();
+        alert('Please contact your system administrator to reset your password.');
+      });
+
+      // Auto-focus username field
+      username.focus();
+
+      // Handle URL error parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const err = urlParams.get('err');
+      if (err) setError(err);
+
+      // Prevent form auto-complete attacks
+      setTimeout(() => {
+        if (username.value && !password.value) {
+          username.value = '';
+        }
+      }, 100);
+
+    })();
+  </script>
+</body>
+</html>

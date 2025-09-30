@@ -1,0 +1,1225 @@
+<!doctype html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-store, max-age=0">
+  <title>NAVI-SIMS — Edit Vessel</title>
+  <style>
+/* Searchable Dropdown (SDD) */
+.sdd { position: relative; max-width: 520px; }
+.sdd-btn {
+  width: 100%; padding: 10px 12px; border:1px solid var(--border,#E5E7EB);
+  border-radius: 10px; background: var(--card,#fff); color: var(--text,#0F172A);
+  display: flex; align-items: center; justify-content: space-between; cursor: pointer;
+}
+.sdd-panel {
+  position: absolute; z-index: 50; top: calc(100% + 6px); left: 0; right:0;
+  background: var(--card,#fff); border:1px solid var(--border,#E5E7EB);
+  border-radius: 12px; box-shadow: var(--shadow,0 10px 30px rgba(2,6,23,.08));
+  display: none; max-height: 320px; overflow: hidden;
+}
+.sdd.open .sdd-panel { display: block; }
+.sdd-search { padding: 8px; border-bottom:1px solid var(--border,#E5E7EB); }
+.sdd-search input {
+  width: 100%; padding: 10px 12px; border:1px solid var(--border,#E5E7EB);
+  border-radius: 8px; background: var(--panel,#F9FAFB); color: var(--text,#0F172A);
+}
+.sdd-list { max-height: 260px; overflow: auto; }
+.sdd-opt {
+  padding: 10px 12px; cursor: pointer; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;
+}
+.sdd-opt:hover, .sdd-opt[aria-selected="true"] { background: rgba(37,99,235,.08); }
+.sdd-empty { padding: 12px; color: var(--muted,#64748B); }
+.sdd-kbd { font: 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted,#64748B); }
+
+/* ===== NAVI-SIMS Design System (edit vessel) ===== */
+:root{
+  --bg:#F6F7FB; --card:#ffffff; --panel:#F9FAFB; --text:#0F172A; --muted:#64748B;
+  --border:#E5E7EB; --ring:#2563EB; --primary:#2563EB; --danger:#EF4444; --ok:#059669;
+  --radius:18px; --shadow:0 10px 30px rgba(2,6,23,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#0B1220; --card:#0F172A; --panel:#111827; --text:#E5E7EB; --muted:#94A3B8; --border:#1F2937; --primary:#60A5FA; --shadow:0 10px 30px rgba(0,0,0,.45) }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;font:400 16px/1.45 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;}
+.wrap{width:min(96vw,1200px)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow)}
+.title{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+.logo-banner{width:min(38vw,200px);height:auto;object-fit:contain;background:#fff;border-radius:10px;box-shadow:0 0 0 1px var(--border), 0 3px 12px rgba(0,0,0,.06)}
+.muted{color:var(--muted)}
+.msg{margin-top:12px;display:none;padding:10px;border-radius:10px}
+.msg.ok{background:#E6FFED;color:#065F46;border:1px solid #A7F3D0}
+.msg.err{background:#FEE2E2;color:#991B1B;border:1px solid #FECACA}
+.hint,.note{font-size:.8rem;color:var(--muted)}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;background:#EEF2FF;color:#3730A3;font-size:.78rem;border:1px solid #E0E7FF}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.btn{background:var(--primary);color:#fff;border:none;border-radius:12px;padding:10px 14px;cursor:pointer}
+.btn.alt{background:#334155;color:#fff}
+.btn.soft{background:#E5E7EB;color:#111827}
+.btn.danger{background:var(--danger)}
+.btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn[disabled]{opacity:.6;cursor:not-allowed}
+.req::after{content:" *"; color:var(--danger)}
+.divider{height:1px;background:var(--border);margin:12px 0}
+
+/* Tabs */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 16px}
+.tab{border:1px solid var(--border);background:var(--panel);padding:8px 12px;border-radius:999px;cursor:pointer}
+.tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.tabpanes > .pane{display:none}
+.tabpanes > .pane.active{display:block}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:900px){ .grid{grid-template-columns:1fr} }
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px}
+.panel h3{margin:0 0 10px;font-size:1.04rem}
+label{font-size:.9rem;color:var(--muted);display:block;margin:8px 0 6px}
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:12px;outline:none;background:#fff}
+@media (prefers-color-scheme: dark){ input,select,textarea{background:#0F172A;color:var(--text)} }
+input:focus,select:focus,textarea:focus{border-color:var(--ring);box-shadow:0 0 0 4px color-mix(in oklab, var(--ring) 18%, transparent)}
+input,select{height:44px}
+textarea{min-height:92px;resize:vertical}
+
+/* ---------- Search bar ---------- */
+.searchbar{
+  background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:12px;
+  display:grid; grid-template-columns: 1fr 2fr auto; gap:10px; align-items:end;
+}
+@media (max-width:800px){ .searchbar{grid-template-columns:1fr 1fr; } .searchbar .act{grid-column:1/-1} }
+
+/* ---------- Inventory: cards + pagination ---------- */
+.inv-head{font-size:.8rem;color:var(--muted);margin-bottom:10px}
+.inv-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0 8px}
+.inv-controls .sep{flex:1}
+.inv-controls .stat{font-size:.85rem;color:var(--muted)}
+.inv-list{display:flex;flex-direction:column;gap:12px;margin-top:10px}
+.inv-item{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 6px 22px rgba(2,6,23,.06);overflow:hidden}
+.inv-hd{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px dashed var(--border);background:var(--panel)}
+.inv-hd .title{display:flex;gap:10px;align-items:center;margin:0}
+.inv-hd .title strong{font-weight:700}
+.inv-hd .meta{display:flex;gap:14px;color:var(--muted);font-size:.86rem;flex-wrap:wrap}
+.inv-hd .actions{display:flex;gap:8px}
+/* Theme-aware collapse toggle */
+/* Theme-aware, obvious “+ / –” toggle */
+.inv-toggle{
+  -webkit-appearance:none; appearance:none;
+  width:34px; height:34px; border-radius:10px;
+  border:1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  display:inline-flex; align-items:center; justify-content:center;
+  cursor:pointer;
+  position:relative;
+}
+.inv-toggle::before{
+  content: "–";               /* expanded by default */
+  font: 700 18px/1 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  transform: translateY(-1px); /* optically center the dash */
+}
+.inv-item.collapsed .inv-toggle::before{
+  content: "+";               /* when collapsed, show plus */
+}
+
+.inv-toggle:hover{ border-color: var(--ring); }
+.inv-toggle:focus{
+  outline:none;
+  box-shadow:0 0 0 4px color-mix(in oklab, var(--ring) 18%, transparent);
+}
+.inv-body{padding:14px;display:grid;grid-template-columns: repeat(12,1fr);gap:12px}
+.inv-field label{font-size:.8rem;color:var(--muted);margin:0 0 6px;display:block}
+.inv-field input,.inv-field select,.inv-field textarea{border-radius:10px; border:1px solid var(--border); height:42px; padding:8px 10px}
+.inv-field textarea{min-height:140px; line-height:1.45;}
+.inv-name{grid-column:1 / span 5}
+.inv-qty{grid-column:6 / span 2}
+.inv-mfd{grid-column:8 / span 2}
+.inv-exp{grid-column:10 / span 3}
+.inv-file{grid-column:1 / span 5}
+.inv-status{grid-column:6 / span 3}
+.inv-class{grid-column:9 / span 3}
+.inv-desc{grid-column:1 / span 12}
+.inv-desc .wordcount{font-size:.76rem;color:var(--muted);margin-top:4px}
+.inv-actions{grid-column:12 / span 1; display:flex; align-items:flex-start; justify-content:flex-end}
+.inv-item.collapsed .inv-body{display:none}
+@media (max-width:1024px){
+  .inv-body{grid-template-columns: repeat(6,1fr)}
+  .inv-name{grid-column:1 / span 6}
+  .inv-qty{grid-column:1 / span 2}
+  .inv-mfd{grid-column:3 / span 2}
+  .inv-exp{grid-column:5 / span 2}
+  .inv-file{grid-column:1 / span 6}
+  .inv-status{grid-column:1 / span 3}
+  .inv-class{grid-column:4 / span 3}
+  .inv-desc{grid-column:1 / span 6}
+}
+@media (max-width:640px){
+  .inv-body{grid-template-columns: repeat(4,1fr)}
+  .inv-name,.inv-file,.inv-desc{grid-column:1 / span 4}
+  .inv-qty,.inv-mfd,.inv-exp,.inv-status,.inv-class{grid-column:1 / span 2}
+}
+.pill{border-radius:999px;border:1px solid var(--border);padding:6px 10px;background:#fff}
+
+/* --- High-contrast dropdowns (for dark/light) --- */
+.pill { background:#ffffff; color:#0F172A; border-color:var(--border); }
+select { color: var(--text); }
+select:disabled, option[disabled] { color:#94A3B8 !important; }
+@media (prefers-color-scheme: dark){
+  .pill, select { background:#0F172A !important; color:#F8FAFC !important; border-color:#334155 !important; }
+  select option { background:#0F172A; color:#F8FAFC; }
+}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="title">
+        <img class="logo-banner" src="<?!= logoUrl ?>" alt="Logo" onerror="this.style.display='none'">
+        <div>
+          <h2 style="margin:0">Edit Vessel</h2>
+          <div class="muted">Your level: <?= userLevel || '—' ?></div>
+        </div>
+        <button id="btnBack" class="btn alt" type="button" style="margin-left:auto">Back</button>
+      </div>
+
+      <!-- Header: SHIP_ID (read-only on edit) -->
+      <div class="panel" style="margin-bottom:12px">
+        <div class="row" style="align-items:center">
+          <div>
+            <div class="hint">Editing vessel</div>
+            <div class="badge" id="shipIdBadge">SHIP_ID: —</div>
+          </div>
+        </div>
+        <div id="msgTopOk" class="msg ok"></div>
+        <div id="msgTopErr" class="msg err"></div>
+      </div>
+
+      <!-- Search bar (MMSI / IMO / Ship/Owner Name) -->
+      <div class="searchbar">
+        <div>
+          <label>Search by</label>
+          <select id="keyType" class="pill">
+            <option value="MMSI">MMSI No</option>
+            <option value="IMO">IMO No</option>
+            <option value="SHIP_NAME">Ship Name</option>
+            <option value="OWNER_NAME">Owner Name</option>
+          </select>
+        </div>
+        <div>
+          <label id="keyLabel">Select MMSI No</label>
+          <select id="keyValue" class="pill">
+            <option selected disabled value="">— Loading —</option>
+          </select>
+        </div>
+        <div class="act">
+          <button id="btnLoad" class="btn" type="button">Load Vessel</button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs" id="tabs" style="margin-top:14px">
+        <div class="tab active" data-pane="tab-main">Vessel Main Info</div>
+        <div class="tab" data-pane="tab-propulsion">Vessel Propulsion System</div>
+        <div class="tab" data-pane="tab-engines">Vessel Engine Info</div>
+        <div class="tab" data-pane="tab-inventory">Vessel Inventory</div>
+      </div>
+
+      <div class="tabpanes">
+        <!-- ========== TAB 1: MAIN INFO ========== -->
+        <div id="tab-main" class="pane active">
+          <div class="panel">
+            <h3>Main Information</h3>
+            <div class="grid">
+              <div>
+                <label class="req">Ship Name</label><input data-main="SHIP_NAME">
+
+                <label class="req">Owner Name</label>
+                <!-- DROPDOWN (Company_Id list) -->
+                <select id="ownerNameSel" class="pill" data-main="OWNER_NAME">
+                  <option selected disabled value="">— Loading companies —</option>
+                </select>
+
+                <label>Flag</label><input data-main="FLAG">
+                <label class="req">Port of Registry</label><input data-main="PORT_OF_REGISTRY">
+                <label>Official No</label><input data-main="OFFICIAL_NO">
+                <label>Call Sign No</label><input data-main="CALL_SIGN_NO">
+                <label>MMSI No</label><input data-main="MMSI_NO">
+                <label>IMO No</label><input data-main="IMO_NO">
+                <label>Ship Type</label><input data-main="SHIP_TYPE">
+                <label>Gross Tonnage</label><input type="number" step="0.01" data-main="GROSS_TONNAGE">
+                <label>Net Tonnage</label><input type="number" step="0.01" data-main="NET_TONNAGE">
+                <label>Length</label><input type="number" step="0.01" data-main="LENGTH">
+              </div>
+              <div>
+                <label>Breadth</label><input type="number" step="0.01" data-main="BREADTH">
+                <label>Depth</label><input type="number" step="0.01" data-main="DEPTH">
+                <label>Ship Classification Society</label><input data-main="SHIP_CLASSIFICATION_SOCIETY">
+                <label>Class No</label><input data-main="CLASS_NO">
+                <label>Hull No</label><input data-main="HULL_NO">
+                <label>Hull Material</label><input data-main="HULL_MATERIAL">
+                <label>Hull Type</label><input data-main="HULL_TYPE">
+                <label>Date of Keel Laid</label><input type="date" data-main="DATE_OF_KEEL_LAID">
+                <label>Date of Construction</label><input type="date" data-main="DATE_OF_CONSTRUCTION">
+                <label>Date of Delivery</label><input type="date" data-main="DATE_OF_DELIVERY">
+                <label>Ship Manager</label><input data-main="SHIP_MANAGER">
+                <label>Ship Manager Address</label><textarea data-main="SHIP_MANAGER_ADDRESS"></textarea>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="grid">
+              <div>
+                <label>Ship Manager Doc</label><input data-main="SHIP_MANAGER_DOC" placeholder="(Drive File ID or URL)">
+              </div>
+              <div>
+                <label>Ship Manager Roc</label><input data-main="SHIP_MANAGER_ROC" placeholder="(Drive File ID or URL)">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== TAB 2: PROPULSION (0..N) ========== -->
+        <div id="tab-propulsion" class="pane">
+          <div class="panel">
+            <h3>Propulsion System</h3>
+            <table class="table" id="tblProp">
+              <thead>
+                <tr>
+                  <th>Engine Type</th>
+                  <th>Propulsion Type</th>
+                  <th>No of Propulsion</th>
+                  <th class="action-col"></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+            <div class="row">
+              <button id="btnAddProp" class="btn soft" type="button">+ Add Propulsion</button>
+              <button id="btnResetProp" class="btn alt" type="button">Reset Propulsion</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== TAB 3: ENGINES (0..N) ========== -->
+        <div id="tab-engines" class="pane">
+          <div class="panel">
+            <h3>Engine Info</h3>
+            <table class="table" id="tblEngines">
+              <thead>
+                <tr>
+                  <th>Engine Position</th>
+                  <th>Maker</th>
+                  <th>Model</th>
+                  <th>Power kW</th>
+                  <th>Power HP</th>
+                  <th>Speed RPM</th>
+                  <th>No of Screw</th>
+                  <th>Size of Bore</th>
+                  <th>Size of Stroke</th>
+                  <th class="action-col"></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+            <div class="row">
+              <button id="btnAddEngine" class="btn soft" type="button">+ Add Engine</button>
+              <button id="btnResetEng" class="btn alt" type="button">Reset Engines</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== TAB 4: INVENTORY (0..N) with pagination/collapse ========== -->
+        <div id="tab-inventory" class="pane">
+          <div class="panel">
+            <h3>Inventory</h3>
+            <div class="inv-head">Attachment allows docs & images up to 10 MB. Stored filename will be prefixed with the SHIP_ID.</div>
+
+            <div class="inv-controls">
+              <div>
+                <label class="hint">Items per page</label>
+                <select id="invPageSize" class="pill">
+                  <option>3</option>
+                  <option selected>5</option>
+                  <option>10</option>
+                </select>
+              </div>
+
+              <div class="sep"></div>
+
+              <div class="actions">
+                <button id="invCollapseAll" class="btn ghost small" type="button">Collapse all</button>
+                <button id="invExpandAll" class="btn ghost small" type="button">Expand all</button>
+              </div>
+
+              <div class="sep"></div>
+
+              <div class="pager">
+                <button id="invPrev" class="btn soft small" type="button">Prev</button>
+                <span class="stat" id="invPageStat">Page 1/1</span>
+                <button id="invNext" class="btn soft small" type="button">Next</button>
+              </div>
+            </div>
+
+            <div id="invList" class="inv-list"></div>
+
+            <div class="row">
+              <button id="btnAddInv" class="btn soft" type="button">+ Add Item</button>
+              <button id="btnResetInv" class="btn alt" type="button">Reset Inventory</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Save / global messages -->
+      <div class="row" style="margin-top:16px">
+        <button id="btnSaveAll" class="btn" type="button" disabled>Save Changes</button>
+      </div>
+      <div id="msgSaveOk" class="msg ok"></div>
+      <div id="msgSaveErr" class="msg err"></div>
+    </div>
+  </div>
+
+  <script>
+  const token  = "<?= token ?>";
+  const appUrl = "<?= appUrl ?>";
+
+  // ===== Utilities =====
+  const $ = id => document.getElementById(id);
+  const on = (el, ev, fn) => { if (el) el.addEventListener(ev, fn); };
+  function setMsg(baseId, ok, text) {
+    const okBox  = $(baseId+'Ok'), errBox = $(baseId+'Err');
+    if (okBox) okBox.style.display = 'none';
+    if (errBox) errBox.style.display = 'none';
+    const tgt = ok ? okBox : errBox;
+    if (tgt) { tgt.textContent = text; tgt.style.display = 'block'; }
+  }
+
+  // Tabs
+  on($('tabs'), 'click', (e) => {
+    const t = e.target.closest('.tab'); if (!t) return;
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.pane').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    $(t.dataset.pane).classList.add('active');
+  });
+
+  // Header SHIP_ID (read-only)
+  let SHIP_ID = '';
+  function showShipIdBadge(){ $('shipIdBadge').textContent = 'SHIP_ID: ' + (SHIP_ID || '—'); }
+
+  // ===== File validation (inventory attachments) =====
+  const MAX_FILE_MB = 10;
+  const ALLOWED_MIME = new Set(['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/vnd.ms-powerpoint','application/vnd.openxmlformats-officedocument.presentationml.presentation','text/plain','image/jpeg','image/png','image/gif','image/webp','image/heic','image/heif','image/bmp','image/tiff']);
+  const ALLOWED_EXT = new Set(['pdf','doc','docx','xls','xlsx','ppt','pptx','txt','jpg','jpeg','png','gif','webp','heic','heif','bmp','tif','tiff']);
+  function isAllowedFile(file) {
+    if (!file) return false;
+    const mimeOk = ALLOWED_MIME.has((file.type || '').toLowerCase());
+    const extOk = ALLOWED_EXT.has((file.name.split('.').pop() || '').toLowerCase());
+    const sizeOk = (file.size || 0) <= MAX_FILE_MB * 1024 * 1024;
+    return (mimeOk || extOk) && sizeOk;
+  }
+  function explainFileProblem(file) {
+    if (file && file.size > MAX_FILE_MB * 1024 * 1024) return `File too large (> ${MAX_FILE_MB} MB): ${file.name}`;
+    return `Unsupported type: ${file ? file.name : '(none)'}`;
+  }
+  function fileToBase64(file){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(file);});}
+
+  // MAIN — read & write
+  function resetMain(){ document.querySelectorAll('[data-main]').forEach(el=> el.value=''); }
+
+  // If owner list hasn't loaded yet when setMain runs, keep a pending value
+  function collectMain(){
+    const obj = {};
+    document.querySelectorAll('[data-main]').forEach(el=>{ obj[el.getAttribute('data-main')] = (el.value||'').trim(); });
+    return obj;
+  }
+  function basicMainValidation(main){
+    const missing = [];
+    if (!main['OWNER_NAME']) missing.push('Owner Name');
+    if (!main['PORT_OF_REGISTRY']) missing.push('Port of Registry');
+    if (!main['SHIP_NAME']) missing.push('Ship Name');
+    return missing;
+  }
+
+  // PROPULSION (0..N)
+  function newPropRow(data){
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input value="${data?.ENGINE_TYPE||''}" data-prop="ENGINE_TYPE"></td>
+      <td><input value="${data?.PROPULSION_TYPE||''}" data-prop="PROPULSION_TYPE"></td>
+      <td><input type="number" step="1" value="${data?.NO_OF_PROPULSION||''}" data-prop="NO_OF_PROPULSION"></td>
+      <td class="action-col"><button class="btn danger small btnDel">Delete</button></td>
+    `;
+    tr.querySelector('.btnDel').addEventListener('click', ()=> tr.remove());
+    return tr;
+  }
+  function addPropRow(d){ $('tblProp').querySelector('tbody').appendChild(newPropRow(d||{})); }
+  function resetProp(){ $('tblProp').querySelector('tbody').innerHTML = ''; }
+  function setPropulsion(list){ resetProp(); (list||[]).forEach(addPropRow); if(!(list||[]).length) addPropRow({}); }
+  function collectProp(){
+    const rows = Array.from($('tblProp').querySelectorAll('tbody tr'));
+    return rows.map(tr => {
+      const get = (k)=> tr.querySelector(`[data-prop="${k}"]`)?.value?.trim() || '';
+      return { ENGINE_TYPE: get('ENGINE_TYPE'), PROPULSION_TYPE: get('PROPULSION_TYPE'), NO_OF_PROPULSION: get('NO_OF_PROPULSION') };
+    });
+  }
+
+  // ENGINES (0..N)
+  function newEngineRow(data){
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input value="${data?.ENGINE_POSITION||''}" placeholder="PORT/STBD/AUX" data-eng="ENGINE_POSITION"></td>
+      <td><input value="${data?.MAKER||''}" data-eng="MAKER"></td>
+      <td><input value="${data?.MODEL||''}" data-eng="MODEL"></td>
+      <td><input type="number" step="0.01" value="${data?.POWER_KW||''}" data-eng="POWER_KW"></td>
+      <td><input type="number" step="0.01" value="${data?.POWER_HP||''}" data-eng="POWER_HP"></td>
+      <td><input type="number" step="1"    value="${data?.SPEED_RPM||''}" data-eng="SPEED_RPM"></td>
+      <td><input type="number" step="1"    value="${data?.NO_OF_SCREW||''}" data-eng="NO_OF_SCREW"></td>
+      <td><input type="number" step="0.01" value="${data?.SIZE_OF_BORE||''}" data-eng="SIZE_OF_BORE"></td>
+      <td><input type="number" step="0.01" value="${data?.SIZE_OF_STROKE||''}" data-eng="SIZE_OF_STROKE"></td>
+      <td class="action-col"><button class="btn danger small btnDel">Delete</button></td>
+    `;
+    tr.querySelector('.btnDel').addEventListener('click', ()=> tr.remove());
+    return tr;
+  }
+  function addEngineRow(d){ $('tblEngines').querySelector('tbody').appendChild(newEngineRow(d||{})); }
+  function resetEng(){ $('tblEngines').querySelector('tbody').innerHTML = ''; }
+  function setEngines(list){ resetEng(); (list||[]).forEach(addEngineRow); if(!(list||[]).length) addEngineRow({}); }
+  function collectEngines(){
+    const rows = Array.from($('tblEngines').querySelectorAll('tbody tr'));
+    return rows.map(tr=>{
+      const get = (k)=> tr.querySelector(`[data-eng="${k}"]`)?.value?.trim() || '';
+      return { ENGINE_POSITION:get('ENGINE_POSITION'), MAKER:get('MAKER'), MODEL:get('MODEL'),
+               POWER_KW:get('POWER_KW'), POWER_HP:get('POWER_HP'), SPEED_RPM:get('SPEED_RPM'),
+               NO_OF_SCREW:get('NO_OF_SCREW'), SIZE_OF_BORE:get('SIZE_OF_BORE'), SIZE_OF_STROKE:get('SIZE_OF_STROKE') };
+    });
+  }
+
+  // ===== INVENTORY (0..N) — pagination + collapse + Name dropdown from sheet =====
+  const INV_DESC_MAX_WORDS = 120;
+  let invPage = 1, invPageSize = 5;
+  const invListEl = $('invList'); const invPageStat = $('invPageStat');
+  let INV_NAMES = []; // filled from backend
+
+  function countWords(s){ return (s || '').trim().split(/\s+/).filter(Boolean).length; }
+  function clampDescriptionToLimit(textarea, counter){
+    const words = textarea.value.trim().split(/\s+/).filter(Boolean);
+    if (words.length > INV_DESC_MAX_WORDS) textarea.value = words.slice(0, INV_DESC_MAX_WORDS).join(' ');
+    counter.textContent = `${countWords(textarea.value)}/${INV_DESC_MAX_WORDS} words`;
+  }
+
+  // Returns { el, value, label } for the NAME field inside a single inventory card (div)
+  function getInvName(div){
+    const el = div.querySelector('[data-inv="NAME"]');
+    if (!el) return { el:null, value:'', label:'' };
+
+    // Works for <select> and <input>
+    const raw = (el.value || '').trim();
+    let label = raw;
+
+    if (el.tagName === 'SELECT' && el.selectedIndex >= 0) {
+      const opt = el.options[el.selectedIndex];
+      label = (opt?.text || raw).trim();   // SUB_CATEGORY NAME label
+    }
+    return { el, value: raw, label };
+  }
+
+  function summarizeItem(div){
+    const get = k => div.querySelector(`[data-inv="${k}"]`)?.value?.trim() || '';
+    const { label } = getInvName(div);     // <-- pretty label
+    return {
+      name: (label || '—'),
+      qty:  get('QUANTITY') || '0',
+      mfd:  get('DATE_MANUFACTURED') || '—',
+      exp:  get('DATE_EXPIRY') || '—',
+      st:   get('STATUS') || '—',
+      cls:  get('CLASS') || '—'
+    };
+  }
+
+  function setHeaderFromInputs(div){
+    const {name, qty, mfd, exp, st, cls} = summarizeItem(div);
+    div.querySelector('[data-hd-name]').textContent = name;
+    div.querySelector('[data-hd-qty]').textContent  = qty;
+    div.querySelector('[data-hd-dates]').textContent= `${mfd} → ${exp}`;
+    div.querySelector('[data-hd-sc]').textContent   = `${st} / ${cls}`;
+  }
+  function fillNameSelect(selectEl, selectedValue){
+    // INV_NAMES now: [{NAME, CATEGORY, SUB_CATEGORY}, ...]
+    upgradeInventoryNameSelect(selectEl, INV_NAMES);
+    if (selectedValue) {
+      selectEl.value = selectedValue;
+      selectEl.dispatchEvent(new Event('change'));
+    }
+  }
+  function newInvItem(data){
+    const div = document.createElement('div');
+    div.className = 'inv-item';
+    div.innerHTML = `
+      <div class="inv-hd">
+        <div class="title">
+          <button class="inv-toggle" type="button" aria-label="Toggle"></button>
+          <strong data-hd-name>—</strong>
+        </div>
+        <div class="meta">
+          <span>Qty: <b data-hd-qty>0</b></span>
+          <span><b data-hd-dates>— → —</b></span>
+          <span><b data-hd-sc>— / —</b></span>
+        </div>
+        <div class="actions">
+          <button class="btn danger small btnDel" type="button">Delete</button>
+        </div>
+      </div>
+      <div class="inv-body">
+        <div class="inv-field inv-name">
+          <label>Name</label>
+          <select data-inv="NAME"></select>
+        </div>
+        <div class="inv-field inv-qty">
+          <label>Quantity</label>
+          <input type="number" step="1" value="${data?.QUANTITY||''}" data-inv="QUANTITY" placeholder="0">
+        </div>
+        <div class="inv-field inv-mfd">
+          <label>Date Manufactured</label>
+          <input type="date" value="${data?.DATE_MANUFACTURED||''}" data-inv="DATE_MANUFACTURED">
+        </div>
+        <div class="inv-field inv-exp">
+          <label>Date Expiry</label>
+          <input type="date" value="${data?.DATE_EXPIRY||''}" data-inv="DATE_EXPIRY">
+        </div>
+        <div class="inv-field inv-file">
+          <label>Attachment</label>
+          <input type="file" data-inv-file="ATTACHMENT"
+                 accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.gif,.webp,.heic,image/*">
+        </div>
+        <div class="inv-field inv-status">
+          <label>Status</label>
+          <input value="${data?.STATUS||''}" data-inv="STATUS" placeholder="e.g. Active">
+        </div>
+        <div class="inv-field inv-class">
+          <label>Class</label>
+          <input value="${data?.CLASS||''}" data-inv="CLASS" placeholder="e.g. A/B/C">
+        </div>
+        <div class="inv-field inv-desc">
+          <label>Description <span class="hint">(max ~120 words)</span></label>
+          <textarea data-inv="DESCRIPTION" placeholder="Describe the item, usage, location, etc."></textarea>
+          <div class="wordcount" data-inv="DESC_COUNTER">0/${INV_DESC_MAX_WORDS} words</div>
+        </div>
+      </div>
+    `;
+    // actions
+    div.querySelector('.btnDel').addEventListener('click', ()=> { div.remove(); renderInvPagination(); enableSaveIfLoaded(); });
+    div.querySelector('.inv-toggle').addEventListener('click', ()=> div.classList.toggle('collapsed'));
+    // hydrate selects + values
+    const nameSel = div.querySelector('[data-inv="NAME"]'); fillNameSelect(nameSel, data?.NAME || ''); nameSel.addEventListener('change', ()=> setHeaderFromInputs(div));
+    const ta = div.querySelector('textarea[data-inv="DESCRIPTION"]'); const counter = div.querySelector('[data-inv="DESC_COUNTER"]');
+    ta.value = (data?.DESCRIPTION || '').trim(); ta.addEventListener('input', ()=> clampDescriptionToLimit(ta, counter)); clampDescriptionToLimit(ta, counter);
+    div.querySelectorAll('[data-inv]').forEach(el=> el.addEventListener('input', ()=> setHeaderFromInputs(div)));
+    setHeaderFromInputs(div);
+    return div;
+  }
+  function addInvRow(d){ invListEl.appendChild(newInvItem(d||{})); renderInvPagination(); enableSaveIfLoaded(); }
+  function resetInv(){ invListEl.innerHTML = ''; renderInvPagination(); }
+  function setInventory(list){ resetInv(); (list||[]).forEach(addInvRow); if(!(list||[]).length) addInvRow({}); }
+  function getAllInvItems(){ return Array.from(invListEl.querySelectorAll('.inv-item')); }
+  function renderInvPagination(){
+    const items = getAllInvItems(); const per = invPageSize; const total = items.length;
+    const totalPages = Math.max(1, Math.ceil(total / per)); if (invPage > totalPages) invPage = totalPages;
+    const start = (invPage - 1) * per, end = start + per;
+    items.forEach((el, idx)=> el.style.display = (idx >= start && idx < end) ? '' : 'none');
+    invPageStat.textContent = `Page ${invPage}/${totalPages} • ${total} item(s)`;
+  }
+  
+  async function collectInventoryFilesAndValues(){
+    const items = getAllInvItems();
+    const out = [];
+
+    for (const item of items) {
+      // local field getter for this card
+      const get = (k)=> item.querySelector(`[data-inv="${k}"]`)?.value?.trim() || '';
+
+      // build "<SUB_CATEGORY> <NAME>" (or just NAME if no sub)
+      const selName = item.querySelector('[data-inv="NAME"]');
+      const rawName = (selName?.value || '').trim();
+      const sub = (selName && selName.selectedIndex >= 0)
+        ? (selName.options[selName.selectedIndex]?.dataset?.sub || '').trim()
+        : '';
+      const combinedName = sub ? `${sub} ${rawName}` : rawName;
+
+      // attachment (unchanged)
+      const input = item.querySelector('[data-inv-file="ATTACHMENT"]');
+      let filePayload = null;
+      const f = input && input.files && input.files[0];
+      if (f) {
+        if (!isAllowedFile(f)) {
+          setMsg('msgSave', false, explainFileProblem(f) + '. Allowed: docs & images up to 10MB.');
+          throw new Error('invalid-file');
+        }
+        const b64 = await fileToBase64(f);
+        const suggested = (SHIP_ID || 'SHIP') + '_' + f.name.replace(/^\d+_/, '');
+        filePayload = { name: suggested, origName: f.name, mime: f.type, dataBase64: b64 };
+      }
+
+      out.push({
+        NAME: combinedName, // <-- save combined string
+        QUANTITY: get('QUANTITY'),
+        DATE_MANUFACTURED: get('DATE_MANUFACTURED'),
+        DATE_EXPIRY: get('DATE_EXPIRY'),
+        ATTACHMENT: filePayload,
+        DESCRIPTION: get('DESCRIPTION'),
+        STATUS: get('STATUS'),
+        CLASS: get('CLASS')
+      });
+    }
+    return out;
+  }
+
+  // ====== Search keys (MMSI/IMO/Name) ======
+  let MMSI_LIST = [], IMO_LIST = [], SHIPNAME_LIST = [], OWNERNAME_LIST = [];
+  function fillKeyDropdown(){
+    const type = $('keyType').value;
+    const map = {
+      'MMSI':       { list: MMSI_LIST,       label: 'Select MMSI No' },
+      'IMO':        { list: IMO_LIST,        label: 'Select IMO No' },
+      'SHIP_NAME':  { list: SHIPNAME_LIST,   label: 'Select Ship Name' },
+      'OWNER_NAME': { list: OWNERNAME_LIST,  label: 'Select Owner Name' }
+    };
+    const { list, label } = map[type] || { list: [], label: 'Select' };
+    const sel = $('keyValue');
+    $('keyLabel').textContent = label;
+    sel.innerHTML = '';
+
+    if (!list.length){
+      const o = new Option('— None found —','',true,true); o.disabled = true; sel.add(o);
+      sel.disabled = true; return;
+    }
+    sel.disabled = false;
+    const ph = new Option('— Select —','',true,true); ph.disabled = true; sel.add(ph);
+    list.forEach(v => sel.add(new Option(v, v)));
+  }
+
+  // ====== Load vessel by key ======
+  function enableSaveIfLoaded(){ $('btnSaveAll').disabled = !SHIP_ID; }
+  function hydrateAll(data){
+    SHIP_ID = data?.shipId || ''; showShipIdBadge(); enableSaveIfLoaded();
+    setMain(data?.main || {}); setPropulsion(data?.propulsion || []); setEngines(data?.engines || []); setInventory(data?.inventory || []);
+    // if owner list is loaded later, we’ll apply OWNER_PENDING_VALUE then
+  }
+  function loadVessel(){
+    const type = $('keyType').value; const val = $('keyValue').value;
+    if (!val) { setMsg('msgTop', false, 'Please select a value.'); return; }
+    setMsg('msgTop', true, ''); setMsg('msgTop', false, '');
+    API
+      .withSuccessHandler(res => {
+        if (res?.multiple && Array.isArray(res.candidates) && res.candidates.length){
+          MMSI_LIST = res.candidates.map(c => c.MMSI_NO).filter(Boolean).sort();
+          $('keyType').value = 'MMSI';
+          fillKeyDropdown();
+          setMsg('msgTop', false, res.msg || 'Multiple vessels found. Please choose MMSI No.');
+          return;
+        }
+        if (!res?.ok) { setMsg('msgTop', false, res?.msg || 'Not found.'); return; }
+        hydrateAll(res);
+        // after hydrate, if owner list already loaded, force-select the owner
+        if (OWNER_NAMES.length && OWNER_PENDING_VALUE) {
+          const sel = $('ownerNameSel');
+          if (sel){ sel.value = OWNER_PENDING_VALUE; }
+        }
+      })
+      .withFailureHandler(err => setMsg('msgTop', false, err?.message || 'Failed to load vessel'))
+      .getVesselByKey(token, { keyType: type, keyValue: val });
+  }
+
+  // ====== Inventory Names (dropdown list) ======
+  function setInventoryNames(names){
+    // normalize (just in case)
+    INV_NAMES = Array.isArray(names) ? names.filter(n => n && n.NAME && n.CATEGORY) : [];
+    document.querySelectorAll('#invList [data-inv="NAME"]').forEach(sel=>{
+      const keep = sel.value || '';
+      fillNameSelect(sel, keep);
+    });
+  }
+
+  function loadInventoryNames(){
+    API
+      .withSuccessHandler(res => { if (res?.ok) setInventoryNames(res.names || []); })
+      .withFailureHandler(_ => {})
+      .getInventoryNames(token);
+  }
+
+  // ====== Owner Names (Company_Id) ======
+  let OWNER_NAMES = [];
+  let OWNER_PENDING_VALUE = ''; // will be set by setMain()
+
+  function setOwnerNames(list){
+    OWNER_NAMES = Array.isArray(list) ? list : [];
+    const sel = document.getElementById('ownerNameSel');
+    sel.innerHTML = '';
+    if (!OWNER_NAMES.length){
+      const o = new Option('— No companies found —','',true,true);
+      o.disabled = true; sel.add(o); sel.disabled = true; return;
+    }
+    sel.disabled = false;
+
+    // placeholder selected only if we don't already have a pending value
+    const ph = new Option('— Select company —','',!OWNER_PENDING_VALUE,!OWNER_PENDING_VALUE);
+    ph.disabled = true; sel.add(ph);
+
+    const wanted = (OWNER_PENDING_VALUE || '').trim().toLowerCase();
+    let matched = false;
+    OWNER_NAMES.forEach(name => {
+      const isSel = wanted && name.trim().toLowerCase() === wanted;
+      if (isSel) matched = true;
+      sel.add(new Option(name, name, false, isSel));
+    });
+
+    // If stored OWNER_NAME isn't in COMP_NAME list, show it so edits don’t force a change
+    if (!matched && OWNER_PENDING_VALUE) {
+      sel.add(new Option(OWNER_PENDING_VALUE + ' (not in list)', OWNER_PENDING_VALUE, false, true));
+    }
+  }
+
+  function showOwnerNamesError(msg){
+    const sel = document.getElementById('ownerNameSel');
+    sel.innerHTML = '';
+    const o = new Option('— ' + (msg || 'Failed to load companies') + ' —','',true,true);
+    o.disabled = true; sel.add(o); sel.disabled = true;
+  }
+
+  async function loadOwnerNames() {
+    try {
+      const res = await API.getOwnerNames(token);
+      if (res?.ok) {
+        setOwnerNames(res.names || []);
+      } else {
+        showOwnerNamesError(res?.msg || 'Failed to load owner names');
+      }
+    } catch (err) {
+      showOwnerNamesError(err?.message || 'Network error');
+    }
+  }
+
+// When hydrating vessel data, capture OWNER_NAME so we can preselect later.
+function setMain(obj){
+  document.querySelectorAll('[data-main]').forEach(el=>{
+    const k = el.getAttribute('data-main');
+    const v = (obj && obj[k]) ? obj[k] : '';
+    if (k === 'OWNER_NAME') {
+      OWNER_PENDING_VALUE = v || '';
+      // If options already loaded, try to select now:
+      const sel = document.getElementById('ownerNameSel');
+      if (sel && sel.options && sel.options.length) {
+        const wanted = (OWNER_PENDING_VALUE || '').trim().toLowerCase();
+        let matched = false;
+        Array.from(sel.options).forEach(o => {
+          if (o.value.trim().toLowerCase() === wanted) { o.selected = true; matched = true; }
+        });
+        if (!matched && OWNER_PENDING_VALUE) {
+          sel.add(new Option(OWNER_PENDING_VALUE + ' (not in list)', OWNER_PENDING_VALUE, false, true));
+        }
+      }
+    } else {
+      el.value = v;
+    }
+  });
+}
+
+  // ===== Save changes =====
+  on($('btnSaveAll'), 'click', async ()=>{
+    setMsg('msgSave', true, ''); setMsg('msgSave', false, '');
+    if (!SHIP_ID) { setMsg('msgSave', false, 'No vessel loaded. Use the search above.'); return; }
+    const main = collectMain(); const miss = basicMainValidation(main);
+    if (miss.length) { setMsg('msgSave', false, 'Please fill required fields: ' + miss.join(', ') + '.'); return; }
+    const propulsion = collectProp(); const engines = collectEngines();
+    let inventory = [];
+    try { inventory = await collectInventoryFilesAndValues(); }
+    catch(e){ if (e?.message === 'invalid-file') return; setMsg('msgSave', false, e?.message || 'File processing error.'); return; }
+
+    $('btnSaveAll').disabled = true;
+    API
+      .withSuccessHandler((res)=>{
+        $('btnSaveAll').disabled = false;
+        if (!res?.ok) { setMsg('msgSave', false, res?.msg || 'Update failed.'); return; }
+        setMsg('msgSave', true, res.msg || 'Updated.');
+      })
+      .withFailureHandler((err)=>{
+        $('btnSaveAll').disabled = false;
+        setMsg('msgSave', false, err?.message || 'Unexpected error.');
+      })
+      .updateVesselAll(token, { shipId: SHIP_ID, main, propulsion, engines, inventory });
+  });
+
+  // Wire controls
+  on($('btnBack'),  'click', ()=>{ window.top.location.href = `${appUrl}?page=dashboard&token=${encodeURIComponent(token)}`; });
+  on($('btnAddProp'),   'click', ()=> addPropRow({}));
+  on($('btnResetProp'), 'click', resetProp);
+  on($('btnAddEngine'), 'click', ()=> addEngineRow({}));
+  on($('btnResetEng'),  'click', resetEng);
+  on($('btnAddInv'),    'click', ()=>{ addInvRow({}); invPage = Math.ceil(getAllInvItems().length / invPageSize); renderInvPagination(); });
+  on($('btnResetInv'),  'click', resetInv);
+  on($('invPrev'), 'click', ()=>{ if (invPage > 1) { invPage--; renderInvPagination(); } });
+  on($('invNext'), 'click', ()=>{ const total = getAllInvItems().length; const pages = Math.max(1, Math.ceil(total / invPageSize)); if (invPage < pages) { invPage++; renderInvPagination(); } });
+  on($('invPageSize'), 'change', (e)=>{ invPageSize = parseInt(e.target.value,10)||5; invPage = 1; renderInvPagination(); });
+  on($('invCollapseAll'), 'click', ()=> getAllInvItems().forEach(el=> el.classList.add('collapsed')));
+  on($('invExpandAll'),   'click', ()=> getAllInvItems().forEach(el=> el.classList.remove('collapsed')));
+
+  // Search controls
+  on($('keyType'), 'change', fillKeyDropdown);
+  on($('btnLoad'), 'click', loadVessel);
+
+  function loadVesselKeys(){
+    $('keyValue').innerHTML = '<option selected disabled>— Loading —</option>';
+    API
+      .withSuccessHandler(res => {
+        if (!res?.ok){ setMsg('msgTop', false, res?.msg || 'Failed to load keys'); return; }
+        MMSI_LIST      = res.mmsi       || [];
+        IMO_LIST       = res.imo        || [];
+        SHIPNAME_LIST  = res.shipNames  || [];
+        OWNERNAME_LIST = res.ownerNames || [];
+        fillKeyDropdown();
+      })
+      .withFailureHandler(err => setMsg('msgTop', false, err?.message || 'Failed to load keys'))
+      .getVesselKeys(token);
+  }
+
+  // Init
+  document.addEventListener('DOMContentLoaded', ()=>{
+    showShipIdBadge();
+    loadVesselKeys();      // fills MMSI/IMO/Ship/Owner dropdowns for searching
+    loadInventoryNames();  // fills Inventory "Name" selects
+    loadOwnerNames();      // <-- NEW: populate Owner Name dropdown in Main tab
+    // start with empty rows; they’ll be replaced on load
+    setPropulsion([]); setEngines([]); setInventory([]);
+    renderInvPagination();
+  });
+
+  // ====== Searchable Inventory Name Dropdown (CATEGORY SUB_CATEGORY NAME) ======
+  // Expect raw items with columns: NAME, CATEGORY, SUB_CATEGORY (and optionally ID).
+  // KISS: no external libs, progressive enhancement on <select>.
+
+  // (function(){
+  //   function formatInvName(row){
+  //     const sub = (row.SUB_CATEGORY || '').trim();
+  //     const nm  = (row.NAME || '').trim();
+  //     if (!nm) return '';
+  //     return sub ? `${sub} ${nm}` : nm;
+  //   }
+
+  //   function normalize(str){ return (str||'').toLowerCase(); }
+
+  //   // Upgrade a native <select> into a searchable dropdown.
+  //   // selectEl: HTMLSelectElement
+  //   // items: Array<{NAME, CATEGORY, SUB_CATEGORY, ID?}>
+  //   // opts.valueField: 'ID' | 'NAME' (default: 'NAME')
+  //   function upgradeInventoryNameSelect(selectEl, items, opts){
+  //     if (!selectEl) throw new Error('upgradeInventoryNameSelect: select element not found');
+  //     opts = opts || {};
+  //     const valueField = opts.valueField || 'NAME';
+
+  //     // Build options list (value + label)
+  //     const options = items
+  //       .filter(r => (r && r.NAME && r.CATEGORY)) // minimal validation
+  //       .map(r => ({
+  //         value: (r[valueField] || r.NAME).toString(),
+  //         label: formatInvName(r),
+  //         raw: r
+  //       }))
+  //       // sort by CATEGORY, SUB_CATEGORY, NAME (case-insensitive)
+  //       .sort((a,b)=>{
+  //         const ca = normalize(a.raw.CATEGORY), cb = normalize(b.raw.CATEGORY);
+  //         if (ca !== cb) return ca < cb ? -1 : 1;
+  //         const sa = normalize(a.raw.SUB_CATEGORY||''), sb = normalize(b.raw.SUB_CATEGORY||'');
+  //         if (sa !== sb) return sa < sb ? -1 : 1;
+  //         const na = normalize(a.raw.NAME), nb = normalize(b.raw.NAME);
+  //         return na < nb ? -1 : (na > nb ? 1 : 0);
+  //       });
+
+  //     // Fill original <select> (for forms / existing code)
+  //     // Keep the same id/name so other code still works.
+  //     selectEl.innerHTML = '';
+  //     for (const o of options) {
+  //       const opt = document.createElement('option');
+  //       opt.value = o.value;
+  //       opt.textContent = o.label; // display formatted label even on fallback
+  //       selectEl.appendChild(opt);
+  //     }
+
+  //     // Progressive enhancement UI
+  //     const wrap = document.createElement('div');
+  //     wrap.className = 'sdd';
+  //     const btn = document.createElement('button');
+  //     btn.type = 'button';
+  //     btn.className = 'sdd-btn';
+  //     btn.innerHTML = `<span class="sdd-label">${selectEl.options[selectEl.selectedIndex]?.text || 'Select item...'}</span>
+  //                     <span class="sdd-kbd">/ to search</span>`;
+  //     const panel = document.createElement('div');
+  //     panel.className = 'sdd-panel';
+  //     panel.innerHTML = `
+  //       <div class="sdd-search">
+  //         <input type="text" placeholder="Search CATEGORY / SUB_CATEGORY / NAME…" aria-label="Search inventory names">
+  //       </div>
+  //       <div class="sdd-list" role="listbox"></div>
+  //     `;
+  //     wrap.appendChild(btn);
+  //     wrap.appendChild(panel);
+
+  //     // Insert UI right after select; hide original but keep in DOM
+  //     selectEl.style.position = 'absolute';
+  //     selectEl.style.opacity = '0';
+  //     selectEl.style.pointerEvents = 'none';
+  //     selectEl.style.height = '0';
+  //     selectEl.parentNode.insertBefore(wrap, selectEl.nextSibling);
+
+  //     const labelEl = btn.querySelector('.sdd-label');
+  //     const inputEl = panel.querySelector('input');
+  //     const listEl  = panel.querySelector('.sdd-list');
+
+  //     let filtered = options.slice();
+  //     let activeIndex = -1;
+
+  //     function renderList(){
+  //       listEl.innerHTML = '';
+  //       if (!filtered.length) {
+  //         const emp = document.createElement('div');
+  //         emp.className = 'sdd-empty';
+  //         emp.textContent = 'No matches';
+  //         listEl.appendChild(emp);
+  //         return;
+  //       }
+  //       filtered.forEach((o, idx)=>{
+  //         const it = document.createElement('div');
+  //         it.className = 'sdd-opt';
+  //         it.setAttribute('role', 'option');
+  //         it.setAttribute('data-value', o.value);
+  //         it.textContent = o.label;
+  //         if (idx === activeIndex) it.setAttribute('aria-selected','true');
+  //         it.addEventListener('click', ()=> choose(o));
+  //         listEl.appendChild(it);
+  //       });
+  //     }
+
+  //     function open(){
+  //       wrap.classList.add('open');
+  //       inputEl.value = '';
+  //       filtered = options.slice();
+  //       activeIndex = -1;
+  //       renderList();
+  //       setTimeout(()=>inputEl.focus(), 0);
+  //     }
+  //     function close(){ wrap.classList.remove('open'); }
+
+  //     function choose(o){
+  //       // Update select
+  //       selectEl.value = o.value;
+  //       // Update button label
+  //       labelEl.textContent = o.label;
+  //       // Fire change event for any existing listeners
+  //       selectEl.dispatchEvent(new Event('change'));
+  //       close();
+  //     }
+
+  //     function filter(q){
+  //       const nq = normalize(q);
+  //       filtered = options.filter(o=>{
+  //         const r = o.raw;
+  //         return (
+  //           normalize(r.CATEGORY).includes(nq) ||
+  //           normalize(r.SUB_CATEGORY||'').includes(nq) ||
+  //           normalize(r.NAME).includes(nq)  ||
+  //           normalize(o.label).includes(nq)
+  //         );
+  //       });
+  //       activeIndex = -1;
+  //       renderList();
+  //     }
+
+  //     // Events
+  //     btn.addEventListener('click', ()=>{
+  //       if (wrap.classList.contains('open')) close(); else open();
+  //     });
+  //     inputEl.addEventListener('input', (e)=> filter(e.target.value));
+  //     inputEl.addEventListener('keydown', (e)=>{
+  //       if (e.key === 'Escape'){ close(); btn.focus(); }
+  //       else if (e.key === 'ArrowDown'){ e.preventDefault(); move(1); }
+  //       else if (e.key === 'ArrowUp'){ e.preventDefault(); move(-1); }
+  //       else if (e.key === 'Enter'){
+  //         e.preventDefault();
+  //         if (filtered.length && activeIndex >= 0) choose(filtered[activeIndex]);
+  //       }
+  //     });
+  //     document.addEventListener('keydown', (e)=>{
+  //       // Quick open with "/" when button has focus
+  //       if (document.activeElement === btn && e.key === '/') {
+  //         e.preventDefault(); open();
+  //       }
+  //     });
+  //     document.addEventListener('click', (e)=>{
+  //       if (!wrap.contains(e.target)) close();
+  //     });
+
+  //     function move(delta){
+  //       if (!filtered.length) return;
+  //       activeIndex = (activeIndex + delta + filtered.length) % filtered.length;
+  //       renderList();
+  //       // ensure item is visible
+  //       const node = listEl.children[activeIndex];
+  //       if (node) node.scrollIntoView({block:'nearest'});
+  //     }
+
+  //     // Keep UI in sync if value was preset programmatically
+  //     selectEl.addEventListener('change', ()=>{
+  //       const opt = options.find(o => o.value == selectEl.value);
+  //       if (opt) labelEl.textContent = opt.label;
+  //     });
+  //   }
+
+  //   // Expose globally for your pages
+  //   window.upgradeInventoryNameSelect = upgradeInventoryNameSelect;
+  //   window.formatInvNameForDebug = formatInvName; // optional
+  // })();
+
+  (function(){
+    function formatInvLabel(r){
+      const sub = (r.SUB_CATEGORY||'').trim();
+      const nm  = (r.NAME||'').trim();
+      if (!nm) return '';
+      return sub ? `${sub} ${nm}` : nm;
+    }
+
+    function normalize(s){ return (s||'').toLowerCase(); }
+
+    // Turn a <select> into a searchable dropdown using an items array of {NAME,CATEGORY,SUB_CATEGORY}
+    function upgradeInventoryNameSelect(selectEl, items){
+      if (!selectEl) return;
+
+      // Build value/label list
+      const options = (Array.isArray(items)?items:[])
+        .filter(r => r && r.NAME && r.CATEGORY)
+        .map(r => ({ value: r.NAME, label: formatInvLabel(r), raw:r }))
+        .sort((a,b)=>{
+          const ca=normalize(a.raw.CATEGORY), cb=normalize(b.raw.CATEGORY);
+          if (ca!==cb) return ca<cb?-1:1;
+          const sa=normalize(a.raw.SUB_CATEGORY), sb=normalize(b.raw.SUB_CATEGORY);
+          if (sa!==sb) return sa<sb?-1:1;
+          const na=normalize(a.raw.NAME), nb=normalize(b.raw.NAME);
+          return na<nb?-1:(na>nb?1:0);
+        });
+
+      // Fill native select (kept for form submits + existing listeners)
+      const current = selectEl.value || selectEl.getAttribute('data-current') || '';
+      selectEl.innerHTML = '';
+      if (!options.length){
+        const opt = new Option('— No items found —', '', true, true);
+        opt.disabled = true; selectEl.add(opt); selectEl.disabled = true;
+        return;
+      }
+      selectEl.disabled = false;
+      const phSel = !current; const ph = new Option('— Select —','',phSel,phSel);
+      ph.disabled = true; selectEl.add(ph);
+
+      options.forEach(o => {
+        const isSel = current && (
+          o.value.toLowerCase() === current.toLowerCase() ||   // raw NAME match
+          o.label.toLowerCase() === current.toLowerCase()      // combined "<SUB> <NAME>" match
+        );
+        const opt = new Option(o.label, o.value, false, isSel);
+        opt.dataset.category = o.raw.CATEGORY || '';
+        opt.dataset.sub      = o.raw.SUB_CATEGORY || '';       // <-- store sub-category
+        selectEl.add(opt);
+      });
+
+      const wrap = document.createElement('div'); wrap.className = 'sdd';
+      const btn  = document.createElement('button'); btn.type='button'; btn.className='sdd-btn';
+      const labelEl = document.createElement('span'); labelEl.className='sdd-label';
+      labelEl.textContent = selectEl.options[selectEl.selectedIndex]?.text || 'Select item...';
+      const kbd = document.createElement('span'); kbd.className='sdd-kbd'; kbd.textContent = '/ to search';
+      btn.appendChild(labelEl); btn.appendChild(kbd);
+
+      const panel = document.createElement('div'); panel.className='sdd-panel';
+      panel.innerHTML = `
+        <div class="sdd-search">
+          <input type="text" placeholder="Search CATEGORY / SUB_CATEGORY / NAME…" aria-label="Search inventory names">
+        </div>
+        <div class="sdd-list" role="listbox"></div>
+      `;
+      wrap.appendChild(btn); wrap.appendChild(panel);
+
+      // Insert after select (keep select hidden but functional)
+      selectEl.style.position='absolute'; selectEl.style.opacity='0'; selectEl.style.pointerEvents='none'; selectEl.style.height='0';
+      selectEl.parentNode.insertBefore(wrap, selectEl.nextSibling);
+
+      const inputEl = panel.querySelector('input');
+      const listEl  = panel.querySelector('.sdd-list');
+      let filtered = options.slice();
+      let activeIndex = -1;
+
+      function renderList(){
+        listEl.innerHTML='';
+        if (!filtered.length){
+          const emp = document.createElement('div'); emp.className='sdd-empty'; emp.textContent='No matches';
+          listEl.appendChild(emp); return;
+        }
+        filtered.forEach((o, idx)=>{
+          const it = document.createElement('div'); it.className='sdd-opt'; it.setAttribute('role','option');
+          it.textContent = o.label;
+          if (idx===activeIndex) it.setAttribute('aria-selected','true');
+          it.addEventListener('click', ()=> choose(o));
+          listEl.appendChild(it);
+        });
+      }
+      function open(){ wrap.classList.add('open'); inputEl.value=''; filtered=options.slice(); activeIndex=-1; renderList(); setTimeout(()=>inputEl.focus(),0); }
+      function close(){ wrap.classList.remove('open'); }
+      function move(delta){
+        if (!filtered.length) return;
+        activeIndex = (activeIndex + delta + filtered.length) % filtered.length;
+        renderList();
+        const node = listEl.children[activeIndex];
+        if (node) node.scrollIntoView({block:'nearest'});
+      }
+      function filter(q){
+        const nq = normalize(q);
+        filtered = options.filter(o=>{
+          const r=o.raw;
+          return normalize(r.CATEGORY).includes(nq) || normalize(r.SUB_CATEGORY||'').includes(nq)
+              || normalize(r.NAME).includes(nq) || normalize(o.label).includes(nq);
+        });
+        activeIndex=-1; renderList();
+      }
+      function choose(o){
+        selectEl.value = o.value;
+        labelEl.textContent = o.label;
+        selectEl.dispatchEvent(new Event('change'));
+        close();
+      }
+
+      btn.addEventListener('click', ()=> wrap.classList.contains('open') ? close() : open());
+      document.addEventListener('click', (e)=>{ if (!wrap.contains(e.target)) close(); });
+      inputEl.addEventListener('input', (e)=> filter(e.target.value));
+      inputEl.addEventListener('keydown', (e)=>{
+        if (e.key==='Escape'){ close(); btn.focus(); }
+        else if (e.key==='ArrowDown'){ e.preventDefault(); move(1); }
+        else if (e.key==='ArrowUp'){ e.preventDefault(); move(-1); }
+        else if (e.key==='Enter'){ e.preventDefault(); if (filtered.length && activeIndex>=0) choose(filtered[activeIndex]); }
+      });
+      document.addEventListener('keydown', (e)=>{
+        if (document.activeElement === btn && e.key === '/') { e.preventDefault(); open(); }
+      });
+
+      // Keep in sync if value changes programmatically
+      selectEl.addEventListener('change', ()=>{
+        const sel = options.find(o => o.value.toLowerCase() === (selectEl.value||'').toLowerCase());
+        labelEl.textContent = sel ? sel.label : 'Select item...';
+      });
+
+      // expose for later updates
+      selectEl._sdd = { wrap, labelEl };
+    }
+
+    // Expose globally
+    window._invLabel = formatInvLabel;
+    window.upgradeInventoryNameSelect = upgradeInventoryNameSelect;
+  })();
+  </script>
+</body>
+</html>

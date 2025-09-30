@@ -1,0 +1,374 @@
+<!doctype html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-store, max-age=0">
+  <title>NAVI-SIMS — Register Client</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    /* ===== NAVI-SIMS Design System ===== */
+    :root {
+      --bg: #F6F7FB; --card: #ffffff; --panel: #F9FAFB; --text: #0F172A;
+      --muted: #64748B; --border: #E5E7EB; --ring: #2563EB; --primary: #2563EB;
+      --danger: #EF4444; --ok: #059669;
+      --radius: 18px; --shadow: 0 10px 30px rgba(2, 6, 23, .08);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0B1220; --card: #0F172A; --panel: #111827; --text: #E5E7EB;
+        --muted: #94A3B8; --border: #1F2937; --ring: #60A5FA;
+        --primary: #60A5FA; --shadow: 0 10px 30px rgba(0, 0, 0, .45);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .wrapper { max-width: 900px; width: 100%; }
+    .header { text-align: center; margin-bottom: 2rem; }
+    .header h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .header p { font-size: 0.875rem; color: var(--muted); margin: 0; }
+    .cards-container {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 768px) {
+      .cards-container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 1.5rem; display: flex;
+      flex-direction: column; gap: 1rem;
+    }
+    .card-header { margin-bottom: 0.5rem; }
+    .card-header h2 { font-size: 1.25rem; font-weight: 600; margin: 0; }
+    .form-group {
+      display: flex; flex-direction: column; gap: 0.5rem;
+    }
+    .form-group label {
+      font-size: 0.875rem; font-weight: 500; color: var(--text);
+    }
+    .form-group input, .form-group select {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.875rem;
+      color: var(--text); transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus {
+      outline: none; border-color: var(--ring); box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+    }
+    .form-group input[type="file"] {
+      padding: 0.5rem 1rem;
+    }
+    .file-input-container {
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .file-input-container input {
+      flex-grow: 1;
+    }
+    .file-input-label {
+      background: var(--primary); color: #fff; padding: 0.75rem 1rem;
+      border-radius: 8px; cursor: pointer; transition: background 0.2s;
+      font-size: 0.875rem; font-weight: 500;
+    }
+    .file-input-label:hover { background: #1D53B2; }
+    .actions {
+      display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;
+    }
+    .btn {
+      padding: 0.75rem 1.5rem; border: none; border-radius: 8px;
+      cursor: pointer; font-size: 0.875rem; font-weight: 600;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn.primary {
+      background: var(--primary); color: #fff;
+    }
+    .btn.primary:hover { background: #1D53B2; }
+    .btn.alt{background:#334155;color:#fff}
+    .btn.secondary {
+      background: var(--panel); color: var(--text); border: 1px solid var(--border);
+    }
+    .btn.secondary:hover { background: #EAECEF; }
+    .msg-box {
+      padding: 1rem; border-radius: 8px; font-size: 0.875rem;
+      margin-top: 1rem; display: none;
+    }
+    .msg-ok { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
+    .msg-error { background: #FEF2F2; color: #991B1B; border: 1px solid #FCA5A5; }
+    .icon { margin-left: 0.5rem; font-size: 1rem; color: var(--muted); }
+    .date-input-container {
+      display: flex; align-items: center;
+      position: relative;
+    }
+    .date-input-container input[type="date"] {
+      padding-right: 2.5rem;
+    }
+    .date-input-container .icon-calendar {
+      position: absolute; right: 1rem; cursor: pointer;
+    }
+    .divider{height:1px;background:var(--border);margin:12px 0}
+    .back-button {
+      position: absolute;
+      top: 1.5rem;
+      right: 2rem;
+      text-decoration: none;
+      background-color: var(--panel);
+      color: var(--muted);
+      padding: 0.6rem 1.2rem;
+      border-radius: 12px;
+      font-weight: 500;
+      transition: all 0.2s ease-in-out;
+      border: 1px solid var(--border);
+      display: inline-flex;
+      align-items: center;
+    }
+    .back-button:hover {
+      background-color: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    .back-button i {
+      margin-right: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+     
+  <div class="wrapper">   
+    <a id="backButton" class="back-button" href="#">
+    <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+  </a> 
+    <div class="header">     
+      <h1>Register Client</h1>
+      <p>Fill out the form below to register a new client.</p>
+    </div>
+    <form id="registerClientForm">
+      <div class="cards-container">
+        
+        <!-- Company Details Card -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Company Details</h2>
+          </div>
+          <div class="form-group">
+            <label for="clientTitle">Client Title</label>
+              <select id="clientTitle" name="CLIENT_TITLE" required>
+                <option value="" disabled selected>— Select —</option>
+                <option value="SHIP OWNER">SHIP OWNER</option>
+                <option value="SHIP MANAGER">SHIP MANAGER</option>
+                <option value="SHIP AGENT">SHIP AGENT</option>
+                <option value="CHARTERER">CHARTERER</option>
+              </select>
+          </div>
+          <div class="form-group">
+            <label for="comp_name">Company Name</label>
+            <input type="text" id="comp_name" data-col="COMP_NAME" required>
+          </div>
+          <div class="form-group">
+            <label for="comp_regno">Company Registration No.</label>
+            <input type="text" id="comp_regno" data-col="COMP_REGNO">
+          </div>
+          <div class="form-group">
+            <label for="comp_imono">Company IMO No.</label>
+            <input type="text" id="comp_imono" data-col="COMP_IMONO">
+          </div>
+          <div class="form-group">
+            <label for="comp_tin">Company TIN No.</label>
+            <input type="text" id="comp_tin" data-col="COMP_TIN">
+          </div>
+          <div class="form-group">
+            <label for="comp_contractno">Company Contract No.</label>
+            <input type="text" id="comp_contractno" data-col="COMP_CONTRACTNO">
+          </div>
+          <div class="form-group">
+            <label for="comp_contact_office">Company Contact (Office)</label>
+            <input type="tel" id="comp_contact_office" data-col="COMP_CONTACT_O">
+          </div>
+          <div class="form-group">
+            <label for="comp_contact_mobile">Company Contact (Mobile)</label>
+            <input type="tel" id="comp_contact_mobile" data-col="COMP_CONTACT_M">
+          </div>
+          <div class="form-group">
+            <label for="comp_email">Company Email</label>
+            <input type="email" id="comp_email" data-col="COMP_EMAIL">
+          </div>
+          <div class="form-group">
+            <label for="comp_address_reg">Registered Address</label>
+            <textarea id="comp_address_reg" data-col="COMP_ADD_R" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="comp_address_bus">Business Address</label>
+            <textarea id="comp_address_bus" data-col="COMP_ADD_B" rows="3"></textarea>
+          </div>
+        </div>
+
+        <!-- Company's Documentation Card (NEW) -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Company's Documentation</h2>
+          </div>
+          <!-- Date pickers -->
+          <div class="form-group">
+            <label for="comp_ci_date">Contract Issuance Date</label>
+            <input type="date" id="comp_ci_date" data-col="COMP_CI_DATE">
+          </div>
+          <div class="form-group">
+            <label for="comp_ce_date">Contract Expiry Date</label>
+            <input type="date" id="comp_ce_date" data-col="COMP_CE_DATE">
+          </div>
+          <!-- File uploads -->
+          <div class="form-group">
+            <label for="comp_ioc">Information of Certificate (PDF)</label>
+            <input type="file" id="comp_ioc" data-col="COMP_IOC" accept="application/pdf">
+          </div>
+          <div class="form-group">
+            <label for="comp_corp_info">Corporate Information (PDF)</label>
+            <input type="file" id="comp_corp_info" data-col="COMP_CORP_INFO" accept="application/pdf">
+          </div>
+          <div class="form-group">
+            <label for="comp_contract_agt">Contract Agreement (PDF)</label>
+            <input type="file" id="comp_contract_agt" data-col="COMP_CONTRACT_AGT" accept="application/pdf">
+          </div>
+          <div class="form-group">
+            <label for="comp_logopic">Company Logo/Image</label>
+            <input type="file" id="comp_logopic" name="comp_logopic" data-col="COMP_LOGOPIC" accept="image/*">
+            <p class="filename" id="comp_logopic_filename"></p>
+          </div>
+        </div>
+        
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn secondary" id="btnReset">Reset</button>
+        <button type="submit" class="btn primary" id="btnRegister">Register Client</button>
+      </div>
+    </form>
+    <div id="statusMessage" class="msg-box"></div>
+  </div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  //const appUrl = '<?= ScriptApp.getService().getUrl() ?>';
+  //const token = '<?= token ?>';
+  
+  const appUrl = '<?= appUrl ?>';
+  const token = '<?= token ?>';
+
+  const on = (el, type, handler) => el.addEventListener(type, handler);
+
+  function showStatus(isSuccess, message) {
+    const statusDiv = $('statusMessage');
+    //statusDiv.textContent = message;
+    statusDiv.innerHTML = message;
+    statusDiv.className = `msg-box ${isSuccess ? 'msg-ok' : 'msg-error'}`;
+    statusDiv.style.display = 'block';
+  }
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = error => reject(error);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  on($('registerClientForm'), 'submit', async (e) => {
+    e.preventDefault();
+    const registerButton = $('btnRegister');
+    registerButton.disabled = true;
+    registerButton.innerHTML = 'Registering...';
+    showStatus(true, 'Processing your request...');
+
+    try {
+      const values = {};
+      const files = {};
+      
+      document.querySelectorAll('#registerClientForm [data-col]').forEach(el => {
+        if (el.type !== 'file') {
+          values[el.getAttribute('data-col')] = el.value.trim();
+        }
+      });
+      values['CLIENT_TITLE'] = $('clientTitle').value;
+
+      const fileInputs = document.querySelectorAll('input[type="file"][data-col]');
+      for (const el of fileInputs) {
+        if (el.files && el.files[0]) {
+          const file = el.files[0];
+          const col = el.getAttribute('data-col');
+          const base64 = await fileToBase64(file);
+          files[col] = { name: file.name, mime: file.type, dataBase64: base64 };
+        }
+      }
+
+      API
+        .withSuccessHandler(res => {
+          console.log('Server response:', res);
+
+          if (res && res.ok) {
+            showStatus(true, res.msg);
+
+            const profileUrl = `${appUrl}?page=client_profile&token=${encodeURIComponent(token)}&client_id=${encodeURIComponent(res.clientId)}&from=register_client`;
+            
+            //API.logMessage('profile url: ' + profileUrl);
+            
+            registerButton.innerHTML = 'View Client Profile'; 
+            registerButton.disabled = false;
+
+            registerButton.onclick = (event) => {
+              // Prevent the original form 'submit' event from firing again
+              event.preventDefault(); 
+              
+              // Give user feedback and prevent multiple clicks
+              registerButton.disabled = true;
+              registerButton.innerHTML = 'Redirecting...';
+              window.top.location.href = profileUrl;
+              
+              return false;
+            };         
+
+          } else {
+              console.error('Registration failed:', res);
+              registerButton.disabled = false;
+              registerButton.innerHTML = 'Register Client';
+              showStatus(false, res.msg || 'Failed to register client.');
+            } 
+        })
+        .withFailureHandler(err => {
+          console.error('Server error:', err);
+          registerButton.disabled = false;
+          registerButton.innerHTML = 'Register Client';
+          showStatus(false, err.message || 'An unexpected error occurred.');
+        })
+        .saveClientRegistration(token, values, files);
+
+    } catch (err) {
+      console.error('Form Processing error:', err);
+      registerButton.disabled = false;
+      registerButton.innerHTML = 'Register Client';
+      showStatus(false, 'Error processing files: ' + err.message);
+    }
+  });
+  
+  on($('btnReset'), 'click', () => {
+    $('registerClientForm').reset();
+    $('statusMessage').style.display = 'none';
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const dashboardUrl = `${appUrl}?page=dashboard&token=${encodeURIComponent(token)}`;
+    $('backButton').href = dashboardUrl;
+  });
+</script>
+</body>
+</html>
