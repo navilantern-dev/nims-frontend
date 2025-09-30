@@ -1,5 +1,5 @@
   // config
-  const GAS_BASE = "https://script.google.com/macros/s/AKfycbx6_Xq9_jRrXw0VgrmipJiRJ9kiV3wBFAbJMlkI04jLfdvyM_kNJuQ2IOmPycVu3hFHGw/exec"; // <-- your Web App URL
+  const GAS_BASE = "https://script.google.com/macros/s/AKfycbwepHg0_U6xclvSPqPnXVRv8wlgo7q4AaPHHUNx-HxYREabx5hI8AV7NPHdFx4HZsyNEQ/exec"; // <-- your Web App URL
 
   // Simple POST wrapper (URL-encoded) to avoid CORS preflight
   async function gasCall(fn, token, args = {}) {
