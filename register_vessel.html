@@ -1,7 +1,6 @@
 <!doctype html>
 <html>
 <head>
-  <script src="js/nav.js"></script>
   <base target="_top">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -390,10 +389,26 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
       <div id="msgSaveErr" class="msg err"></div>
     </div>
   </div>
-
+  <script src="js/api.js"></script>
   <script>
-  const token  = "<?= token ?>";
-  const appUrl = "<?= appUrl ?>";
+  // NEW (JavaScript):
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token') || localStorage.getItem('navi_token') || '';
+
+  if (!token) {
+    window.location.href = 'login.html?err=' + encodeURIComponent('Session expired');
+  }
+
+  // Load user session dynamically if needed
+  let userInfo = null;
+  async function loadSession() {
+    try {
+      const res = await API.getUserSessionInfo(token);
+      if (res?.ok) userInfo = res.user;
+    } catch (err) {
+      console.error('Session load failed:', err);
+    }
+  }
 
   // ===== File validation rules for Inventory attachments =====
   const MAX_FILE_MB = 10;

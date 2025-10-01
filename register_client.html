@@ -1,7 +1,6 @@
 <!doctype html>
 <html>
 <head>
-  <script src="js/nav.js"></script>
   <base target="_top">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,7 +8,6 @@
   <title>NAVI-SIMS — Register Client</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
-    /* ===== NAVI-SIMS Design System ===== */
     :root {
       --bg: #F6F7FB; --card: #ffffff; --panel: #F9FAFB; --text: #0F172A;
       --muted: #64748B; --border: #E5E7EB; --ring: #2563EB; --primary: #2563EB;
@@ -60,29 +58,17 @@
     .form-group label {
       font-size: 0.875rem; font-weight: 500; color: var(--text);
     }
-    .form-group input, .form-group select {
+    .form-group input, .form-group select, .form-group textarea {
       background: var(--panel); border: 1px solid var(--border);
       border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.875rem;
       color: var(--text); transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .form-group input:focus, .form-group select:focus {
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
       outline: none; border-color: var(--ring); box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
     }
     .form-group input[type="file"] {
       padding: 0.5rem 1rem;
     }
-    .file-input-container {
-      display: flex; align-items: center; gap: 0.5rem;
-    }
-    .file-input-container input {
-      flex-grow: 1;
-    }
-    .file-input-label {
-      background: var(--primary); color: #fff; padding: 0.75rem 1rem;
-      border-radius: 8px; cursor: pointer; transition: background 0.2s;
-      font-size: 0.875rem; font-weight: 500;
-    }
-    .file-input-label:hover { background: #1D53B2; }
     .actions {
       display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;
     }
@@ -106,18 +92,6 @@
     }
     .msg-ok { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
     .msg-error { background: #FEF2F2; color: #991B1B; border: 1px solid #FCA5A5; }
-    .icon { margin-left: 0.5rem; font-size: 1rem; color: var(--muted); }
-    .date-input-container {
-      display: flex; align-items: center;
-      position: relative;
-    }
-    .date-input-container input[type="date"] {
-      padding-right: 2.5rem;
-    }
-    .date-input-container .icon-calendar {
-      position: absolute; right: 1rem; cursor: pointer;
-    }
-    .divider{height:1px;background:var(--border);margin:12px 0}
     .back-button {
       position: absolute;
       top: 1.5rem;
@@ -144,11 +118,10 @@
   </style>
 </head>
 <body>
-     
   <div class="wrapper">   
     <a id="backButton" class="back-button" href="#">
-    <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
-  </a> 
+      <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+    </a> 
     <div class="header">     
       <h1>Register Client</h1>
       <p>Fill out the form below to register a new client.</p>
@@ -156,7 +129,6 @@
     <form id="registerClientForm">
       <div class="cards-container">
         
-        <!-- Company Details Card -->
         <div class="card">
           <div class="card-header">
             <h2>Company Details</h2>
@@ -213,12 +185,10 @@
           </div>
         </div>
 
-        <!-- Company's Documentation Card (NEW) -->
         <div class="card">
           <div class="card-header">
             <h2>Company's Documentation</h2>
           </div>
-          <!-- Date pickers -->
           <div class="form-group">
             <label for="comp_ci_date">Contract Issuance Date</label>
             <input type="date" id="comp_ci_date" data-col="COMP_CI_DATE">
@@ -227,7 +197,6 @@
             <label for="comp_ce_date">Contract Expiry Date</label>
             <input type="date" id="comp_ce_date" data-col="COMP_CE_DATE">
           </div>
-          <!-- File uploads -->
           <div class="form-group">
             <label for="comp_ioc">Information of Certificate (PDF)</label>
             <input type="file" id="comp_ioc" data-col="COMP_IOC" accept="application/pdf">
@@ -243,7 +212,6 @@
           <div class="form-group">
             <label for="comp_logopic">Company Logo/Image</label>
             <input type="file" id="comp_logopic" name="comp_logopic" data-col="COMP_LOGOPIC" accept="image/*">
-            <p class="filename" id="comp_logopic_filename"></p>
           </div>
         </div>
         
@@ -257,19 +225,30 @@
     <div id="statusMessage" class="msg-box"></div>
   </div>
 
+<script src="js/api.js"></script>
 <script>
-  const $ = id => document.getElementById(id);
-  //const appUrl = '<?= ScriptApp.getService().getUrl() ?>';
-  //const token = '<?= token ?>';
-  
-  const appUrl = '<?= appUrl ?>';
-  const token = '<?= token ?>';
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token') || localStorage.getItem('navi_token') || '';
 
-  const on = (el, type, handler) => el.addEventListener(type, handler);
+  if (!token) {
+    window.location.href = 'login.html?err=' + encodeURIComponent('Session expired');
+  }
+
+  // Load user session dynamically if needed
+  let userInfo = null;
+  async function loadSession() {
+    try {
+      const res = await API.getUserSessionInfo(token);
+      if (res?.ok) userInfo = res.user;
+    } catch (err) {
+      console.error('Session load failed:', err);
+    }
+  }
+
+  const $ = id => document.getElementById(id);
 
   function showStatus(isSuccess, message) {
     const statusDiv = $('statusMessage');
-    //statusDiv.textContent = message;
     statusDiv.innerHTML = message;
     statusDiv.className = `msg-box ${isSuccess ? 'msg-ok' : 'msg-error'}`;
     statusDiv.style.display = 'block';
@@ -284,7 +263,7 @@
     });
   }
 
-  on($('registerClientForm'), 'submit', async (e) => {
+  $('registerClientForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const registerButton = $('btnRegister');
     registerButton.disabled = true;
@@ -312,47 +291,28 @@
         }
       }
 
-      API
-        .withSuccessHandler(res => {
-          console.log('Server response:', res);
+      const res = await API.saveClientRegistration(token, values, files);
 
-          if (res && res.ok) {
-            showStatus(true, res.msg);
+      if (res && res.ok) {
+        showStatus(true, res.msg);
+        const profileUrl = `client_profile.html?token=${encodeURIComponent(token)}&client_id=${encodeURIComponent(res.clientId)}&from=register_client`;
+        
+        registerButton.innerHTML = 'View Client Profile'; 
+        registerButton.disabled = false;
 
-            const profileUrl = `${appUrl}?page=client_profile&token=${encodeURIComponent(token)}&client_id=${encodeURIComponent(res.clientId)}&from=register_client`;
-            
-            //API.logMessage('profile url: ' + profileUrl);
-            
-            registerButton.innerHTML = 'View Client Profile'; 
-            registerButton.disabled = false;
-
-            registerButton.onclick = (event) => {
-              // Prevent the original form 'submit' event from firing again
-              event.preventDefault(); 
-              
-              // Give user feedback and prevent multiple clicks
-              registerButton.disabled = true;
-              registerButton.innerHTML = 'Redirecting...';
-              window.top.location.href = profileUrl;
-              
-              return false;
-            };         
-
-          } else {
-              console.error('Registration failed:', res);
-              registerButton.disabled = false;
-              registerButton.innerHTML = 'Register Client';
-              showStatus(false, res.msg || 'Failed to register client.');
-            } 
-        })
-        .withFailureHandler(err => {
-          console.error('Server error:', err);
-          registerButton.disabled = false;
-          registerButton.innerHTML = 'Register Client';
-          showStatus(false, err.message || 'An unexpected error occurred.');
-        })
-        .saveClientRegistration(token, values, files);
-
+        registerButton.onclick = (event) => {
+          event.preventDefault(); 
+          registerButton.disabled = true;
+          registerButton.innerHTML = 'Redirecting...';
+          window.location.href = profileUrl;
+          return false;
+        };         
+      } else {
+        console.error('Registration failed:', res);
+        registerButton.disabled = false;
+        registerButton.innerHTML = 'Register Client';
+        showStatus(false, res.msg || 'Failed to register client.');
+      }
     } catch (err) {
       console.error('Form Processing error:', err);
       registerButton.disabled = false;
@@ -361,14 +321,13 @@
     }
   });
   
-  on($('btnReset'), 'click', () => {
+  $('btnReset').addEventListener('click', () => {
     $('registerClientForm').reset();
     $('statusMessage').style.display = 'none';
   });
 
   document.addEventListener('DOMContentLoaded', () => {
-    const dashboardUrl = `${appUrl}?page=dashboard&token=${encodeURIComponent(token)}`;
-    $('backButton').href = dashboardUrl;
+    $('backButton').href = `dashboard.html?token=${encodeURIComponent(token)}`;
   });
 </script>
 </body>

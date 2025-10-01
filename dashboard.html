@@ -1,7 +1,6 @@
 <!doctype html>
 <html>
 <head>
-  <script src="js/nav.js"></script>
   <base target="_top">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -67,13 +66,13 @@ h2{margin:0 0 4px 0;font-size:1.5rem}
   <div class="wrap">
     <div class="card">
       <div class="top">
-        <img class="logo" src="<?!= logoUrl ?>" alt="Logo" onerror="this.style.display='none'">
+        <img class="logo" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='52'%3E%3Ccircle fill='%232563EB' cx='26' cy='26' r='26'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-family='Arial' font-size='20' font-weight='bold'%3EN%3C/text%3E%3C/svg%3E" alt="Logo">
         <div style="flex:1">
-          <h2>Welcome, <?= username ?></h2>
+          <h2 id="welcomeText">Welcome</h2>
           <div class="user-info">
-            <div class="pill">Level: <?= userLevel || 'Unknown' ?></div>
-            <div class="pill">Group: <?= userGroup || 'Unknown' ?></div>
-            <div class="pill">ID: <?= userId || 'Unknown' ?></div>
+            <div class="pill" id="userLevel">Level: Loading...</div>
+            <div class="pill" id="userGroup">Group: Loading...</div>
+            <div class="pill" id="userId">ID: Loading...</div>
           </div>
           <div class="security-status">
             <div class="status-indicator secure" id="securityIndicator"></div>
@@ -97,302 +96,238 @@ h2{margin:0 0 4px 0;font-size:1.5rem}
         </div>
       </div>
 
-      <? var lvl = (userLevel || '').toString().toLowerCase(); ?>
-      <? 
-        var __UGID   = (typeof userGroupId !== 'undefined' && userGroupId != null) ? String(userGroupId) : '';
-        var __UGNAME = (typeof userGroup   !== 'undefined' && userGroup   != null) ? String(userGroup)   : '';
-      ?>
-
-      <? if (lvl === 'super' || lvl === 'admin') { ?>
-        <div class="modules">
-          <div class="module">
-            <h3>👥 User Management</h3>
-            <p>Create, edit, and manage user accounts. Control access levels and permissions.</p>
-            <div class="row">
-              <button type="button" class="btn-outline" id="btnCreateUser">Create User</button>
-              <button type="button" class="btn-outline" id="btnEditUser">Edit Users</button>
-            </div>
-          </div>
-
-          <div class="module">
-            <h3>🏢 Company Management</h3>
-            <p>Register and manage company information and business details.</p>
-            <div class="row">
-              <button type="button" class="btn-outline" id="btnRegisterCompany">Register Company</button>
-              <button type="button" class="btn-outline" id="btnListCompany">Companies List</button>
-            </div>
-          </div>
-
-          <div class="module">
-            <h3>🚢 Vessel Management</h3>
-            <p>Register new vessels and manage existing vessel information and inventories.</p>
-            <div class="row">
-              <button type="button" class="btn-outline" id="btnRegisterVessel">Register Vessel</button>
-              <button type="button" class="btn-outline" id="btnEditVessel">Edit Vessels</button>
-              <button type="button" class="btn-outline" id="btnViewVessel">View Vessel</button>
-            </div>
-          </div>
-
-          <? if (lvl === 'super') { ?>
-            <div class="module">
-              <h3>⚙️ System Administration</h3>
-              <p>Manage user roles, groups, and system-wide configurations.</p>
-              <div class="row">
-                <button type="button" class="btn-outline" id="btnAddLevelGroup">Roles & Groups</button>
-                <button type="button" class="btn-outline" id="btnSystemLogs">System Logs</button>
-              </div>
-            </div>
-          <? } ?>
-
-          <div class="module">
-            <h3>📊 Reports & Analytics</h3>
-            <p>View system reports, user activity, and vessel statistics.</p>
-            <div class="row">
-              <button type="button" class="btn-outline" id="btnReports">View Reports</button>
-              <button type="button" class="btn-outline" id="btnActivity">Activity Log</button>
-            </div>
-          </div>
-        </div>
-
-      <? } else if (lvl === 'user') { ?>
-        <div class="modules" style="grid-template-columns:1fr">
-          <div class="module">
-            <h3>📋 My Profile</h3>
-            <p>Your account details (read-only).</p>
-            <div id="myProfileView" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px"></div>
-          </div>
-          <div class="module">
-              <h3>🏢 Companies Details</h3>
-              <p>Company information and business details.</p>
-              <div class="row">
-                <button type="button" class="btn-outline" id="btnListCompany">Companies List</button>  <!-- THIS VIEW IS FOR USER (STAFF/ENGINEER) -->
-              </div>
-          </div>
-          <div class="module">
-            <h3>🚢 My Vessels</h3>
-            <p>View and manage vessel information assigned to your account.</p>
-            <div class="row">
-              <button type="button" class="btn-outline" id="btnViewVessel">View Vessel</button>
-              <? if (__UGID === '1' || /staff/i.test(__UGNAME)) { ?>
-                <button type="button" class="btn-outline" id="btnEditVessel">Edit Vessel Info</button>
-              <? } ?>
-            </div>
-          </div>
-        </div>
-
-      <? } else { ?>
-        <div class="modules">
-          <div class="module">
-            <h3>⚠️ Access Limited</h3>
-            <p>Your current user level has limited access. You can still view vessels assigned to you.</p>
-            <div class="row">
-              <button type="button" class="btn-outline" id="btnViewVessel">View Vessel</button>
-              <button type="button" class="btn-outline" id="btnContactAdmin">Contact Support</button>
-            </div>
-          </div>
-        </div>
-      <? } ?>
+      <div id="modulesContainer" class="modules">
+        <!-- Modules will be injected here based on user level -->
+      </div>
 
       <div class="user-actions">
         <button id="btnChangePassword" class="btn secondary">Change Password</button>
-        <button id="btnSecurity" class="btn secondary">Security Info</button>
+        <button id="btnSecurity" class="btn secondary" style="display:none">Security Info</button>
         <div style="flex:1"></div>
         <button id="btnLogout" class="btn danger">Secure Logout</button>
       </div>
     </div>
   </div>
 
+  <script src="js/api.js"></script>
   <script>
     (function(){
-      const token    = "<?= token ?>";
-      const appUrl   = "<?= appUrl ?>";
-      const userLevel = "<?= userLevel ?>";
-      const userGroupId = "<?= userGroupId ?>";
+      // Get token from URL
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token') || '';
 
-      const userGroupName = "<?= userGroup ?>"; // display name
-      // expose for renderProfile (which is outside the IIFE)
-      window.__UL  = userLevel;       // e.g. "user"
-      window.__UGN = userGroupName;   // e.g. "client"
+      if (!token) {
+        window.location.href = 'login.html?err=' + encodeURIComponent('Session expired. Please login again.');
+        return;
+      }
 
-      // Navigation helper
+      // Store in localStorage for easy access
+      localStorage.setItem('navi_token', token);
+
+      let userInfo = null;
+
+      // Navigation helper for GitHub Pages
       function navigate(page) {
-        window.top.location.href = `${appUrl}?page=${page}&token=${encodeURIComponent(token)}`;
+        window.location.href = `${page}.html?token=${encodeURIComponent(token)}`;
       }
 
-      // Logout with confirmation
-      document.getElementById('btnLogout').addEventListener('click', () => {
-        if (confirm('Are you sure you want to logout?')) {
-          google.script.run
-            .withSuccessHandler(() => window.top.location.href = `${appUrl}?page=login`)
-            .withFailureHandler(() => window.top.location.href = `${appUrl}?page=login`)
-            .logout(token);
-        }
-      });
+      // Load user session info
+      async function loadUserInfo() {
+        try {
+          const res = await API.getUserSessionInfo(token);
+          
+          if (!res || !res.ok) {
+            window.location.href = 'login.html?err=' + encodeURIComponent('Session expired. Please login again.');
+            return;
+          }
 
-      // Button event listeners
-      const buttons = {
-        'btnCreateUser':      () => navigate('create_user'),
-        'btnEditUser':        () => navigate('edit_user'),
-        'btnRegisterVessel':  () => navigate('register_vessel'),
-        'btnEditVessel':      () => navigate('edit_vessel'),
-        'btnViewVessel':      () => navigate('view_vessel'),  // ✅ point to the new page
-        'btnChangePassword':  () => navigate('change_password'),
-        'btnEditProfile':     () => navigate('edit_user'),     // Edit own profile (reuse)
-        'btnRegisterCompany': () => navigate('register_client'),
-        'btnEditCompany':     () => navigate('client_profile'),
-        'btnListCompany':     () => navigate('client_list'),
-      };
+          userInfo = res.user;
+          
+          // Update UI
+          document.getElementById('welcomeText').textContent = `Welcome, ${userInfo.username || 'User'}`;
+          document.getElementById('userLevel').textContent = `Level: ${userInfo.levelName || 'Unknown'}`;
+          document.getElementById('userGroup').textContent = `Group: ${userInfo.groupName || 'Unknown'}`;
+          document.getElementById('userId').textContent = `ID: ${userInfo.userId || 'Unknown'}`;
 
-      Object.entries(buttons).forEach(([id, handler]) => {
-        const btn = document.getElementById(id);
-        if (btn) btn.addEventListener('click', handler);
-      });
+          // Render appropriate modules based on level
+          renderModules(userInfo.levelName, userInfo.groupId, userInfo.groupName);
 
-      // Placeholder buttons
-      [
-        'btnAddLevelGroup','btnSystemLogs',
-        'btnReports','btnActivity','btnMyActivity','btnContactAdmin'
-      ].forEach(id=>{
-        const btn = document.getElementById(id);
-        if (btn) btn.addEventListener('click', ()=> alert('This feature is coming soon!'));
-      });
-
-      // Security info
-      const btnSecurity = document.getElementById('btnSecurity');
-      if (btnSecurity) {
-        btnSecurity.addEventListener('click', () => {
-          google.script.run
-            .withSuccessHandler((res) => {
-              if (res?.ok) {
-                const info = res.security;
-                const message = `Security Information:
-                
-Last Login: ${info.lastLogin}
-Failed Login Attempts: ${info.failedAttempts}
-Secure Password: ${info.hasSecurePassword ? 'Yes' : 'No (Please update)'}
-Session Expires: ${new Date(info.sessionExpiry).toLocaleString()}
-
-Your account is protected with advanced security measures including password encryption, session management, and activity logging.`;
-                alert(message);
-              } else {
-                alert('Unable to retrieve security information.');
-              }
-            })
-            .withFailureHandler(() => alert('Unable to retrieve security information.'))
-            .getSecurityInfo(token);
-        });
-      }
-
-      // Security indicator (placeholder timing)
-      function updateSecurityStatus() {
-        const indicator = document.getElementById('securityIndicator');
-        const text = document.getElementById('securityText');
-        const sessionAge = 0; // Placeholder
-        if (sessionAge > 3000000) { // 50 minutes
-          indicator.className = 'status-indicator warning';
-          text.textContent = 'Session expiring soon';
-        } else {
-          indicator.className = 'status-indicator secure';
-          text.textContent = 'Secure session active';
+        } catch (err) {
+          console.error('Failed to load user info:', err);
+          alert('Failed to load session. Please login again.');
+          window.location.href = 'login.html';
         }
       }
 
-      // Quick stats for admins
-      if (userLevel === 'super' || userLevel === 'admin') {
-        const statsContainer = document.getElementById('quickStats');
-        if (statsContainer) {
-          statsContainer.style.display = 'grid';
-          API
-            .withSuccessHandler((res) => {
-              if (res?.ok) {
-                document.getElementById('totalUsers').textContent = res.users?.length || '0';
-              }
-            })
-            .withFailureHandler(() => { document.getElementById('totalUsers').textContent = 'N/A'; })
-            .getEditableUserList(token);
-        }
-      }
+      function renderModules(levelName, groupId, groupName) {
+        const container = document.getElementById('modulesContainer');
+        const lvl = (levelName || '').toLowerCase();
 
-      // Init
-      updateSecurityStatus();
-      // Load my profile (Client_Info if USER_GROUP=0, Staff_Info if USER_GROUP=1)
-      API
-      .withSuccessHandler(renderProfile)
-      .withFailureHandler(() => {
-        const box = document.getElementById('myProfileView');
-        if (box) box.textContent = 'Unable to load profile.';
-      })
-      .getMyProfile(token, "<?= userId ?>", "<?= username ?>");  // ← pass hints
+        if (lvl === 'super' || lvl === 'admin') {
+          container.innerHTML = `
+            <div class="module">
+              <h3>👥 User Management</h3>
+              <p>Create, edit, and manage user accounts. Control access levels and permissions.</p>
+              <div class="row">
+                <button type="button" class="btn-outline" onclick="navigate('create_user')">Create User</button>
+                <button type="button" class="btn-outline" onclick="navigate('edit_user')">Edit Users</button>
+              </div>
+            </div>
 
-      setInterval(updateSecurityStatus, 60000);
+            <div class="module">
+              <h3>🏢 Company Management</h3>
+              <p>Register and manage company information and business details.</p>
+              <div class="row">
+                <button type="button" class="btn-outline" onclick="navigate('register_client')">Register Company</button>
+                <button type="button" class="btn-outline" onclick="navigate('client_list')">Companies List</button>
+              </div>
+            </div>
 
-      // Session timeout prompt (50 mins)
-      setTimeout(() => {
-        if (confirm('Your session will expire soon. Would you like to extend it?')) {
-          API.withSuccessHandler(() => {}).getUserSessionInfo(token);
-        }
-      }, 50 * 60 * 1000);
-    })();
+            <div class="module">
+              <h3>🚢 Vessel Management</h3>
+              <p>Register new vessels and manage existing vessel information and inventories.</p>
+              <div class="row">
+                <button type="button" class="btn-outline" onclick="navigate('register_vessel')">Register Vessel</button>
+                <button type="button" class="btn-outline" onclick="navigate('edit_vessel')">Edit Vessels</button>
+                <button type="button" class="btn-outline" onclick="navigate('view_vessel')">View Vessel</button>
+              </div>
+            </div>
 
-    // escape + render
-    function _esc(s){ return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+            ${lvl === 'super' ? `
+            <div class="module">
+              <h3>⚙️ System Administration</h3>
+              <p>Manage user roles, groups, and system-wide configurations.</p>
+              <div class="row">
+                <button type="button" class="btn-outline" onclick="alert('Coming soon!')">Roles & Groups</button>
+                <button type="button" class="btn-outline" onclick="alert('Coming soon!')">System Logs</button>
+              </div>
+            </div>` : ''}
 
-    function _esc(s){ return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-    function renderProfile(res){
-      const box = document.getElementById('myProfileView');
-      if (!box) return;
-      
-      console.log('Profile response:', res); // Debug log
-      
-      if (!res?.ok) { 
-        // Show debug information if available
-        if (res?.debug) {
-          console.log('Debug info:', res.debug);
-          box.innerHTML = `
-            <div style="color: var(--muted); font-size: 0.9rem;">
-              <p><strong>Debug Information:</strong></p>
-              <p>User ID: ${res.debug.userId || 'N/A'}</p>
-              <p>Username: ${res.debug.username || 'N/A'}</p>
-              <p>Group: ${res.debug.group || 'N/A'} (ID: ${res.debug.groupId || 'N/A'})</p>
-              <p>Sheet: ${res.debug.sheetName || 'N/A'}</p>
-              <p>Is Staff: ${res.debug.isStaff ? 'Yes' : 'No'}</p>
-              <p>Search Method: ${res.debug.searchMethod || 'None'}</p>
-              <p>Available Headers: ${res.debug.availableHeaders ? res.debug.availableHeaders.join(', ') : 'None'}</p>
-              <p>Total Rows: ${res.debug.totalRows || 0}</p>
-              <p><em>Error: ${res.msg || 'Unknown error'}</em></p>
+            <div class="module">
+              <h3>📊 Reports & Analytics</h3>
+              <p>View system reports, user activity, and vessel statistics.</p>
+              <div class="row">
+                <button type="button" class="btn-outline" onclick="alert('Coming soon!')">View Reports</button>
+                <button type="button" class="btn-outline" onclick="alert('Coming soon!')">Activity Log</button>
+              </div>
             </div>
           `;
+        } else if (lvl === 'user') {
+          const isStaff = groupId === '1' || /staff/i.test(groupName);
+          container.innerHTML = `
+            <div class="module">
+              <h3>📋 My Profile</h3>
+              <p>Your account details (read-only).</p>
+              <div id="myProfileView" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px">Loading...</div>
+            </div>
+            <div class="module">
+              <h3>🏢 Companies Details</h3>
+              <p>Company information and business details.</p>
+              <div class="row">
+                <button type="button" class="btn-outline" onclick="navigate('client_list')">Companies List</button>
+              </div>
+            </div>
+            <div class="module">
+              <h3>🚢 My Vessels</h3>
+              <p>View and manage vessel information assigned to your account.</p>
+              <div class="row">
+                <button type="button" class="btn-outline" onclick="navigate('view_vessel')">View Vessel</button>
+                ${isStaff ? `<button type="button" class="btn-outline" onclick="navigate('edit_vessel')">Edit Vessel Info</button>` : ''}
+              </div>
+            </div>
+          `;
+          
+          // Load profile
+          loadProfile();
         } else {
-          box.textContent = res.msg || 'No profile found.'; 
+          container.innerHTML = `
+            <div class="module">
+              <h3>⚠️ Access Limited</h3>
+              <p>Your current user level has limited access. You can still view vessels assigned to you.</p>
+              <div class="row">
+                <button type="button" class="btn-outline" onclick="navigate('view_vessel')">View Vessel</button>
+                <button type="button" class="btn-outline" onclick="alert('Please contact your administrator for support.')">Contact Support</button>
+              </div>
+            </div>
+          `;
         }
-        return; 
+
+        // Make navigate function available globally for inline onclick
+        window.navigate = navigate;
       }
 
-      if (!res.data) { 
-        box.textContent = 'No profile data available.'; 
-        return; 
+      async function loadProfile() {
+        try {
+          const res = await API.getMyProfile(token, userInfo.userId, userInfo.username);
+          const box = document.getElementById('myProfileView');
+          if (!box) return;
+          
+          if (!res || !res.ok || !res.data) {
+            box.textContent = res?.msg || 'No profile data available.';
+            return;
+          }
+
+          const keys = Array.isArray(res.order) && res.order.length ? res.order : Object.keys(res.data);
+          const rows = keys.map(k => {
+            const value = res.data[k];
+            const displayValue = (value === null || value === undefined || value === '') ? 
+                                '<em style="color: var(--muted);">Not specified</em>' : 
+                                escapeHtml(value);
+            
+            return `<tr>
+              <th style="text-align:left;padding:8px 10px;color:var(--muted);min-width:120px">${escapeHtml(k.replace(/_/g, ' '))}</th>
+              <td style="padding:8px 10px">${displayValue}</td>
+            </tr>`;
+          }).join('');
+
+          box.innerHTML = `<table style="width:100%;border-collapse:collapse">${rows}</table>`;
+        } catch (err) {
+          console.error('Failed to load profile:', err);
+          const box = document.getElementById('myProfileView');
+          if (box) box.textContent = 'Unable to load profile.';
+        }
       }
 
-      const keys = Array.isArray(res.order) && res.order.length ? res.order : Object.keys(res.data);
-      const rows = keys.map(k => {
-        const value = res.data[k];
-        const displayValue = (value === null || value === undefined || value === '') ? 
-                            '<em style="color: var(--muted);">Not specified</em>' : 
-                            _esc(value);
+      function escapeHtml(s) {
+        return String(s ?? '').replace(/[&<>"']/g, m => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        }[m]));
+      }
+
+      // Logout
+      document.getElementById('btnLogout').addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to logout?')) return;
         
-        return `<tr>
-          <th style="text-align:left;padding:8px 10px;color:var(--muted);min-width:120px">${_esc(k.replace(/_/g, ' '))}</th>
-          <td style="padding:8px 10px">${displayValue}</td>
-        </tr>`;
-      }).join('');
+        try {
+          await API.logout(token);
+        } catch (err) {
+          console.error('Logout error:', err);
+        }
+        
+        localStorage.removeItem('navi_token');
+        window.location.href = 'login.html';
+      });
 
-      box.innerHTML = `<table style="width:100%;border-collapse:collapse">${rows}</table>`;
+      // Change password
+      document.getElementById('btnChangePassword').addEventListener('click', () => {
+        navigate('change_password');
+      });
+
+      // Init
+      loadUserInfo();
       
-      // Show debug info in console if available
-      if (res.debug) {
-        console.log('Profile loaded successfully:', res.debug);
-      }
-    }
+      setInterval(() => {
+        const indicator = document.getElementById('securityIndicator');
+        const text = document.getElementById('securityText');
+        // You can add actual session checking here
+        indicator.className = 'status-indicator secure';
+        text.textContent = 'Secure session active';
+      }, 60000);
+    })();
   </script>
 </body>
 </html>
