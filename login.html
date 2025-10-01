@@ -9,26 +9,15 @@
   <style>
 /* ===== NAVI-SIMS Design System (enhanced login) ===== */
 :root{
-  --bg: #F6F7FB;
-  --card: #ffffff;
-  --text: #0F172A;
-  --subtle: #64748B;
-  --muted: #94A3B8;
-  --border: #E5E7EB;
-  --ring: #2563EB;
-  --primary: #2563EB;
-  --primary-contrast: #ffffff;
-  --danger: #EF4444;
-  --warning: #F59E0B;
-  --success: #10B981;
-  --shadow: 0 10px 30px rgba(2,6,23,.08);
+  --bg: #F6F7FB; --card: #ffffff; --text: #0F172A; --subtle: #64748B; --muted: #94A3B8;
+  --border: #E5E7EB; --ring: #2563EB; --primary: #2563EB; --primary-contrast: #ffffff;
+  --danger: #EF4444; --warning: #F59E0B; --success: #10B981; --shadow: 0 10px 30px rgba(2,6,23,.08);
   --radius: 16px;
 }
 @media (prefers-color-scheme: dark){
   :root{
-    --bg:#0B1220; --card:#111827; --text:#E5E7EB; --subtle:#CBD5E1;
-    --muted:#94A3B8; --border:#1F2937; --ring:#60A5FA;
-    --primary:#60A5FA; --primary-contrast:#0B1220;
+    --bg:#0B1220; --card:#111827; --text:#E5E7EB; --subtle:#CBD5E1; --muted:#94A3B8;
+    --border:#1F2937; --ring:#60A5FA; --primary:#60A5FA; --primary-contrast:#0B1220;
     --shadow: 0 10px 30px rgba(0,0,0,.45);
   }
 }
@@ -55,7 +44,7 @@ label{font-size:.9rem;color:var(--subtle);margin-bottom:6px}
 input[type="text"],input[type="password"]{
   width:100%; height:46px; padding:12px 14px; padding-right:78px;
   border:1px solid var(--border); border-radius:12px; background:#fff; outline:none;
-  font-size:16px; /* Prevent zoom on iOS */
+  font-size:16px;
 }
 @media (prefers-color-scheme: dark){
   input[type="text"],input[type="password"]{background:#0F172A;color:var(--text)}
@@ -63,8 +52,7 @@ input[type="text"],input[type="password"]{
 input:focus{border-color:var(--ring); box-shadow:0 0 0 4px color-mix(in oklab, var(--ring) 20%, transparent)}
 .input-wrap.has-strength{padding-bottom:6px}
 .password-strength{
-  position:absolute; bottom:-20px; left:0; right:80px; 
-  height:3px; background:#E5E7EB; border-radius:2px; overflow:hidden;
+  position:absolute; bottom:-20px; left:0; right:80px; height:3px; background:#E5E7EB; border-radius:2px; overflow:hidden;
 }
 .password-strength .bar{height:100%;width:0%;transition:all .3s ease;border-radius:2px}
 .strength-weak .bar{width:33%;background:var(--danger)}
@@ -107,7 +95,7 @@ input:focus{border-color:var(--ring); box-shadow:0 0 0 4px color-mix(in oklab, v
 .forgot-password{text-align:center;margin-top:12px}
 .forgot-password a{color:var(--primary);text-decoration:none;font-size:.85rem}
 .forgot-password a:hover{text-decoration:underline}
-</style>
+  </style>
 </head>
 <body>
   <div class="card">
@@ -183,23 +171,19 @@ input:focus{border-color:var(--ring); box-shadow:0 0 0 4px color-mix(in oklab, v
         togglePw.textContent = hidden ? 'Hide' : 'Show';
       });
 
-      // Password strength indicator (for user feedback)
+      // Password strength indicator
       password.addEventListener('input', () => {
         const val = password.value;
         let strength = 'weak';
-        
         if (val.length >= 8) {
           const hasUpper = /[A-Z]/.test(val);
           const hasLower = /[a-z]/.test(val);
           const hasNumber = /\d/.test(val);
           const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(val);
-          
           const score = [hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
-          
           if (score >= 3 && val.length >= 12) strength = 'strong';
           else if (score >= 2 && val.length >= 8) strength = 'medium';
         }
-        
         strengthIndicator.className = `password-strength strength-${strength}`;
       });
 
@@ -215,25 +199,14 @@ input:focus{border-color:var(--ring); box-shadow:0 0 0 4px color-mix(in oklab, v
         errBox.style.display = 'none';
       }
 
-      // Enhanced form submission with security features
+      // GAS-native sign-in
       form.addEventListener('submit', (e) => {
         e.preventDefault();
-        setError('');
-        setWarning('');
-        
+        setError(''); setWarning('');
         const u = username.value.trim();
         const p = password.value;
-
-        // Basic client-side validation
-        if (!u || !p) {
-          setError('Please enter both username and password.');
-          return;
-        }
-
-        if (u.length > 50) {
-          setError('Username too long.');
-          return;
-        }
+        if (!u || !p) { setError('Please enter both username and password.'); return; }
+        if (u.length > 50) { setError('Username too long.'); return; }
 
         btn.disabled = true;
         btn.textContent = 'Signing in...';
@@ -242,20 +215,13 @@ input:focus{border-color:var(--ring); box-shadow:0 0 0 4px color-mix(in oklab, v
           .withSuccessHandler((res) => {
             btn.disabled = false;
             btn.textContent = 'Sign In';
-            
             if (!res || !res.ok) {
-              if (res?.locked) {
-                setWarning(res.msg || 'Account temporarily locked.');
-              } else {
-                setError(res?.msg || 'Login failed.');
-              }
-              
-              // Clear password on failed attempt for security
+              if (res?.locked) setWarning(res.msg || 'Account temporarily locked.');
+              else setError(res?.msg || 'Login failed.');
               password.value = '';
               strengthIndicator.className = 'password-strength';
               return;
             }
-            
             const base = "<?= appUrl ?>";
             window.top.location.href = `${base}?page=dashboard&token=${encodeURIComponent(res.token)}&ts=${Date.now()}`;
           })
@@ -269,107 +235,22 @@ input:focus{border-color:var(--ring); box-shadow:0 0 0 4px color-mix(in oklab, v
           .authenticate(u, p);
       });
 
-      // Handle forgot password link
       $('forgotLink').addEventListener('click', (e) => {
         e.preventDefault();
         alert('Please contact your system administrator to reset your password.');
       });
 
-      // Auto-focus username field
-      username.focus();
-
-      // Handle URL error parameter
+      // URL error parameter
       const urlParams = new URLSearchParams(window.location.search);
       const err = urlParams.get('err');
       if (err) setError(err);
 
-      // Prevent form auto-complete attacks
+      // Autofocus + sanitize
+      username.focus();
       setTimeout(() => {
-        if (username.value && !password.value) {
-          username.value = '';
-        }
+        if (username.value && !password.value) username.value = '';
       }, 100);
-
     })();
-  </script>
-  <script src="js/api.js"></script>
-  <script src="js/nav.js"></script>
-  <script src="js/shim.google.run.js"></script>
-  <script>
-    const $ = (id) => document.getElementById(id);
-    const username = $('username');
-    const password = $('password');
-    const btn = $('btnLogin');
-    const errBox = $('errBox');
-    const warnBox = $('warnBox');
-    const strengthIndicator = $('passwordStrength');
-
-    function setError(msg) {
-      errBox.textContent = msg || '';
-      errBox.style.display = msg ? 'block' : 'none';
-      warnBox.style.display = 'none';
-    }
-    function setWarning(msg) {
-      warnBox.textContent = msg || '';
-      warnBox.style.display = msg ? 'block' : 'none';
-      errBox.style.display = 'none';
-    }
-
-    // Optional: quick connectivity check (shows clearer error if GAS_BASE is wrong)
-    async function preflightPing() {
-      try {
-        const res = await API.ping();
-        // If your backend doesn't implement "ping", res.ok will be false but the request succeeded
-        return true;
-      } catch (e) {
-        setError('Cannot reach server. Check your GAS URL / deployment access.');
-        return false;
-      }
-    }
-
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      setError(''); setWarning('');
-      const u = username.value.trim();
-      const p = password.value;
-
-      if (!u || !p) return setError('Please enter both username and password.');
-
-      btn.disabled = true;
-      btn.textContent = 'Signing in…';
-
-      // Race login vs. timeout to prevent spinner hang
-      const TIMEOUT_MS = 15000;
-      const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('Request timed out.')), TIMEOUT_MS));
-
-      try {
-        // optional ping first for nicer error if endpoint is wrong
-        await preflightPing();
-
-        const loginPromise = API.authenticate(u, p);
-        const res = await Promise.race([loginPromise, timeout]);
-
-        if (!res || !res.ok) {
-          if (res && res.locked) setWarning(res.msg || 'Account temporarily locked.');
-          else setError((res && res.msg) || 'Login failed.');
-          password.value = '';
-          strengthIndicator.className = 'password-strength';
-          return;
-        }
-
-        // Save token and go dashboard
-        localStorage.setItem('navi_token', res.token);
-        const url = new URL(location.href);
-        url.searchParams.set('token', res.token);
-        history.replaceState(null, '', url.toString());
-        goTo('dashboard', { ts: Date.now() });
-      } catch (ex) {
-        setError(ex.message || 'Connection error. Check your GAS URL or network.');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Sign In';
-      }
-    });
   </script>
 </body>
 </html>
