@@ -118,6 +118,9 @@
   </style>
 </head>
 <body>
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script>requireAuth();</script>
   <div class="wrapper">   
     <a id="backButton" class="back-button" href="#">
       <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
@@ -225,7 +228,6 @@
     <div id="statusMessage" class="msg-box"></div>
   </div>
 
-<script src="js/api.js"></script>
 <script>
   const params = new URLSearchParams(window.location.search);
   const token = params.get('token') || localStorage.getItem('navi_token') || '';

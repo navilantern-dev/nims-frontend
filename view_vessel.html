@@ -127,6 +127,9 @@
   </style>
 </head>
 <body>
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script>requireAuth();</script>
   <div class="wrap">
     <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">
       <div class="h1" style="margin:0">View Vessel</div>
@@ -184,7 +187,6 @@
     </div>
   </div>
 
-  <script src="js/api.js"></script>
   <script>
   // ===== bootstrap =====
   const params = new URLSearchParams(window.location.search);

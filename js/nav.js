@@ -1,78 +1,89 @@
 <script>
-// Base URL of your static site (works with custom domain or GitHub Pages)
+// ----- token helpers -------------------------------------------------
+function getToken() {
+  const q = new URLSearchParams(location.search);
+  const t = q.get('token') || localStorage.getItem('navi_token') || '';
+  if (q.get('token') && localStorage.getItem('navi_token') !== q.get('token')) {
+    localStorage.setItem('navi_token', q.get('token'));
+  }
+  return t;
+}
+function requireAuth() {
+  const t = getToken();
+  if (!t) location.replace('login.html?err=' + encodeURIComponent('Session expired'));
+  return t;
+}
+
+// ----- base + routing ------------------------------------------------
 const FRONT_BASE = (() => {
   const { origin, pathname } = location;
   return origin + pathname.replace(/\/[^/]*$/, '');
 })();
+function pageToHtml(name) { return `${name}.html`; }
 
-// Map a page name to its file
-function pageToHtml(name) {
-  return `${name}.html`;
-}
-
-// Navigate to another page with query params
 function goTo(page, params = {}) {
   const url = new URL(`${FRONT_BASE}/${pageToHtml(page)}`);
-  Object.entries(params).forEach(([k, v]) => {
-    if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
+  const t = getToken();
+  const merged = { token: t, ...params };
+  Object.entries(merged).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, String(v));
   });
   location.href = url.toString();
 }
 
-// Quick access to current query params and token
-const Q = new URLSearchParams(location.search);
-const token = Q.get('token') || localStorage.getItem('navi_token') || '';
-
-// ---- Legacy link auto-fixer ----------------------------------------------
-// Converts hrefs like "?page=client_list&token=..." or "...?page=dashboard"
-// into "client_list.html?token=..."
-function rewriteLegacyLinks() {
+// ----- link rewriter -------------------------------------------------
+// 1) ?page=foo   -> foo.html
+// 2) ./dashboard -> ./dashboard.html
+// 3) add ?token=... to internal *.html links if missing
+function rewriteLinks() {
+  const t = getToken();
   const anchors = document.querySelectorAll('a[href]');
+
   anchors.forEach(a => {
+    let href = a.getAttribute('href');
+    if (!href || href === '#') return;
+
     try {
-      const href = a.getAttribute('href');
-      if (!href) return;
-
-      // 1) Handle links that start with ?page=foo
-      if (/^\?page=/.test(href)) {
+      // handle "?page=foo"
+      if (/^\?page=/.test(href) || href.includes('?page=')) {
         const u = new URL(href, location.href);
         const p = u.searchParams.get('page');
         if (p) {
           u.searchParams.delete('page');
-          a.setAttribute('href', `${pageToHtml(p)}${u.search}`);
+          href = `${pageToHtml(p)}${u.search}`;
+          a.setAttribute('href', href);
         }
-        return;
       }
 
-      // 2) Handle links that contain ?page=foo somewhere
-      if (href.includes('?page=')) {
-        const u = new URL(href, location.href);
-        const p = u.searchParams.get('page');
-        if (p) {
-          u.searchParams.delete('page');
-          a.setAttribute('href', `${pageToHtml(p)}${u.search}`);
-        }
-        return;
-      }
-
-      // 3) Handle extensionless local links like "./dashboard"
+      // add .html if extensionless local link
       if (!/^[a-z]+:\/\//i.test(href) && !/\.[a-z0-9]+$/i.test(href)) {
-        // keep absolute/relative prefix if any
         const cleaned = href.replace(/\/+$/, '');
-        if (cleaned && cleaned !== '#') {
-          a.setAttribute('href', `${cleaned}.html`);
+        if (cleaned) {
+          href = `${cleaned}.html`;
+          a.setAttribute('href', href);
         }
       }
-    } catch (_) { /* ignore malformed URLs */ }
+
+      // append token to same-origin html links if missing
+      const u2 = new URL(a.getAttribute('href'), location.href);
+      const sameOrigin = u2.origin === location.origin;
+      const looksHtml = /\.html$/i.test(u2.pathname);
+      if (sameOrigin && looksHtml && t && !u2.searchParams.get('token')) {
+        u2.searchParams.set('token', t);
+        a.setAttribute('href', u2.toString());
+      }
+    } catch (e) {
+      // ignore malformed URLs
+    }
   });
 }
 
-// Auto-run on load
-document.addEventListener('DOMContentLoaded', rewriteLegacyLinks);
-
-// Optional: expose for manual use in pages
+// expose
 window.goTo = goTo;
-window.Q = Q;
-window.FRONT_BASE = FRONT_BASE;
-window.pageToHtml = pageToHtml;
+window.requireAuth = requireAuth;
+window.getToken = getToken;
+window.Q = new URLSearchParams(location.search);
+
+// run after DOM is ready
+document.addEventListener('DOMContentLoaded', rewriteLinks);
 </script>

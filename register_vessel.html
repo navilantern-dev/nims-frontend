@@ -197,6 +197,9 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
   </style>
 </head>
 <body>
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script>requireAuth();</script>
   <div class="wrap">
     <div class="card">
       <div class="title">
@@ -389,7 +392,6 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
       <div id="msgSaveErr" class="msg err"></div>
     </div>
   </div>
-  <script src="js/api.js"></script>
   <script>
   // NEW (JavaScript):
   const params = new URLSearchParams(window.location.search);

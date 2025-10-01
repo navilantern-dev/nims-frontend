@@ -65,6 +65,9 @@
   </style>
 </head>
 <body>
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script>requireAuth();</script>
   <a id="backButton" class="back-button" href="#">
     <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
   </a>
@@ -93,7 +96,6 @@
 
   <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
   <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
-  <script src="js/api.js"></script>
   <script>
     const params = new URLSearchParams(window.location.search);
     const token = params.get('token') || localStorage.getItem('navi_token') || '';

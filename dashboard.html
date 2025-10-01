@@ -63,6 +63,9 @@ h2{margin:0 0 4px 0;font-size:1.5rem}
   </style>
 </head>
 <body>
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script>requireAuth();</script>
   <div class="wrap">
     <div class="card">
       <div class="top">
@@ -109,7 +112,6 @@ h2{margin:0 0 4px 0;font-size:1.5rem}
     </div>
   </div>
 
-  <script src="js/api.js"></script>
   <script>
     (function(){
       // Get token from URL
