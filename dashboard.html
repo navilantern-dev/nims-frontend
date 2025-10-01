@@ -108,8 +108,8 @@ h2{margin:0 0 4px 0;font-size:1.5rem}
             <h3>👥 User Management</h3>
             <p>Create, edit, and manage user accounts. Control access levels and permissions.</p>
             <div class="row">
-              <button type="button" class="btn-outline" id="btnCreateUser">Create User</button>
-              <button type="button" class="btn-outline" id="btnEditUser">Edit Users</button>
+              <button class="btn-outline" data-goto="create_user">Create User</button>
+              <button class="btn-outline" data-goto="edit_user">Edit Users</button>
             </div>
           </div>
 
@@ -117,8 +117,8 @@ h2{margin:0 0 4px 0;font-size:1.5rem}
             <h3>🏢 Company Management</h3>
             <p>Register and manage company information and business details.</p>
             <div class="row">
-              <button type="button" class="btn-outline" id="btnRegisterCompany">Register Company</button>
-              <button type="button" class="btn-outline" id="btnListCompany">Companies List</button>
+              <button class="btn-outline" data-goto="register_client">Register Company</button>
+              <button class="btn-outline" data-goto="client_list">Companies List</button>
             </div>
           </div>
 
@@ -126,9 +126,9 @@ h2{margin:0 0 4px 0;font-size:1.5rem}
             <h3>🚢 Vessel Management</h3>
             <p>Register new vessels and manage existing vessel information and inventories.</p>
             <div class="row">
-              <button type="button" class="btn-outline" id="btnRegisterVessel">Register Vessel</button>
-              <button type="button" class="btn-outline" id="btnEditVessel">Edit Vessels</button>
-              <button type="button" class="btn-outline" id="btnViewVessel">View Vessel</button>
+              <button class="btn-outline" data-goto="register_vessel"></button>Register Vessel</button>
+              <button class="btn-outline" data-goto="edit_vessel">Edit Vessels</button>
+              <button class="btn-outline" data-goto="view_vessel">View Vessel</button>
             </div>
           </div>
 
@@ -164,16 +164,16 @@ h2{margin:0 0 4px 0;font-size:1.5rem}
               <h3>🏢 Companies Details</h3>
               <p>Company information and business details.</p>
               <div class="row">
-                <button type="button" class="btn-outline" id="btnListCompany">Companies List</button>  <!-- THIS VIEW IS FOR USER (STAFF/ENGINEER) -->
+                <button class="btn-outline" data-goto="client_list">Companies List</button>  <!-- THIS VIEW IS FOR USER (STAFF/ENGINEER) -->
               </div>
           </div>
           <div class="module">
             <h3>🚢 My Vessels</h3>
             <p>View and manage vessel information assigned to your account.</p>
             <div class="row">
-              <button type="button" class="btn-outline" id="btnViewVessel">View Vessel</button>
+              <button class="btn-outline" data-goto="view_vessel">View Vessel</button>
               <? if (__UGID === '1' || /staff/i.test(__UGNAME)) { ?>
-                <button type="button" class="btn-outline" id="btnEditVessel">Edit Vessel Info</button>
+                <button class="btn-outline" data-goto="edit_vessel">Edit Vessel Info</button>
               <? } ?>
             </div>
           </div>
@@ -185,7 +185,7 @@ h2{margin:0 0 4px 0;font-size:1.5rem}
             <h3>⚠️ Access Limited</h3>
             <p>Your current user level has limited access. You can still view vessels assigned to you.</p>
             <div class="row">
-              <button type="button" class="btn-outline" id="btnViewVessel">View Vessel</button>
+              <button class="btn-outline" data-goto="view_vessel">View Vessel</button>
               <button type="button" class="btn-outline" id="btnContactAdmin">Contact Support</button>
             </div>
           </div>
@@ -193,7 +193,7 @@ h2{margin:0 0 4px 0;font-size:1.5rem}
       <? } ?>
 
       <div class="user-actions">
-        <button id="btnChangePassword" class="btn secondary">Change Password</button>
+        <button class="btn secondary" data-goto="change_password">Change Password</button>
         <button id="btnSecurity" class="btn secondary">Security Info</button>
         <div style="flex:1"></div>
         <button id="btnLogout" class="btn danger">Secure Logout</button>
@@ -395,6 +395,16 @@ Your account is protected with advanced security measures including password enc
   </script>
   <script src="js/api.js"></script>
   <script src="js/nav.js"></script>
+  <script>
+    // Requires nav.js (for goTo/getToken)
+    document.addEventListener('click', (e) => {
+      const el = e.target.closest('[data-goto]');
+      if (!el) return;
+      e.preventDefault();
+      const page = el.getAttribute('data-goto');
+      goTo(page);
+    });
+  </script>
   <script src="js/shim.google.run.js"></script>
   <script>
     // Redirects to login.html if no valid token is present
