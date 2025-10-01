@@ -9,6 +9,7 @@
   <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css">
   <title>NAVI-SIMS — Client Profile</title>
   <style>
+    /* ===== NAVI-SIMS Design System ===== */
     :root {
       --bg: #F6F7FB; --card: #ffffff; --panel: #F9FAFB; --text: #0F172A;
       --muted: #64748B; --border: #E5E7EB; --ring: #2563EB; --primary: #2563EB;
@@ -113,17 +114,18 @@
     .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
     .btn[disabled]{opacity:.6;cursor:not-allowed}
 
+    /* ================== Style for icon ================ */
     .edit-icon {
       position: absolute;
-      top: 25px;
-      right: 25px;
-      z-index: 10;
-      cursor: pointer;
-      color: var(--primary);
-      background-color: var(--card);
+      top: 25px; /* Adjust vertical position */
+      right: 25px; /* Adjust horizontal position */
+      z-index: 10; /* CRITICAL: Ensures it sits above other elements (like the image) */
+      cursor: pointer; /* Provides visual feedback that it's clickable */
+      color: var(--primary); /* Use your primary color for visibility */
+      background-color: var(--card); /* Gives a small background for contrast */
       padding: 8px;
-      border-radius: 50%;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      border-radius: 50%; /* Makes it a circle */
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle lift */
       transition: transform 0.2s;
     }
 
@@ -131,26 +133,46 @@
         transform: scale(1.1);
     }
 
+    /* === Wrapping for Addresses and File Links === */
     .address-placeholder,
     .file-placeholder {
+        /* Critical for containing long text */
         max-width: 100%;
-        display: block;
+        display: block; /* Ensures the element uses its full width */
+        /* Allows text to wrap naturally and break very long words (like UUIDs/hashes) */
         word-wrap: break-word; 
         overflow-wrap: break-word;
         word-break: break-all;
     }
 
+    /* Specifically for multi-line addresses (like from your spreadsheet data) */
     .address-placeholder {
+        /* Use pre-wrap to respect existing line breaks (\n) from your spreadsheet
+          AND wrap lines that exceed the card width. */
         white-space: pre-wrap;
     }
 
+    /* Specifically for the link text */
     .document-link {
+        /* Inherit wrapping properties from the parent */
         display: block;
         white-space: normal;
         word-wrap: break-word;
         word-break: break-all;
     }
 
+    /* Ensure the profile picture is clean */
+    .profile-picture {
+        display: block;
+        margin: 0 auto 10px auto;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%; /* If you want a circle logo */
+        object-fit: cover; /* Prevents stretching */
+        z-index: 1;
+    }
+
+    /* ======= Modal Styles ===============*/
     .modal-overlay {
       display: none;
       position: fixed;
@@ -193,16 +215,16 @@
       font-weight: 600;
       margin-bottom: 4px;
     }
-    .modal-body input[type="text"], .modal-body input[type="file"], .modal-body input[type="date"], .modal-body select, .modal-body input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]) {
+    .modal-body input[type="text"], .modal-body input[type="file"], .modal-body input[type="date"], .modal-body input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]) {
       width: 100%;
       padding: 8px;
       border: 1px solid var(--border);
       border-radius: 8px;
       background-color: var(--panel);
-      color: var(--text);
+      color: #97ADC4;
     }
     .modal-body a{
-      color: var(--primary);
+      color: #82A8CF;
     }
     .modal-footer {
       display: flex;
@@ -228,10 +250,15 @@
     }
   </style>
 </head>
-<body>
-  <script src="js/api.js"></script>
-  <script src="js/nav.js"></script>
-  <script>requireAuth();</script>
+<body data-app-url="<?= appUrl ?>" data-token="<?= token ?>">
+  <script type="application/json" id="profile-data">
+    <?= JSON.stringify(clientProfileData) ?>
+  </script>
+  <script type="application/json" id="vessel-data">
+    <?= JSON.stringify(clientSHData) ?>
+  </script>
+  <script> const clientProfile = <?!= JSON.stringify(clientProfileData)?>; </script>
+
   <div class="wrapper">
     <button id="btnBack" class="btn alt" type="button" style="float:right">Back</button>
     <div class="header">
@@ -239,60 +266,134 @@
       <p>View the full details of the client and their registered vessels.</p>
     </div>
     
-    <div class="card-grid" id="profileContainer">
+    <!-- Profile & Details Container -->
+    <div class="card-grid">
+      <!-- Profile Picture and Basic Info -->
+      <? var data = clientProfileData.data; ?>
+      <div class="card profile-section">
+        <img id="comp_logopic" class="profile-picture" src="<?= getSecureImageUrl(data.COMP_LOGOPIC) ?>" alt="Company Logo">
+        <i class="fa-solid fa-pen edit-icon" id="editCompLogo"></i>
+        <h3 id="comp_name" class="profile-name"><?= data.COMP_NAME ?></h3>
+        <p id="comp_title" class="profile-title"><?= data.CLIENT_TITLE ?></p>
+      </div>
+      
+      <!-- Company Details Card -->
       <div class="card">
-        <p style="color:var(--muted);text-align:center;">Loading profile...</p>
+        <i class="fa-solid fa-pen edit-icon" id="editCompDetails"></i>
+        <div class="card-header">
+          <h2>Company Details</h2>
+          
+        </div>
+        <div class="details-list">
+          <div class="detail-item"><span class="detail-label">Company Registration No.</span><span id="display_comp_regno" class="detail-value"><?= data.COMP_REGNO ?></span></div>
+          <div class="detail-item"><span class="detail-label">Company IMO No.</span><span id="display_comp_imono" class="detail-value"><?= data.COMP_IMONO ?></span></div>
+          <div class="detail-item"><span class="detail-label">Company TIN No.</span><span id="display_comp_tin" class="detail-value"><?= data.COMP_TIN ?></span></div>
+          <div class="detail-item"><span class="detail-label">Company Contract No.</span><span id="display_comp_contractno" class="detail-value"><?= data.COMP_CONTRACTNO ?></span></div>
+          <div class="detail-item"><span class="detail-label">Contact (Office)</span><span id="display_comp_contact_o" class="detail-value"><?= data.COMP_CONTACT_O ?></span></div>
+          <div class="detail-item"><span class="detail-label">Contact (Mobile)</span><span id="display_comp_contact_m" class="detail-value"><?= data.COMP_CONTACT_M ?></span></div>
+          <div class="detail-item"><span class="detail-label">Company Email</span><span id="display_comp_email" class="detail-value"><?= data.COMP_EMAIL ?></span></div>
+          <div>
+            <div class="detail-item"><span class="detail-label">Registered Address</span><span id="display_comp_add_r" class="detail-value"><?= data.COMP_ADD_R ?></span></div>
+            <div class="spacer"></div>
+            <div class="detail-item"><span class="detail-label">Business Address</span><span id="display_comp_add_b" class="detail-value"><?= data.COMP_ADD_B ?></span></div>
+          </div>
+        </div>
       </div>
+
+      <!-- Company Documentation Card -->
+      <div class="card">
+        <i class="fa-solid fa-pen edit-icon" id="editCompDoc"></i>
+        <div class="card-header">
+          <h2>Company Documentation</h2>
+          
+        </div>
+        <div class="details-list">
+          <div class="detail-item"><span class="detail-label">Contract Issuance Date</span><span id="display_comp_ci_date" class="detail-value"><?= data.COMP_CI_DATE_FMT ?></span></div>
+          <div class="detail-item"><span class="detail-label">Contract Expiry Date</span><span id="display_comp_ce_date" class="detail-value"><?= data.COMP_CE_DATE_FMT ?></span></div>
+          <div class="detail-item">
+            <span class="detail-label">Information of Certificate</span>
+            <span id="display_comp_ioc" class="detail-value">
+              <a class="document-link" 
+                href="<?= data.IOC_FILE.url ?>"  
+                target="_blank" 
+                title="<?= data.IOC_FILE.name?>">
+                <?= data.IOC_FILE.name ?>
+              </a>                
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Corporate Information</span>
+            <span id="display_comp_corp_info" class="detail-value">
+              <a class="document-link" 
+                href="<?= data.CORP_INFO_FILE.url ?>" 
+                target="_blank" 
+                title="<?= data.CORP_INFO_FILE.name?>">
+                <?= data.CORP_INFO_FILE.name ?>
+              </a>
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Contract Agreement</span>
+            <span id="display_comp_contract_agt" class="detail-value">
+              <a class="document-link" 
+                href="<?= data.CONTRACT_AGT_FILE.url ?>" 
+                target="_blank" 
+                title="<?= data.CONTRACT_AGT_FILE.name?>">
+                <?= data.CONTRACT_AGT_FILE.name ?>
+              </a>  
+            </span>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+    
+    <!-- Registered Vessels Table -->
+    <div class="card" style="margin-top: 1.5rem; width: 100%;">
+      <div class="card-header">
+        <h2>Registered Vessels</h2>
+      </div>
+      <table id="vesselsTable" style="width: 100%; border-collapse: collapse; text-align: left;">
+        <thead>
+          <tr>
+            <th style="padding: 0.75rem; border-bottom: 1px solid var(--border);">Name</th>
+            <th style="padding: 0.75rem; border-bottom: 1px solid var(--border);">IMO No.</th>
+            <th style="padding: 0.75rem; border-bottom: 1px solid var(--border);">Official No.</th>
+            <th style="padding: 0.75rem; border-bottom: 1px solid var(--border);">Ship Type</th>
+          </tr>
+        </thead>
+        <tbody id="vesselsTableBody">
+        <? var vessels = clientSHData.data; ?>
+        <? if(!vessels || vessels.length === 0) { ?>
+              <tr><td colspan="4" style="text-align: center; padding: 2rem;">No vessels found for this client.</td></tr>
+        <? }else{ ?>
+        <?  vessels.forEach(vessel => { ?>
+            <tr>
+              <td style="padding: 0.75rem; border-bottom: 1px solid var(--border);"><?= vessel.SHIP_NAME || 'N/A' ?></td>
+              <td style="padding: 0.75rem; border-bottom: 1px solid var(--border);"><?= vessel.IMO_NO || 'N/A' ?></td>
+              <td style="padding: 0.75rem; border-bottom: 1px solid var(--border);"><?= vessel.OFFICIAL_NO || 'N/A' ?></td>
+              <td style="padding: 0.75rem; border-bottom: 1px solid var(--border);"><?= vessel.SHIP_TYPE || 'N/A' ?></td>
+            </tr>
+        <?  }); ?>
+        <? } ?>
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <div id="editModal" class="modal-overlay">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 id="modalTitle">Edit Client Information</h2>
-        <button class="modal-close" onclick="closeModal()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <form id="editForm"></form>
-      </div>
-      <div class="modal-footer">
-        <div id="statusMessage" class="status-message"></div>
-        <button class="btn btn-primary" onclick="submitEditForm()">Save Changes</button>
-        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get('token') || localStorage.getItem('navi_token') || '';
-
-  if (!token) {
-    window.location.href = 'login.html?err=' + encodeURIComponent('Session expired');
-  }
-
-  // Load user session dynamically if needed
-  let userInfo = null;
-  async function loadSession() {
-    try {
-      const res = await API.getUserSessionInfo(token);
-      if (res?.ok) userInfo = res.user;
-    } catch (err) {
-      console.error('Session load failed:', err);
-    }
-  }
-
-  if (!clientId) {
-    alert('No client ID provided');
-    window.location.href = 'client_list.html?token=' + encodeURIComponent(token);
-  }
-
-  let clientProfileData = null;
-  let clientSHData = null;
-  let userLevelId = null;
-
+<script>
+  // ===============================================
+  // 1. CRITICAL: Define the global helper first and separate template variables
+  // ===============================================
   const $ = id => document.getElementById(id);
+  const appUrl = document.body.dataset.appUrl;
+  const token = document.body.dataset.token;
 
+  // ===============================================
+  // 2. Define all core functions (open/close) globally
+  // ===============================================
+
+  // Function to show status messages
   function showStatus(isSuccess, message) {
     const statusMsg = $('statusMessage');
     statusMsg.textContent = message;
@@ -300,25 +401,39 @@
     statusMsg.style.display = 'block';
   }
 
+  // Function to close the modal
   function closeModal() {
     $('editModal').style.display = 'none';
-    $('editForm').innerHTML = '';
+    $('editForm').innerHTML = ''; // Clear form content
     showStatus(false, '');
   }
 
+  // Function to open the modal and populate the form
   function openModal(type) {
     const form = $('editForm');
     form.innerHTML = '';
     let title = '';
 
-    if (!clientProfileData) {
-      console.error("Profile data not loaded");
+    const dataElement = $('profile-data');
+    if(!dataElement){
+      console.error("Profile data element (profile-data) not found");
       return;
     }
 
-    const data = clientProfileData.data;
-    const compId = data.COMP_ID;
+    // FIX: Correctly extract nested client data (Ensuring the fix from the previous step is here)
+    //let profileData = JSON.parse(dataElement.textContent.trim());
+    //let data = (profileData && profileData.data) ? profileData.data : profileData; 
+    let data = clientProfile.data;
 
+    if (!data.COMP_ID) {
+        console.error("Client ID not found in profile data structure.");
+        return;
+    }
+
+    const compId = data.COMP_ID;
+    const compName = data.COMP_NAME;
+
+    // Add hidden fields for submission
     form.insertAdjacentHTML('beforeend', `<input type="hidden" name="COMP_ID" value="${compId}">`);
 
     if (type === 'logo') {
@@ -327,7 +442,7 @@
         <div class="form-group">
           <label for="compLogoFile">Company Logo:</label>
           <input type="file" id="compLogoFile" name="COMP_LOGOPIC" accept="image/*">
-          <small>Current file: ${data.COMP_LOGOPIC ? 'View' : 'None'}</small>
+          <small>Current file: <a href="${data.COMP_LOGOPIC}" target="_blank">${data.COMP_LOGOPIC ? 'View' : 'None'}</a></small>
         </div>
       `);
     } else if (type === 'details') {
@@ -335,12 +450,12 @@
       form.insertAdjacentHTML('beforeend', `
         <div class="form-group">
           <label for="compName">Company Name:</label>
-          <input type="text" id="compName" name="COMP_NAME" value="${data.COMP_NAME || ''}" required>
+          <input type="text" id="compName" name="COMP_NAME" value="${data.COMP_NAME}" required>
         </div>
         <div class="form-group">
             <label for="clientTitle">Client Title:</label>
               <select id="clientTitle" name="CLIENT_TITLE" required>
-                <option value="${data.CLIENT_TITLE}" selected>${data.CLIENT_TITLE}</option>
+                <option value="${data.CLIENT_TITLE}" disabled selected>${data.CLIENT_TITLE}</option>
                 <option value="SHIP OWNER">SHIP OWNER</option>
                 <option value="SHIP MANAGER">SHIP MANAGER</option>
                 <option value="SHIP AGENT">SHIP AGENT</option>
@@ -349,39 +464,39 @@
         </div>
         <div class="form-group">
           <label for="compRegno">Company Registration No.:</label>
-          <input type="text" id="compRegno" name="COMP_REGNO" value="${data.COMP_REGNO || ''}">
+          <input type="text" id="compRegno" name="COMP_REGNO" value="${data.COMP_REGNO}">
         </div>
         <div class="form-group">
           <label for="compIMOno">Company IMO No.:</label>
-          <input type="text" id="compIMOno" name="COMP_IMONO" value="${data.COMP_IMONO || ''}">
+          <input type="text" id="compIMOno" name="COMP_IMONO" value="${data.COMP_IMONO}">
         </div>
         <div class="form-group">
           <label for="compTIN">Company TIN No.:</label>
-          <input type="text" id="compTIN" name="COMP_TIN" value="${data.COMP_TIN || ''}">
+          <input type="text" id="compTIN" name="COMP_TIN" value="${data.COMP_TIN}">
         </div>
         <div class="form-group">
           <label for="compContractNo">Company Contract No.:</label>
-          <input type="text" id="compContractNo" name="COMP_CONTRACTNO" value="${data.COMP_CONTRACTNO || ''}">
+          <input type="text" id="compContractNo" name="COMP_CONTRACTNO" value="${data.COMP_CONTRACTNO}">
         </div>
         <div class="form-group">
           <label for="compContactO">Contact (Office):</label>
-          <input type="text" id="compContactO" name="COMP_CONTACT_O" value="${data.COMP_CONTACT_O || ''}">
+          <input type="text" id="compContactO" name="COMP_CONTACT_O" value="${data.COMP_CONTACT_O}">
         </div>
         <div class="form-group">
           <label for="compContactM">Contact (Mobile):</label>
-          <input type="text" id="compContactM" name="COMP_CONTACT_M" value="${data.COMP_CONTACT_M || ''}">
+          <input type="text" id="compContactM" name="COMP_CONTACT_M" value="${data.COMP_CONTACT_M}">
         </div>
         <div class="form-group">
           <label for="compEmail">Company Email:</label>
-          <input type="email" id="compEmail" name="COMP_EMAIL" value="${data.COMP_EMAIL || ''}">
+          <input type="text" id="compEmail" name="COMP_EMAIL" value="${data.COMP_EMAIL}">
         </div>
         <div class="form-group">
           <label for="compAddR">Registered Address:</label>
-          <input type="text" id="compAddR" name="COMP_ADD_R" value="${data.COMP_ADD_R || ''}">
+          <input type="text" id="compAddR" name="COMP_ADD_R" value="${data.COMP_ADD_R}">
         </div>
         <div class="form-group">
           <label for="compAddB">Business Address:</label>
-          <input type="text" id="compAddB" name="COMP_ADD_B" value="${data.COMP_ADD_B || ''}">
+          <input type="text" id="compAddB" name="COMP_ADD_B" value="${data.COMP_ADD_B}">
         </div>
       `);
     } else if (type === 'doc_details') {
@@ -390,33 +505,35 @@
         <div class="form-group">
           <label for="compIocFile">Information of Certificate:</label>
           <input type="file" id="compIocFile" name="COMP_IOC" accept=".pdf,.doc,.docx">
-          <small>Current: ${data.IOC_FILE?.name || 'None'}</small>
+          <small>Current file: <a href="${data.COMP_IOC}" target="_blank">${data.COMP_IOC ? data.IOC_FILE.name : 'None'}</a></small>
         </div>
         <div class="form-group">
           <label for="compCorpInfoFile">Corporate Information:</label>
           <input type="file" id="compCorpInfoFile" name="COMP_CORP_INFO" accept=".pdf,.doc,.docx">
-          <small>Current: ${data.CORP_INFO_FILE?.name || 'None'}</small>
+          <small>Current file: <a href="${data.COMP_CORP_INFO}" target="_blank">${data.COMP_CORP_INFO ? data.CORP_INFO_FILE.name : 'None'}</a></small>
         </div>
         <div class="form-group">
           <label for="compContractAgtFile">Contract Agreement:</label>
           <input type="file" id="compContractAgtFile" name="COMP_CONTRACT_AGT" accept=".pdf,.doc,.docx">
-          <small>Current: ${data.CONTRACT_AGT_FILE?.name || 'None'}</small>
+          <small>Current file: <a href="${data.COMP_CONTRACT_AGT}" target="_blank">${data.COMP_CONTRACT_AGT ? data.CONTRACT_AGT_FILE.name : 'None'}</a></small>
         </div>
         <div class="form-group">
           <label for="compCIDate">Contract Issuance Date:</label>
-          <input type="date" id="compCIDate" name="COMP_CI_DATE" value="${data.COMP_CI_DATE_ISO || ''}">
+          <input type="date" id="compCIDate" name="COMP_CI_DATE" value="${data.COMP_CI_DATE_ISO}">
         </div>
         <div class="form-group">
           <label for="compCEDate">Contract Expiry Date:</label>
-          <input type="date" id="compCEDate" name="COMP_CE_DATE" value="${data.COMP_CE_DATE_ISO || ''}">
+          <input type="date" id="compCEDate" name="COMP_CE_DATE" value="${data.COMP_CE_DATE_ISO}">
         </div>
       `);
     }
 
     $('modalTitle').textContent = title;
+    // This line is now guaranteed to execute if no errors occurred above
     $('editModal').style.display = 'block'; 
   }
   
+  // Function to handle form submission (remains unchanged)
   async function submitEditForm() {
     const form = $('editForm');
     const compId = form.querySelector('input[name="COMP_ID"]').value;
@@ -457,7 +574,12 @@
       saveButton.textContent = 'Saving...';
       showStatus(false, ''); 
 
-      const result = await API.updateClientProfile(token, compId, dataToUpdate, filesToUpload);
+      const result = await new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)
+          .updateClientProfile(token, compId, dataToUpdate, filesToUpload);
+      });
 
       saveButton.disabled = false;
       saveButton.textContent = 'Save Changes';
@@ -473,6 +595,7 @@
       }
     } catch (err) {
       console.error('Update error:', err);
+      //const saveButton = form.closest('.modal-footer').querySelector('.btn-primary');
       const modalContent = form.closest('.modal-content');
       const saveButton = modalContent.querySelector('.modal-footer .btn-primary');
       saveButton.disabled = false;
@@ -481,153 +604,71 @@
     }
   }
 
-  function renderProfile(profile, vessels) {
-    const data = profile.data;
-    const container = $('profileContainer');
+  // ===============================================
+  // 3. Initialization Logic (DOM Ready)
+  // ===============================================
+  document.addEventListener('DOMContentLoaded',() => {
     
-    container.innerHTML = `
-      <div class="card profile-section">
-        <img class="profile-picture" src="${data.COMP_LOGOPIC || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23ddd\' width=\'100\' height=\'100\'/%3E%3C/svg%3E'}" alt="Company Logo">
-        <i class="fa-solid fa-pen edit-icon" id="editCompLogo" style="${userLevelId === '2' ? 'display:none' : ''}"></i>
-        <h3 class="profile-name">${data.COMP_NAME || 'N/A'}</h3>
-        <p class="profile-title">${data.CLIENT_TITLE || 'N/A'}</p>
-      </div>
-      
-      <div class="card">
-        <i class="fa-solid fa-pen edit-icon" id="editCompDetails" style="${userLevelId === '2' ? 'display:none' : ''}"></i>
-        <div class="card-header">
-          <h2>Company Details</h2>
-        </div>
-        <div class="details-list">
-          <div class="detail-item"><span class="detail-label">Company Registration No.</span><span class="detail-value">${data.COMP_REGNO || 'N/A'}</span></div>
-          <div class="detail-item"><span class="detail-label">Company IMO No.</span><span class="detail-value">${data.COMP_IMONO || 'N/A'}</span></div>
-          <div class="detail-item"><span class="detail-label">Company TIN No.</span><span class="detail-value">${data.COMP_TIN || 'N/A'}</span></div>
-          <div class="detail-item"><span class="detail-label">Company Contract No.</span><span class="detail-value">${data.COMP_CONTRACTNO || 'N/A'}</span></div>
-          <div class="detail-item"><span class="detail-label">Contact (Office)</span><span class="detail-value">${data.COMP_CONTACT_O || 'N/A'}</span></div>
-          <div class="detail-item"><span class="detail-label">Contact (Mobile)</span><span class="detail-value">${data.COMP_CONTACT_M || 'N/A'}</span></div>
-          <div class="detail-item"><span class="detail-label">Company Email</span><span class="detail-value">${data.COMP_EMAIL || 'N/A'}</span></div>
-          <div>
-            <div class="detail-item"><span class="detail-label">Registered Address</span><span class="detail-value">${data.COMP_ADD_R || 'N/A'}</span></div>
-            <div class="spacer"></div>
-            <div class="detail-item"><span class="detail-label">Business Address</span><span class="detail-value">${data.COMP_ADD_B || 'N/A'}</span></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <i class="fa-solid fa-pen edit-icon" id="editCompDoc" style="${userLevelId === '2' ? 'display:none' : ''}"></i>
-        <div class="card-header">
-          <h2>Company Documentation</h2>
-        </div>
-        <div class="details-list">
-          <div class="detail-item"><span class="detail-label">Contract Issuance Date</span><span class="detail-value">${data.COMP_CI_DATE_FMT || 'N/A'}</span></div>
-          <div class="detail-item"><span class="detail-label">Contract Expiry Date</span><span class="detail-value">${data.COMP_CE_DATE_FMT || 'N/A'}</span></div>
-          <div class="detail-item">
-            <span class="detail-label">Information of Certificate</span>
-            <span class="detail-value">
-              ${data.IOC_FILE?.url ? `<a class="document-link" href="${data.IOC_FILE.url}" target="_blank">${data.IOC_FILE.name}</a>` : 'N/A'}
-            </span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Corporate Information</span>
-            <span class="detail-value">
-              ${data.CORP_INFO_FILE?.url ? `<a class="document-link" href="${data.CORP_INFO_FILE.url}" target="_blank">${data.CORP_INFO_FILE.name}</a>` : 'N/A'}
-            </span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Contract Agreement</span>
-            <span class="detail-value">
-              ${data.CONTRACT_AGT_FILE?.url ? `<a class="document-link" href="${data.CONTRACT_AGT_FILE.url}" target="_blank">${data.CONTRACT_AGT_FILE.name}</a>` : 'N/A'}
-            </span>
-          </div>
-        </div>
-      </div>
-    `;
-
-    // Add vessels table
-    const vesselsHtml = vessels && vessels.data && vessels.data.length > 0 
-      ? vessels.data.map(v => `
-          <tr>
-            <td style="padding: 0.75rem; border-bottom: 1px solid var(--border);">${v.SHIP_NAME || 'N/A'}</td>
-            <td style="padding: 0.75rem; border-bottom: 1px solid var(--border);">${v.IMO_NO || 'N/A'}</td>
-            <td style="padding: 0.75rem; border-bottom: 1px solid var(--border);">${v.OFFICIAL_NO || 'N/A'}</td>
-            <td style="padding: 0.75rem; border-bottom: 1px solid var(--border);">${v.SHIP_TYPE || 'N/A'}</td>
-          </tr>
-        `).join('')
-      : '<tr><td colspan="4" style="text-align: center; padding: 2rem;">No vessels found for this client.</td></tr>';
-
-    container.insertAdjacentHTML('beforeend', `
-      <div class="card" style="margin-top: 1.5rem; width: 100%; grid-column: 1 / -1;">
-        <div class="card-header">
-          <h2>Registered Vessels</h2>
-        </div>
-        <table style="width: 100%; border-collapse: collapse; text-align: left;">
-          <thead>
-            <tr>
-              <th style="padding: 0.75rem; border-bottom: 1px solid var(--border);">Name</th>
-              <th style="padding: 0.75rem; border-bottom: 1px solid var(--border);">IMO No.</th>
-              <th style="padding: 0.75rem; border-bottom: 1px solid var(--border);">Official No.</th>
-              <th style="padding: 0.75rem; border-bottom: 1px solid var(--border);">Ship Type</th>
-            </tr>
-          </thead>
-          <tbody>${vesselsHtml}</tbody>
-        </table>
-      </div>
-    `);
-
-    // Wire edit icons
+    // FIX 1: Attach event listeners programmatically (must be inside DOMContentLoaded)
     const icon1 = $('editCompLogo');
     const icon2 = $('editCompDetails');
     const icon3 = $('editCompDoc');
+
     if (icon1) icon1.addEventListener('click', () => openModal('logo'));
     if (icon2) icon2.addEventListener('click', () => openModal('details'));
     if (icon3) icon3.addEventListener('click', () => openModal('doc_details'));
-  }
 
-  async function loadProfile() {
-    try {
-      // Check user permissions
-      const sessRes = await API.getUserSessionInfo(token);
-      if (sessRes?.ok && sessRes.user) {
-        userLevelId = String(sessRes.user.levelId || '');
+    // FIX 2: Security check on user level
+    // Ensure userLevel is safely handled as a string
+    const userLevelId = '<?= userLevel ?>';
+    
+    if (String(userLevelId).includes('2')){
+          if (icon1) icon1.style.setProperty('display', 'none', 'important'); 
+          if (icon2) icon2.style.setProperty('display', 'none', 'important'); 
+          if (icon3) icon3.style.setProperty('display', 'none', 'important'); 
+      } 
+
+    // Back button logic (moved inside DOMContentLoaded)
+    google.script.url.getLocation(function(location) {
+      let callingPageName = 'client_list';
+      const referrerPageArray = location.parameters.from; 
+      if (referrerPageArray && referrerPageArray.length > 0) {
+        callingPageName = referrerPageArray[0];
       }
 
-      // Load profile
-      const profile = await API.getClientProfile(token, clientId);
-      if (!profile || !profile.ok) {
-        alert(profile?.msg || 'Failed to load client profile');
-        window.location.href = `client_list.html?token=${encodeURIComponent(token)}`;
-        return;
-      }
-      clientProfileData = profile;
+      $('btnBack').addEventListener('click', () => { 
+        if (token && token !== 'null') {
+          window.top.location.href = `${appUrl}?page=${callingPageName}&token=${encodeURIComponent(token)}`;
+        } else {
+          alert("Session token is missing.");
+        }
+      });
+    });
 
-      // Load vessels
-      const compName = profile.data.COMP_NAME;
-      const vessels = await API.getVesselsByCompName(token, compName);
-      clientSHData = vessels;
-
-      renderProfile(profile, vessels);
-
-    } catch (err) {
-      console.error('Failed to load profile:', err);
-      alert('Error loading profile: ' + err.message);
-      window.location.href = `client_list.html?token=${encodeURIComponent(token)}`;
-    }
-  }
-
-  // Back button
-  $('btnBack').addEventListener('click', () => {
-    const callingPage = (fromParam && fromParam.trim()) ? fromParam.trim() : 'client_list';
-    window.location.href = `${callingPage}.html?token=${encodeURIComponent(token)}`;
   });
+  /* =================== END FUNCTIONS FOR MODALS =========================== */
+</script>
 
-  // Make functions global for onclick
-  window.closeModal = closeModal;
-  window.openModal = openModal;
-  window.submitEditForm = submitEditForm;
-
-  // Load on page load
-  document.addEventListener('DOMContentLoaded', loadProfile);
-  </script>
+<!------------------------- modal -------------------------->
+<div id="editModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="modalTitle">Edit Client Information</h2>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="editForm">
+        </form>
+    </div>
+    <div class="modal-footer">
+      <div id="statusMessage" class="status-message"></div>
+      <button class="btn btn-primary" onclick="submitEditForm()">Save Changes</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/shim.google.run.js"></script>
 </body>
 </html>

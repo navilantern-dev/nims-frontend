@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css">
   <style>
+    /* ===== NAVI-SIMS Design System ===== */
     :root {
       --bg: #F6F7FB; --card: #ffffff; --panel: #F9FAFB; --text: #0F172A; --muted: #64748B;
       --border: #E5E7EB; --ring: #2563EB; --primary: #2563EB; --danger: #EF4444; --ok: #059669;
@@ -65,9 +66,6 @@
   </style>
 </head>
 <body>
-  <script src="js/api.js"></script>
-  <script src="js/nav.js"></script>
-  <script>requireAuth();</script>
   <a id="backButton" class="back-button" href="#">
     <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
   </a>
@@ -97,25 +95,10 @@
   <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
   <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('token') || localStorage.getItem('navi_token') || '';
-
-    if (!token) {
-      window.location.href = 'login.html?err=' + encodeURIComponent('Session expired');
-    }
-
-    // Load user session dynamically if needed
-    let userInfo = null;
-    async function loadSession() {
-      try {
-        const res = await API.getUserSessionInfo(token);
-        if (res?.ok) userInfo = res.user;
-      } catch (err) {
-        console.error('Session load failed:', err);
-      }
-    }
-
     const $ = (id) => document.getElementById(id);
+    const appUrl = '<?= ScriptApp.getService().getUrl() ?>';
+    const token = '<?= token ?>';
+    // --------------------------------------------------------------------------
 
     let table;
 
@@ -145,7 +128,7 @@
             data: 'COMP_ID',
             title: 'Actions',
             render: function(data, type, row) {
-              return `<i class="fa-solid fa-eye" style="cursor:pointer;" onclick="viewClientProfile('${data}')"></i>`;
+              return `<i class="fa-solid fa-eye" style="cursor:pointer;" onclick="viewClientProfile('${data}')"></span></i>`;
             },
             orderable: false,
             searchable: false
@@ -165,7 +148,9 @@
         return;
       }
       
-      window.location.href = `client_profile.html?client_id=${clientId}&token=${encodeURIComponent(token)}&from=client_list`;
+      const redirectUrl = `${appUrl}?page=client_profile&client_id=${clientId}&token=${encodeURIComponent(token)}&from=client_list`;
+      console.log("Redirecting to:", redirectUrl); //debug
+      window.top.location.href = redirectUrl;
     }
 
     async function loadClientData(searchQuery) {
@@ -175,9 +160,13 @@
       }
       showLoading(true);
       setMsg(true, '');
-      
       try {
-        const result = await API.getClientList(token, searchQuery);
+        const result = await new Promise((resolve, reject) => {
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .getClientList(token, searchQuery);
+        });
 
         if (result.ok) {
           initTable(result.data);
@@ -198,7 +187,8 @@
         return;
       }
 
-      $('backButton').href = `dashboard.html?token=${encodeURIComponent(token)}`;
+      const dashboardUrl = `${appUrl}?page=dashboard&token=${encodeURIComponent(token)}`;
+      $('backButton').href = dashboardUrl;
     
       loadClientData(null);
 
@@ -222,9 +212,9 @@
         }
       });
     });
-
-    // Make viewClientProfile available globally
-    window.viewClientProfile = viewClientProfile;
   </script>
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/shim.google.run.js"></script>
 </body>
 </html>

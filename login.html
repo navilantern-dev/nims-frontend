@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <script src="js/nav.js"></script>
   <base target="_top">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -56,7 +55,7 @@ label{font-size:.9rem;color:var(--subtle);margin-bottom:6px}
 input[type="text"],input[type="password"]{
   width:100%; height:46px; padding:12px 14px; padding-right:78px;
   border:1px solid var(--border); border-radius:12px; background:#fff; outline:none;
-  font-size:16px;
+  font-size:16px; /* Prevent zoom on iOS */
 }
 @media (prefers-color-scheme: dark){
   input[type="text"],input[type="password"]{background:#0F172A;color:var(--text)}
@@ -113,7 +112,7 @@ input:focus{border-color:var(--ring); box-shadow:0 0 0 4px color-mix(in oklab, v
 <body>
   <div class="card">
     <div class="logo-wrap">
-      <img class="logo-banner" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='80'%3E%3Crect fill='%232563EB' width='280' height='80'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-family='Arial' font-size='24' font-weight='bold'%3ENAVI-SIMS%3C/text%3E%3C/svg%3E" alt="Logo" onerror="this.style.display='none'">
+      <img class="logo-banner" src="<?!= logoUrl ?>" alt="Logo" onerror="this.style.display='none'">
       <div style="text-align:center">
         <h1>Secure Sign In</h1>
         <div class="subtitle">NAVI-SIMS Maritime Management System</div>
@@ -146,7 +145,7 @@ input:focus{border-color:var(--ring); box-shadow:0 0 0 4px color-mix(in oklab, v
       
       <div class="small">
         Protected by advanced security measures
-        <br>Maximum 5 attempts • 15 min lockout
+        <br>Maximum <?= maxAttempts || 5 ?> attempts • <?= lockoutMins || 15 ?> min lockout
       </div>
     </form>
 
@@ -164,9 +163,6 @@ input:focus{border-color:var(--ring); box-shadow:0 0 0 4px color-mix(in oklab, v
       </ul>
     </div>
   </div>
-
-  <!-- Load your API wrapper -->
-  <script src="js/api.js"></script>
 
   <script>
     (function () {
@@ -187,7 +183,7 @@ input:focus{border-color:var(--ring); box-shadow:0 0 0 4px color-mix(in oklab, v
         togglePw.textContent = hidden ? 'Hide' : 'Show';
       });
 
-      // Password strength indicator
+      // Password strength indicator (for user feedback)
       password.addEventListener('input', () => {
         const val = password.value;
         let strength = 'weak';
@@ -219,8 +215,8 @@ input:focus{border-color:var(--ring); box-shadow:0 0 0 4px color-mix(in oklab, v
         errBox.style.display = 'none';
       }
 
-      // Form submission using fetch-based API
-      form.addEventListener('submit', async (e) => {
+      // Enhanced form submission with security features
+      form.addEventListener('submit', (e) => {
         e.preventDefault();
         setError('');
         setWarning('');
@@ -242,38 +238,35 @@ input:focus{border-color:var(--ring); box-shadow:0 0 0 4px color-mix(in oklab, v
         btn.disabled = true;
         btn.textContent = 'Signing in...';
 
-        try {
-          const res = await API.authenticate(u, p);
-          
-          btn.disabled = false;
-          btn.textContent = 'Sign In';
-          
-          if (!res || !res.ok) {
-            if (res?.locked) {
-              setWarning(res.msg || 'Account temporarily locked.');
-            } else {
-              setError(res?.msg || 'Login failed.');
+        google.script.run
+          .withSuccessHandler((res) => {
+            btn.disabled = false;
+            btn.textContent = 'Sign In';
+            
+            if (!res || !res.ok) {
+              if (res?.locked) {
+                setWarning(res.msg || 'Account temporarily locked.');
+              } else {
+                setError(res?.msg || 'Login failed.');
+              }
+              
+              // Clear password on failed attempt for security
+              password.value = '';
+              strengthIndicator.className = 'password-strength';
+              return;
             }
             
-            // Clear password on failed attempt
+            const base = "<?= appUrl ?>";
+            window.top.location.href = `${base}?page=dashboard&token=${encodeURIComponent(res.token)}&ts=${Date.now()}`;
+          })
+          .withFailureHandler((err) => {
+            btn.disabled = false;
+            btn.textContent = 'Sign In';
+            setError(err && err.message ? err.message : 'Connection error. Please try again.');
             password.value = '';
             strengthIndicator.className = 'password-strength';
-            return;
-          }
-          
-          // Successful login - redirect to dashboard
-          // Get the base URL dynamically
-          const base = window.location.origin + window.location.pathname.replace(/login\.html$/, '');
-          window.location.href = `dashboard.html?token=${encodeURIComponent(res.token)}&ts=${Date.now()}`;
-          
-        } catch (err) {
-          btn.disabled = false;
-          btn.textContent = 'Sign In';
-          console.error('Login error:', err);
-          setError(err && err.message ? err.message : 'Connection error. Please try again.');
-          password.value = '';
-          strengthIndicator.className = 'password-strength';
-        }
+          })
+          .authenticate(u, p);
       });
 
       // Handle forgot password link
@@ -288,7 +281,7 @@ input:focus{border-color:var(--ring); box-shadow:0 0 0 4px color-mix(in oklab, v
       // Handle URL error parameter
       const urlParams = new URLSearchParams(window.location.search);
       const err = urlParams.get('err');
-      if (err) setError(decodeURIComponent(err));
+      if (err) setError(err);
 
       // Prevent form auto-complete attacks
       setTimeout(() => {
@@ -299,5 +292,8 @@ input:focus{border-color:var(--ring); box-shadow:0 0 0 4px color-mix(in oklab, v
 
     })();
   </script>
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/shim.google.run.js"></script>
 </body>
 </html>

@@ -127,9 +127,6 @@
   </style>
 </head>
 <body>
-  <script src="js/api.js"></script>
-  <script src="js/nav.js"></script>
-  <script>requireAuth();</script>
   <div class="wrap">
     <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">
       <div class="h1" style="margin:0">View Vessel</div>
@@ -189,23 +186,11 @@
 
   <script>
   // ===== bootstrap =====
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get('token') || localStorage.getItem('navi_token') || '';
-
-  if (!token) {
-    window.location.href = 'login.html?err=' + encodeURIComponent('Session expired');
-  }
-
-  // Load user session dynamically if needed
-  let userInfo = null;
-  async function loadSession() {
-    try {
-      const res = await API.getUserSessionInfo(token);
-      if (res?.ok) userInfo = res.user;
-    } catch (err) {
-      console.error('Session load failed:', err);
-    }
-  }
+  const token     = "<?= token ?>";
+  const appUrl    = "<?= appUrl ?>";
+  const userLevel = "<?= userLevel ?>";
+  const userGroup = "<?= userGroup ?>";
+  const username  = "<?= username ?>";
 
   // ===== tiny helpers =====
   const $ = (id)=>document.getElementById(id);
@@ -460,7 +445,7 @@
   }
 
   function openDetail(shipId){
-    API
+    google.script.run
       .withSuccessHandler(res=>{
         if (!res?.ok){ alert(res?.msg || 'Failed to load detail'); return; }
         renderDetail(res);
@@ -512,7 +497,7 @@
 
   // ===== init =====
   document.addEventListener('DOMContentLoaded', ()=>{
-    API
+    google.script.run
       .withSuccessHandler(res=>{
         if (!res?.ok){ alert(res?.msg || 'Failed to load vessels'); return; }
         VIEWER = res.viewer || {canSearch:false};
@@ -542,5 +527,8 @@
     console.error('JS Error:', e.message, e.filename, e.lineno);
   });
   </script>
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/shim.google.run.js"></script>
 </body>
 </html>

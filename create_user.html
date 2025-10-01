@@ -47,6 +47,7 @@ textarea{min-height:92px;resize:vertical}
 .badge{display:inline-block;padding:2px 8px;border-radius:999px;background:#EEF2FF;color:#3730A3;font-size:.78rem;border:1px solid #E0E7FF}
 .divider{height:1px;background:var(--border);margin:10px 0}
 .req::after{content:" *"; color:var(--danger)}
+/* --- Pagination for Card 2 --- */
 .pager-top { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:-6px 0 10px; }
 .steps { display:flex; gap:6px; align-items:center; }
 .step-dot { width:9px; height:9px; border-radius:50%; background:#CBD5E1; border:1px solid #94A3B8; }
@@ -62,21 +63,19 @@ textarea{min-height:92px;resize:vertical}
 </style>
 </head>
 <body>
-  <script src="js/api.js"></script>
-  <script src="js/nav.js"></script>
-  <script>requireAuth();</script>
   <div class="wrap">
     <div class="card">
       <div class="title">
-        <img class="logo-banner" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='60'%3E%3Crect fill='%232563EB' width='200' height='60'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-family='Arial' font-size='18' font-weight='bold'%3ENAVI-SIMS%3C/text%3E%3C/svg%3E" alt="Logo">
+        <img class="logo-banner" src="<?!= logoUrl ?>" alt="Logo" onerror="this.style.display='none'">
         <div>
           <h2 style="margin:0">Create User</h2>
-          <div class="muted" id="userLevelDisplay">Loading...</div>
+          <div class="muted">Your level: <?= userLevel || '—' ?></div>
         </div>
         <button id="btnBack" class="btn alt" type="button" style="margin-left:auto">Back</button>
       </div>
 
       <div class="grid">
+        <!-- Card 1: Create Login -->
         <div class="panel" id="card1">
           <h3>Create Login Information</h3>
           
@@ -116,6 +115,7 @@ textarea{min-height:92px;resize:vertical}
           </div>
         </div>
 
+        <!-- Card 2: Detail Information -->
         <div class="panel" id="card2" style="display:none;">
           <div class="pager-top">
             <h3 id="card2Title" style="margin:0">User Details</h3>
@@ -143,31 +143,28 @@ textarea{min-height:92px;resize:vertical}
   </div>
 
   <script>
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get('token') || localStorage.getItem('navi_token') || '';
-
-  if (!token) {
-    window.location.href = 'login.html?err=' + encodeURIComponent('Session expired');
-  }
-
-  // Load user session dynamically if needed
-  let userInfo = null;
-  async function loadSession() {
-    try {
-      const res = await API.getUserSessionInfo(token);
-      if (res?.ok) userInfo = res.user;
-    } catch (err) {
-      console.error('Session load failed:', err);
-    }
-  }
-
+  // Allowed doc & image MIME types (superset, covers most Office + PDF + images)
   const ALLOWED_MIME = new Set([
-    'application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'application/vnd.ms-powerpoint','application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    'text/plain','image/jpeg','image/png','image/gif','image/webp','image/heic','image/heif','image/bmp','image/tiff'
+    // docs
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'text/plain',
+    // images
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif', 'image/bmp', 'image/tiff'
   ]);
-  const ALLOWED_EXT = new Set(['pdf','doc','docx','xls','xlsx','ppt','pptx','txt','jpg','jpeg','png','gif','webp','heic','heif','bmp','tif','tiff']);
+
+  // Fallback by extension in case some browsers don’t expose exact MIME
+  const ALLOWED_EXT = new Set([
+    'pdf','doc','docx','xls','xlsx','ppt','pptx','txt',
+    'jpg','jpeg','png','gif','webp','heic','heif','bmp','tif','tiff'
+  ]);
+
+  // 15 MB per file (tweak as needed)
   const MAX_FILE_MB = 15;
 
   function isAllowedFile(file) {
@@ -180,18 +177,33 @@ textarea{min-height:92px;resize:vertical}
   }
 
   function explainFileProblem(file) {
-    if (file && file.size > MAX_FILE_MB * 1024 * 1024) return `File too large (>${MAX_FILE_MB} MB): ${file.name}`;
-    return `Unsupported type: ${file ? file.name : '(none)'}`;
+    const parts = [];
+    if (file && file.size > MAX_FILE_MB * 1024 * 1024) {
+      parts.push(`File too large (>${MAX_FILE_MB} MB): ${file.name}`);
+    } else {
+      parts.push(`Unsupported type: ${file ? file.name : '(none)'}`);
+    }
+    return parts.join('. ');
   }
 
-  let LEVELS = [], GROUPS = [];
-  let CREATED_USER_ID = null, SELECTED_GROUP_ID = null, DETAIL_SCHEMA = null;
+  // From server (may be empty if doGet failed to inject — we’ll recover)
+  const LEVELS  = <?!= JSON.stringify(levelOptions || []) ?>; // [{id,name}]
+  const GROUPS  = <?!= JSON.stringify(groupOptions || []) ?>; // [{id,name}]
+  const token   = "<?= token ?>";
+  const appUrl  = "<?= appUrl ?>";
 
-  const $ = (id) => document.getElementById(id);
+  // State
+  let CREATED_USER_ID = null;
+  let SELECTED_GROUP_ID = null;
+  let DETAIL_SCHEMA = null;
+
+  // ---------- Utilities ----------
+  const $  = (id) => document.getElementById(id);
   const on = (el, ev, fn) => { if (el) el.addEventListener(ev, fn); };
 
   function setMsg(which, ok, text) {
-    const okBox  = $(`msg${which}Ok`), errBox = $(`msg${which}Err`);
+    const okBox  = $(`msg${which}Ok`);
+    const errBox = $(`msg${which}Err`);
     if (okBox) okBox.style.display = 'none';
     if (errBox) errBox.style.display = 'none';
     if (ok) { if (okBox) { okBox.textContent = text; okBox.style.display = 'block'; } }
@@ -208,6 +220,18 @@ textarea{min-height:92px;resize:vertical}
     return valid;
   }
 
+  // NOT a <form> submit — we enforce mandatory fields here
+  function validateMandatoryOrShow() {
+    if (enableCreateIfValid()) return true;
+    const missing = [];
+    if (!($('username')?.value || '').trim()) missing.push('Username');
+    if (!($('password')?.value || '').trim()) missing.push('Password');
+    if (!($('level')?.value || '').trim())    missing.push('User Level');
+    if (!($('group')?.value || '').trim())    missing.push('User Group');
+    setMsg(1, false, 'Please fill required fields: ' + missing.join(', ') + '.');
+    return false;
+  }
+
   function fileToBase64(file) {
     return new Promise((resolve, reject) => {
       const fr = new FileReader();
@@ -217,8 +241,10 @@ textarea{min-height:92px;resize:vertical}
     });
   }
 
-  const PAGE_SIZE = 8;
-  let currentPage = 0, totalPages = 0;
+  // ---- Pagination helpers (shared in this page) ----
+  const PAGE_SIZE = 8; // tweak page size here
+  let currentPage = 0;
+  let totalPages = 0;
 
   function renderSteps(container, count) {
     container.innerHTML = '';
@@ -237,36 +263,51 @@ textarea{min-height:92px;resize:vertical}
     if (!pages.length) return;
     currentPage = Math.max(0, Math.min(n, pages.length - 1));
     pages.forEach((p, i) => p.classList.toggle('active', i === currentPage));
-    $('btnPrev').disabled = (currentPage === 0);
-    $('btnNext').disabled = (currentPage === pages.length - 1);
-    renderSteps($('steps'), pages.length);
+    document.getElementById('btnPrev').disabled = (currentPage === 0);
+    document.getElementById('btnNext').disabled = (currentPage === pages.length - 1);
+    renderSteps(document.getElementById('steps'), pages.length);
   }
 
   function wirePagerKeys() {
     document.addEventListener('keydown', (e) => {
-      if ($('card2').style.display === 'none') return;
+      if (document.getElementById('card2').style.display === 'none') return;
       if (e.key === 'ArrowRight' && currentPage < totalPages - 1) goToPage(currentPage + 1);
       if (e.key === 'ArrowLeft'  && currentPage > 0)             goToPage(currentPage - 1);
     });
   }
 
   function buildDetailsForm(schema) {
-    const pager = $('detailsPager');
+    const pager = document.getElementById('detailsPager');
     const cols = schema.columns || [];
     const fileCols = new Set(schema.fileColumns || []);
 
+    // Build field HTML pieces
     const pieces = cols.map(col => {
       const label = col.replace(/_/g, ' ');
       if (fileCols.has(col)) {
-        return `<label data-col="${col}">${label}</label><input type="file" data-col="${col}" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp,.heic,image/*">`;
+        return `
+          <label data-col="${col}">${label}</label>
+          <input type="file" data-col="${col}"
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp,.heic,image/*">
+
+        `;
       } else {
         const isTextArea = /ADDRESS/i.test(col);
-        if (isTextArea) return `<label data-col="${col}">${label}</label><textarea data-col="${col}"></textarea>`;
+        if (isTextArea) {
+          return `
+            <label data-col="${col}">${label}</label>
+            <textarea data-col="${col}"></textarea>
+          `;
+        }
         const type = /EMAIL/i.test(col) ? 'email' : (/PHONE|CONTACT/i.test(col) ? 'tel' : 'text');
-        return `<label data-col="${col}">${label}</label><input type="${type}" data-col="${col}">`;
+        return `
+          <label data-col="${col}">${label}</label>
+          <input type="${type}" data-col="${col}">
+        `;
       }
     });
 
+    // Slice into pages
     pager.innerHTML = '';
     totalPages = Math.ceil(pieces.length / PAGE_SIZE) || 1;
     for (let i = 0; i < totalPages; i++) {
@@ -278,46 +319,33 @@ textarea{min-height:92px;resize:vertical}
     }
 
     currentPage = 0;
-    renderSteps($('steps'), totalPages);
-    $('btnPrev').disabled = (totalPages <= 1);
-    $('btnNext').disabled = (totalPages <= 1);
+    renderSteps(document.getElementById('steps'), totalPages);
+    document.getElementById('btnPrev').disabled = (totalPages <= 1);
+    document.getElementById('btnNext').disabled = (totalPages <= 1);
 
-    if (!$('btnPrev').dataset.wired) {
-      $('btnPrev').addEventListener('click', () => goToPage(currentPage - 1));
-      $('btnNext').addEventListener('click', () => goToPage(currentPage + 1));
-      $('btnPrev').dataset.wired = '1';
-      $('btnNext').dataset.wired = '1';
+    // Wire buttons (only once)
+    if (!document.getElementById('btnPrev').dataset.wired) {
+      document.getElementById('btnPrev').addEventListener('click', () => goToPage(currentPage - 1));
+      document.getElementById('btnNext').addEventListener('click', () => goToPage(currentPage + 1));
+      document.getElementById('btnPrev').dataset.wired = '1';
+      document.getElementById('btnNext').dataset.wired = '1';
       wirePagerKeys();
     }
   }
 
-  async function ensureLevelGroupOptions() {
-    try {
-      const res = await API.getLevelGroupOptions();
-      if (res?.ok) {
-        LEVELS = res.levels || [];
-        GROUPS = res.groups || [];
-        fillLevelGroup(LEVELS, GROUPS);
-      } else {
-        $('level').innerHTML = '<option value="">(Load failed)</option>';
-        $('group').innerHTML = '<option value="">(Load failed)</option>';
-        setMsg(1, false, res?.msg || 'Failed to load level/group options.');
-      }
-    } catch (err) {
-      $('level').innerHTML = '<option value="">(Load failed)</option>';
-      $('group').innerHTML = '<option value="">(Load failed)</option>';
-      setMsg(1, false, err?.message || 'Failed to load level/group options.');
-    }
-  }
-
   function fillLevelGroup(levels, groups) {
-    const levelSelect = $('level'), groupSelect = $('group');
+    const levelSelect = $('level');
+    const groupSelect = $('group');
+
+    // Levels
     if (Array.isArray(levels) && levels.length) {
       levelSelect.innerHTML = '<option value="">— Select Level —</option>' +
         levels.map(l => `<option value="${l.id}">${l.id} — ${l.name}</option>`).join('');
     } else {
       levelSelect.innerHTML = '<option value="">(No levels found)</option>';
     }
+
+    // Groups
     if (Array.isArray(groups) && groups.length) {
       groupSelect.innerHTML = '<option value="">— Select Group —</option>' +
         groups.map(g => `<option value="${g.id}">${g.id} — ${g.name}</option>`).join('');
@@ -326,36 +354,56 @@ textarea{min-height:92px;resize:vertical}
     }
   }
 
-  document.addEventListener('DOMContentLoaded', async () => {
-    // Load user session to show level
-    try {
-      const res = await API.getUserSessionInfo(token);
-      if (res?.ok && res.user) {
-        $('userLevelDisplay').textContent = `Your level: ${res.user.levelName || '—'}`;
-      }
-    } catch (err) {
-      console.error('Failed to load user session:', err);
+  async function ensureLevelGroupOptions() {
+    // First try what the server injected
+    if ((LEVELS && LEVELS.length) || (GROUPS && GROUPS.length)) {
+      fillLevelGroup(LEVELS, GROUPS);
+      return;
     }
+    // Fallback: ask server via RPC
+    google.script.run
+      .withSuccessHandler((res) => {
+        if (res?.ok) fillLevelGroup(res.levels || [], res.groups || []);
+        else {
+          $('level').innerHTML = '<option value="">(Load failed)</option>';
+          $('group').innerHTML = '<option value="">(Load failed)</option>';
+          setMsg(1, false, res?.msg || 'Failed to load level/group options.');
+        }
+      })
+      .withFailureHandler((err) => {
+        $('level').innerHTML = '<option value="">(Load failed)</option>';
+        $('group').innerHTML = '<option value="">(Load failed)</option>';
+        setMsg(1, false, err?.message || 'Failed to load level/group options.');
+      })
+      .getLevelGroupOptions();
+  }
 
+  // ---------- Initialize after DOM is ready ----------
+  document.addEventListener('DOMContentLoaded', () => {
+    // Populate dropdowns (with graceful fallback)
     ensureLevelGroupOptions();
 
+    // Back button
     on($('btnBack'), 'click', () => {
-      window.location.href = `dashboard.html?token=${encodeURIComponent(token)}`;
+      window.top.location.href = `${appUrl}?page=dashboard&token=${encodeURIComponent(token)}`;
     });
 
+    // Enable/disable Create based on mandatory fields
     ['username','password','level','group'].forEach(id=>{
       const el = $(id);
       if (!el) return;
       ['input','change','keyup','blur'].forEach(ev => on(el, ev, enableCreateIfValid));
     });
 
+    // Group change handler - load detail schema if user already created
     on($('group'), 'change', (e) => {
       SELECTED_GROUP_ID = e.target.value;
       if (CREATED_USER_ID && SELECTED_GROUP_ID) loadDetailSchema();
     });
 
-    on($('btnCreate'), 'click', async () => {
-      if (!enableCreateIfValid()) return;
+    // Create user
+    on($('btnCreate'), 'click', () => {
+      if (!validateMandatoryOrShow()) return;
 
       setMsg(1, true, ''); setMsg(1, false, '');
       const payload = {
@@ -365,21 +413,22 @@ textarea{min-height:92px;resize:vertical}
         groupId:  ($('group').value || '').trim()
       };
 
-      try {
-        const res = await API.createUserSubmit(token, payload);
-        if (!res?.ok) { setMsg(1,false,res?.msg||'Failed to create user.'); return; }
-        CREATED_USER_ID = res.userId;
-        SELECTED_GROUP_ID = payload.groupId;
-        $('createdUserId').textContent = CREATED_USER_ID;
-        $('createdBlock').style.display = 'inline-block';
-        setMsg(1, true, 'User created successfully!');
-        $('hUserId').textContent = CREATED_USER_ID;
-        loadDetailSchema();
-      } catch (err) {
-        setMsg(1,false, err?.message||'Unexpected error.');
-      }
+      google.script.run
+        .withSuccessHandler((res) => {
+          if (!res?.ok) { setMsg(1,false,res?.msg||'Failed to create user.'); return; }
+          CREATED_USER_ID = res.userId;
+          SELECTED_GROUP_ID = payload.groupId;
+          $('createdUserId').textContent = CREATED_USER_ID;
+          $('createdBlock').style.display = 'inline-block';
+          setMsg(1, true, `User created successfully!`);
+          $('hUserId').textContent = CREATED_USER_ID;
+          loadDetailSchema();
+        })
+        .withFailureHandler((err)=> setMsg(1,false, err?.message||'Unexpected error.'))
+        .createUserSubmit(token, payload);
     });
 
+    // Save details
     on($('btnSaveDetails'), 'click', async () => {
       setMsg(2, true, ''); setMsg(2, false, '');
       if (!CREATED_USER_ID || !SELECTED_GROUP_ID || !DETAIL_SCHEMA) {
@@ -395,8 +444,8 @@ textarea{min-height:92px;resize:vertical}
             const f = el.files && el.files[0];
             if (f) {
               if (!isAllowedFile(f)) {
-                setMsg(2, false, explainFileProblem(f));
-                return;
+                setMsg(2, false, explainFileProblem(f) + '. Allowed: docs (pdf/doc/docx/xls/xlsx/ppt/pptx/txt) & images (jpg/png/gif/webp/heic).');
+                return; // stop the save; user must fix the file
               }
               files[col] = { name:f.name, mime:f.type, dataBase64: await fileToBase64(f) };
             }
@@ -404,14 +453,16 @@ textarea{min-height:92px;resize:vertical}
             values[col] = (el.value || '').trim();
           }
         }
-        const res = await API.saveDetailForm(token, { userId:CREATED_USER_ID, groupId:SELECTED_GROUP_ID, values, files });
-        if(!res?.ok){ setMsg(2,false,res?.msg||'Failed to save details.'); return; }
-        setMsg(2,true,res.msg||'Details saved successfully!');
+        google.script.run
+          .withSuccessHandler((res)=>{ if(!res?.ok){ setMsg(2,false,res?.msg||'Failed to save details.'); return; } setMsg(2,true,res.msg||'Details saved successfully!'); })
+          .withFailureHandler((err)=> setMsg(2,false, err?.message||'Unexpected error.'))
+          .saveDetailForm(token, { userId:CREATED_USER_ID, groupId:SELECTED_GROUP_ID, values, files });
       } catch (err) {
-        setMsg(2, false, 'Error: ' + err.message);
+        setMsg(2, false, 'Error processing files: ' + err.message);
       }
     });
 
+    // Reset buttons
     on($('btnReset1'), 'click', () => {
       ['username','password','level','group'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
       setMsg(1, true, ''); setMsg(1, false, '');
@@ -425,21 +476,23 @@ textarea{min-height:92px;resize:vertical}
       setMsg(2, true, ''); setMsg(2, false, '');
     });
 
-    async function loadDetailSchema() {
-      try {
-        const schema = await API.getDetailFormSchema(token, SELECTED_GROUP_ID);
-        $('card2').style.display='block';
-        if(!schema?.ok){ setMsg(2,false,schema?.msg||'Failed to load detail form.'); return; }
-        DETAIL_SCHEMA = schema;
-        buildDetailsForm(schema);
-        $('card2Title').textContent = (SELECTED_GROUP_ID === '0') ? 'Client Details' : 'Staff Details';
-        setMsg(2,true,'');
-      } catch (err) {
-        $('card2').style.display='block';
-        setMsg(2,false, err?.message||'Unexpected error.');
-      }
+    function loadDetailSchema() {
+      google.script.run
+        .withSuccessHandler((schema)=>{
+          $('card2').style.display='block';
+          if(!schema?.ok){ setMsg(2,false,schema?.msg||'Failed to load detail form.'); return; }
+          DETAIL_SCHEMA = schema;
+          buildDetailsForm(schema);
+          $('card2Title').textContent = (SELECTED_GROUP_ID === '0') ? 'Client Details' : 'Staff Details';
+          setMsg(2,true,'');
+        })
+        .withFailureHandler((err)=>{ $('card2').style.display='block'; setMsg(2,false, err?.message||'Unexpected error.'); })
+        .getDetailFormSchema(token, SELECTED_GROUP_ID);
     }
   });
   </script>
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/shim.google.run.js"></script>
 </body>
 </html>

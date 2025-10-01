@@ -43,6 +43,7 @@ textarea{min-height:92px;resize:vertical}
 .hint,.note{font-size:.8rem;color:var(--muted)}
 .note a{color:var(--primary);text-decoration:none}
 .note a:hover{text-decoration:underline}
+/* --- Pagination for Card 2 --- */
 .pager-top { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:-6px 0 10px; }
 .steps { display:flex; gap:6px; align-items:center; }
 .step-dot { width:9px; height:9px; border-radius:50%; background:#CBD5E1; border:1px solid #94A3B8; }
@@ -58,21 +59,19 @@ textarea{min-height:92px;resize:vertical}
 </style>
 </head>
 <body>
-  <script src="js/api.js"></script>
-  <script src="js/nav.js"></script>
-  <script>requireAuth();</script>
   <div class="wrap">
     <div class="card">
       <div class="title">
-        <img class="logo-banner" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='60'%3E%3Crect fill='%232563EB' width='200' height='60'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-family='Arial' font-size='18' font-weight='bold'%3ENAVI-SIMS%3C/text%3E%3C/svg%3E" alt="Logo">
+        <img class="logo-banner" src="<?!= logoUrl ?>" alt="Logo" onerror="this.style.display='none'">
         <div>
           <h2 style="margin:0">Edit User</h2>
-          <div class="muted" id="userLevelDisplay">Loading...</div>
+          <div class="muted">Your level: <?= userLevel || '—' ?></div>
         </div>
         <button id="btnBack" class="btn alt" type="button" style="margin-left:auto">Back</button>
       </div>
 
       <div class="grid">
+        <!-- Card 0: select user -->
         <div class="panel" id="card0">
           <h3>Find User</h3>
           <label for="selUser">Select User</label>
@@ -82,6 +81,7 @@ textarea{min-height:92px;resize:vertical}
           <div id="msg0Err" class="msg err"></div>
         </div>
 
+        <!-- Card 1: Login info -->
         <div class="panel" id="card1" style="display:none;">
           <h3>Login Information</h3>
           <div class="hint">Editing USER_ID <span id="hUserId"></span></div>
@@ -114,6 +114,7 @@ textarea{min-height:92px;resize:vertical}
           <div id="msg1Err" class="msg err"></div>
         </div>
 
+        <!-- Card 2: Detail info -->
         <div class="panel" id="card2" style="display:none;">
           <div class="pager-top">
             <h3 id="card2Title" style="margin:0">Details</h3>
@@ -139,26 +140,28 @@ textarea{min-height:92px;resize:vertical}
   </div>
 
   <script>
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get('token') || localStorage.getItem('navi_token') || '';
+  // Allowed doc & image MIME types (superset, covers most Office + PDF + images)
+  const ALLOWED_MIME = new Set([
+    // docs
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'text/plain',
+    // images
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif', 'image/bmp', 'image/tiff'
+  ]);
 
-  if (!token) {
-    window.location.href = 'login.html?err=' + encodeURIComponent('Session expired');
-  }
+  // Fallback by extension in case some browsers don’t expose exact MIME
+  const ALLOWED_EXT = new Set([
+    'pdf','doc','docx','xls','xlsx','ppt','pptx','txt',
+    'jpg','jpeg','png','gif','webp','heic','heif','bmp','tif','tiff'
+  ]);
 
-  // Load user session dynamically if needed
-  let userInfo = null;
-  async function loadSession() {
-    try {
-      const res = await API.getUserSessionInfo(token);
-      if (res?.ok) userInfo = res.user;
-    } catch (err) {
-      console.error('Session load failed:', err);
-    }
-  }
-
-  const ALLOWED_MIME = new Set(['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/vnd.ms-powerpoint','application/vnd.openxmlformats-officedocument.presentationml.presentation','text/plain','image/jpeg','image/png','image/gif','image/webp','image/heic','image/heif','image/bmp','image/tiff']);
-  const ALLOWED_EXT = new Set(['pdf','doc','docx','xls','xlsx','ppt','pptx','txt','jpg','jpeg','png','gif','webp','heic','heif','bmp','tif','tiff']);
+  // 15 MB per file (tweak as needed)
   const MAX_FILE_MB = 15;
 
   function isAllowedFile(file) {
@@ -171,27 +174,40 @@ textarea{min-height:92px;resize:vertical}
   }
 
   function explainFileProblem(file) {
-    if (file && file.size > MAX_FILE_MB * 1024 * 1024) return `File too large (>${MAX_FILE_MB} MB): ${file.name}`;
-    return `Unsupported type: ${file ? file.name : '(none)'}`;
+    const parts = [];
+    if (file && file.size > MAX_FILE_MB * 1024 * 1024) {
+      parts.push(`File too large (>${MAX_FILE_MB} MB): ${file.name}`);
+    } else {
+      parts.push(`Unsupported type: ${file ? file.name : '(none)'}`);
+    }
+    return parts.join('. ');
   }
 
-  let LEVELS = [], GROUPS = [];
-  let CUR_USER_ID = null, CUR_GROUP_ID = null, DETAIL_SCHEMA = null, SNAPSHOT_BASIC = null;
+  // From server
+  const LEVELS = <?!= JSON.stringify(levelOptions) ?>; // [{id,name}]
+  const GROUPS = <?!= JSON.stringify(groupOptions) ?>; // [{id,name}]
+  const token  = "<?= token ?>";
+  const appUrl = "<?= appUrl ?>";
+
+  // State
+  let CUR_USER_ID = null;
+  let CUR_GROUP_ID = null;
+  let DETAIL_SCHEMA = null;
+  let SNAPSHOT_BASIC = null;   // never contains password anymore
+
   let DIRTY1 = false, DIRTY2 = false;
 
-  const $ = (id) => document.getElementById(id);
+  // Utils
+  const $  = (id) => document.getElementById(id);
   const on = (el, ev, fn) => { if (el) el.addEventListener(ev, fn); };
-
   function setMsg(which, ok, text) {
     const okBox  = $(`msg${which}Ok`), errBox = $(`msg${which}Err`);
     if (okBox) okBox.style.display = 'none'; if (errBox) errBox.style.display = 'none';
     if (ok)  { if (okBox)  { okBox.textContent = text; okBox.style.display = 'block'; } }
     else     { if (errBox) { errBox.textContent = text; errBox.style.display = 'block'; } }
   }
-
   function fileToBase64(file){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(file);});}
   function renderFileRef(v){const id=/^[A-Za-z0-9_-]{20,}$/.test(String(v));return id?`<a href="https://drive.google.com/file/d/${v}/view" target="_blank" rel="noopener">open</a>`:String(v||'');}
-
   function fillSelect(sel, options, valueToSet) {
     if (!sel) return;
     sel.innerHTML = options.map(o => `<option value="${String(o.id)}">${o.id} — ${o.name}</option>`).join('');
@@ -199,8 +215,10 @@ textarea{min-height:92px;resize:vertical}
     if (sel.value !== want && want !== '') { const opt=document.createElement('option'); opt.value=want; opt.textContent=want; sel.prepend(opt); sel.value=want; }
   }
 
+  // ===== Pagination state (scoped to this page) =====
   const PAGE_SIZE = 8;
-  let currentPage = 0, totalPages = 0;
+  let currentPage = 0;
+  let totalPages = 0;
 
   function renderSteps(container, count) {
     if (!container) return;
@@ -220,35 +238,51 @@ textarea{min-height:92px;resize:vertical}
     if (!pages.length) return;
     currentPage = Math.max(0, Math.min(n, pages.length - 1));
     pages.forEach((p, i) => p.classList.toggle('active', i === currentPage));
-    $('btnPrev').disabled = (currentPage === 0);
-    $('btnNext').disabled = (currentPage === pages.length - 1);
-    renderSteps($('steps'), pages.length);
+
+    const prevBtn = document.getElementById('btnPrev');
+    const nextBtn = document.getElementById('btnNext');
+    if (prevBtn) prevBtn.disabled = (currentPage === 0);
+    if (nextBtn) nextBtn.disabled = (currentPage === pages.length - 1);
+
+    renderSteps(document.getElementById('steps'), pages.length);
+
+    // (Optional) show Save only on last page:
+    // const saveBtn = document.getElementById('btnSave2');
+    // if (saveBtn) saveBtn.style.visibility = (currentPage === pages.length - 1 ? 'visible' : 'hidden');
   }
 
   function wirePagerKeysOnce() {
     if (document.body.dataset.pagerKeysWired === '1') return;
     document.addEventListener('keydown', (e) => {
-      if ($('card2').style.display === 'none') return;
+      if (document.getElementById('card2').style.display === 'none') return;
       if (e.key === 'ArrowRight' && currentPage < totalPages - 1) goToPage(currentPage + 1);
       if (e.key === 'ArrowLeft'  && currentPage > 0)             goToPage(currentPage - 1);
     });
     document.body.dataset.pagerKeysWired = '1';
   }
 
+  function renderFileRef(v){
+    const id=/^[A-Za-z0-9_-]{20,}$/.test(String(v));
+    return id?`<a href="https://drive.google.com/file/d/${v}/view" target="_blank" rel="noopener">open</a>`:String(v||'');
+  }
+
+  // ===== REPLACEMENT: buildDetailsFormWithValues (paginated) =====
   function buildDetailsFormWithValues(schema) {
-    const pager = $('detailsPager');
+    const pager = document.getElementById('detailsPager');
     if (!pager) return;
 
     const cols = schema.columns || [];
     const fileCols = new Set(schema.fileColumns || []);
     const existing = schema.existing || {};
 
+    // Build parts for each field (label + control [+ note])
     const pieces = cols.map(col => {
       const label = col.replace(/_/g,' ');
       if (fileCols.has(col)) {
         const cur = existing[col] != null ? String(existing[col]) : '';
         const noteHtml = cur ? `<div class="note">Current: ${renderFileRef(cur)}</div>` : '';
-        return `<label data-col="${col}">${label}</label><input type="file" data-col="${col}" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp,.heic,image/*">${noteHtml}`;
+        return `<label data-col="${col}">${label}</label><input type="file" data-col="${col}"
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp,.heic,image/*">${noteHtml}`;
       } else {
         const val = existing[col] != null ? String(existing[col]) : '';
         const isTextArea = /ADDRESS/i.test(col);
@@ -258,145 +292,134 @@ textarea{min-height:92px;resize:vertical}
       }
     });
 
+    // Slice into pages & render
     pager.innerHTML = '';
     totalPages = Math.ceil(pieces.length / PAGE_SIZE) || 1;
 
     for (let i = 0; i < totalPages; i++) {
       const page = document.createElement('div');
-      page.className = 'page';
+      page.className = 'page';  // we'll activate via goToPage(0)
       page.dataset.page = i;
       page.innerHTML = pieces.slice(i * PAGE_SIZE, (i + 1) * PAGE_SIZE).join('');
       pager.appendChild(page);
     }
 
+    // Wire buttons (once)
+    const prevBtn = document.getElementById('btnPrev');
+    const nextBtn = document.getElementById('btnNext');
+    if (prevBtn && !prevBtn.dataset.wired) {
+      prevBtn.addEventListener('click', () => goToPage(currentPage - 1));
+      prevBtn.dataset.wired = '1';
+    }
+    if (nextBtn && !nextBtn.dataset.wired) {
+      nextBtn.addEventListener('click', () => goToPage(currentPage + 1));
+      nextBtn.dataset.wired = '1';
+    }
+
+    // Show first page & steps
     currentPage = 0;
-    goToPage(0);
+    goToPage(0); // <-- ensures .active is set and buttons are enabled/disabled properly
     wirePagerKeysOnce();
   }
 
-  async function loadUserById(id) {
+  function loadUserById(id) {
     setMsg(0,true,''); setMsg(0,false,'');
-    try {
-      const res = await API.getUserBasic(token, id);
-      if (!res || !res.ok) { setMsg(0,false,(res&&res.msg)||'Not found.'); return; }
-      const b = res.basic;
+    google.script.run
+      .withSuccessHandler((res) => {
+        if (!res || !res.ok) { setMsg(0,false,(res&&res.msg)||'Not found.'); return; }
+        const b = res.basic;
 
-      CUR_USER_ID  = b.USER_ID;
-      CUR_GROUP_ID = String(b.USER_GROUP || '').trim();
-      SNAPSHOT_BASIC = b;
+        CUR_USER_ID  = b.USER_ID;
+        CUR_GROUP_ID = String(b.USER_GROUP || '').trim();
+        SNAPSHOT_BASIC = b;
 
-      $('hUserId').textContent = CUR_USER_ID;
-      $('userIdDisplay').value = CUR_USER_ID;
-      $('username').value = b.USERNAME || '';
-      $('password').value = '';
-      fillSelect($('level'),  LEVELS, (b.USER_LEVELID || ''));
-      fillSelect($('group'),  GROUPS, CUR_GROUP_ID);
-      $('card1').style.display = 'block';
+        $('hUserId').textContent = CUR_USER_ID;
+        $('userIdDisplay').value = CUR_USER_ID;
 
-      const schema = await API.getDetailFormSchemaWithValues(token, CUR_USER_ID, CUR_GROUP_ID);
-      $('card2').style.display = 'block';
-      if (!schema || !schema.ok) { setMsg(2,false,(schema&&schema.msg)||'Failed to load details.'); return; }
-      DETAIL_SCHEMA = schema;
-      buildDetailsFormWithValues(schema);
-      $('card2Title').textContent = (CUR_GROUP_ID === '0') ? 'Client Details' : 'Staff Details';
-      setMsg(2,true,'');
-    } catch (err) {
-      setMsg(0,false, err&&err.message?err.message:'Unexpected error.');
-    }
+        $('username').value = b.USERNAME || '';
+        $('password').value = '';
+        fillSelect($('level'),  LEVELS, (b.USER_LEVELID || ''));
+        fillSelect($('group'),  GROUPS, CUR_GROUP_ID);
+
+        $('card1').style.display = 'block';
+
+        google.script.run
+          .withSuccessHandler((schema) => {
+            $('card2').style.display = 'block';
+            if (!schema || !schema.ok) { setMsg(2,false,(schema&&schema.msg)||'Failed to load details.'); return; }
+            DETAIL_SCHEMA = schema;
+            buildDetailsFormWithValues(schema);
+            $('card2Title').textContent = (CUR_GROUP_ID === '0') ? 'Client Details' : 'Staff Details';
+            setMsg(2,true,'');
+          })
+          .withFailureHandler((err)=>{ $('card2').style.display='block'; setMsg(2,false, err&&err.message?err.message:'Unexpected error.'); })
+          .getDetailFormSchemaWithValues(token, CUR_USER_ID, CUR_GROUP_ID);
+      })
+      .withFailureHandler((err)=> setMsg(0,false, err&&err.message?err.message:'Unexpected error.'))
+      .getUserBasic(token, id, '');
   }
 
-  document.addEventListener('DOMContentLoaded', async () => {
-    // Load session info
-    try {
-      const sessRes = await API.getUserSessionInfo(token);
-      if (sessRes?.ok && sessRes.user) {
-        $('userLevelDisplay').textContent = `Your level: ${sessRes.user.levelName || '—'}`;
-      }
-    } catch (err) {
-      console.error('Failed to load session:', err);
-    }
+  document.addEventListener('DOMContentLoaded', () => {
+    on($('btnBack'),'click',()=>{ if(DIRTY1||DIRTY2){ if(!confirm('You have unsaved changes. Leave without saving?')) return; } window.top.location.href = `${appUrl}?page=dashboard&token=${encodeURIComponent(token)}`; });
 
-    // Load levels & groups
-    try {
-      const lgRes = await API.getLevelGroupOptions();
-      if (lgRes?.ok) {
-        LEVELS = lgRes.levels || [];
-        GROUPS = lgRes.groups || [];
-      }
-    } catch (err) {
-      console.error('Failed to load level/group options:', err);
-    }
-
-    on($('btnBack'),'click',()=>{ 
-      if(DIRTY1||DIRTY2){ if(!confirm('You have unsaved changes. Leave without saving?')) return; } 
-      window.location.href = `dashboard.html?token=${encodeURIComponent(token)}`;
-    });
-
-    // Load user list
-    try {
-      const res = await API.getEditableUserList(token);
-      const sel = $('selUser');
-      if (!res || !res.ok) { sel.innerHTML = '<option value="">(Failed to load)</option>'; }
-      else {
+    // Populate user list
+    google.script.run
+      .withSuccessHandler((res) => {
+        const sel = $('selUser');
+        if (!sel) return;
+        if (!res || !res.ok) { sel.innerHTML = '<option value="">(Failed to load)</option>'; return; }
         const opts = ['<option value="">— Choose a user —</option>']
           .concat(res.users.map(u => `<option value="${u.userId}">${u.userId} — ${u.username} (Level ${u.levelId}: ${u.levelName})</option>`));
         sel.innerHTML = opts.join('');
-      }
-    } catch (err) {
-      $('selUser').innerHTML = '<option value="">(Failed to load)</option>';
-    }
+      })
+      .withFailureHandler(() => { $('selUser').innerHTML = '<option value="">(Failed to load)</option>'; })
+      .getEditableUserList(token);
 
-    on($('selUser'),'change', (e)=>{ 
-      const id = e.target.value; 
-      if(!id) return; 
-      if(DIRTY1||DIRTY2){ if(!confirm('You have unsaved changes. Switch user?')) return; } 
-      loadUserById(id); 
-    });
+    on($('selUser'),'change', (e)=>{ const id = e.target.value; if(!id) return; if(DIRTY1||DIRTY2){ if(!confirm('You have unsaved changes. Switch user?')) return; } loadUserById(id); });
 
-    on($('togglePw'),'click',()=>{
-      const pw=$('password'); 
-      if(!pw) return; 
-      const hidden=pw.type==='password'; 
-      pw.type=hidden?'text':'password'; 
-      $('togglePw').textContent=hidden?'Hide':'Show';
-    });
+    // Password toggle
+    on($('togglePw'),'click',()=>{const pw=$('password'); if(!pw) return; const hidden=pw.type==='password'; pw.type=hidden?'text':'password'; $('togglePw').textContent=hidden?'Hide':'Show';});
 
-    ['password','level','group'].forEach(id=>{
-      const el=$(id); if(!el)return; 
-      on(el,'input',()=>{DIRTY1=true;}); 
-      on(el,'change',()=>{DIRTY1=true;});
-    });
+    // Dirty flags for Card 1 (except username which is readonly)
+    ['password','level','group'].forEach(id=>{const el=$(id); if(!el)return; on(el,'input',()=>{DIRTY1=true;}); on(el,'change',()=>{DIRTY1=true;});});
 
-    on($('btnSave1'),'click', async ()=>{
+    // Save basics
+    on($('btnSave1'),'click',()=>{
       setMsg(1,true,''); setMsg(1,false,'');
       if (!CUR_USER_ID) { setMsg(1,false,'Choose a user first.'); return; }
       const payload = {
         userId:  CUR_USER_ID,
-        username: $('username').value.trim(),
+        username: $('username').value.trim(), // immutable on server
         password: ($('password').value.trim() || null),
         levelId:  String(($('level')||{}).value || '').trim(),
         groupId:  String(($('group')||{}).value || '').trim()
       };
-      try {
-        const res = await API.updateUserBasic(token, payload);
-        if(!res || !res.ok){ setMsg(1,false,(res&&res.msg)||'Failed to save.'); return; }
-        setMsg(1,true,res.msg||'Saved.');
-        DIRTY1=false;
-        if (payload.groupId !== CUR_GROUP_ID) {
-          CUR_GROUP_ID = payload.groupId;
-          const schema = await API.getDetailFormSchemaWithValues(token, CUR_USER_ID, CUR_GROUP_ID);
-          $('card2').style.display='block';
-          if(!schema || !schema.ok){ setMsg(2,false,(schema&&schema.msg)||'Failed to load details.'); return; }
-          DETAIL_SCHEMA=schema; buildDetailsFormWithValues(schema);
-          $('card2Title').textContent = (CUR_GROUP_ID === '0') ? 'Client Details' : 'Staff Details';
-          setMsg(2,true,'');
-        }
-        $('password').value='';
-      } catch (err) {
-        setMsg(1,false, err&&err.message?err.message:'Unexpected error.');
-      }
+      google.script.run
+        .withSuccessHandler((res)=>{
+          if(!res || !res.ok){ setMsg(1,false,(res&&res.msg)||'Failed to save.'); return; }
+          setMsg(1,true,res.msg||'Saved.');
+          DIRTY1=false;
+          // If group changed, reload detail schema
+          if (payload.groupId !== CUR_GROUP_ID) {
+            CUR_GROUP_ID = payload.groupId;
+            google.script.run
+              .withSuccessHandler((schema)=>{
+                $('card2').style.display='block';
+                if(!schema || !schema.ok){ setMsg(2,false,(schema&&schema.msg)||'Failed to load details.'); return; }
+                DETAIL_SCHEMA=schema; buildDetailsFormWithValues(schema);
+                $('card2Title').textContent = (CUR_GROUP_ID === '0') ? 'Client Details' : 'Staff Details';
+                setMsg(2,true,'');
+              })
+              .withFailureHandler((err)=>{ $('card2').style.display='block'; setMsg(2,false, err&&err.message?err.message:'Unexpected error.'); })
+              .getDetailFormSchemaWithValues(token, CUR_USER_ID, CUR_GROUP_ID);
+          }
+          $('password').value=''; // clear after save
+        })
+        .withFailureHandler((err)=> setMsg(1,false, err&&err.message?err.message:'Unexpected error.'))
+        .updateUserBasic(token, payload);
     });
 
+    // Reset basics
     on($('btnReset1'),'click',()=>{
       if(!SNAPSHOT_BASIC) return;
       $('userIdDisplay').value = SNAPSHOT_BASIC.USER_ID || '';
@@ -407,19 +430,21 @@ textarea{min-height:92px;resize:vertical}
       DIRTY1=false; setMsg(1,true,''); setMsg(1,false,'');
     });
 
-    on($('btnDelete'),'click', async ()=>{
+    // Delete user
+    on($('btnDelete'),'click',()=>{
       if(!CUR_USER_ID){ setMsg(1,false,'Choose a user first.'); return; }
       if(!confirm(`Delete USER_ID ${CUR_USER_ID}? This removes login & details.`)) return;
-      try {
-        const res = await API.deleteUser(token, CUR_USER_ID);
-        if(!res || !res.ok){ setMsg(1,false,(res&&res.msg)||'Delete failed.'); return; }
-        alert('User deleted.');
-        window.location.href = `dashboard.html?token=${encodeURIComponent(token)}`;
-      } catch (err) {
-        setMsg(1,false, err&&err.message?err.message:'Unexpected error.');
-      }
+      google.script.run
+        .withSuccessHandler((res)=>{
+          if(!res || !res.ok){ setMsg(1,false,(res&&res.msg)||'Delete failed.'); return; }
+          alert('User deleted.');
+          window.top.location.href = `${appUrl}?page=dashboard&token=${encodeURIComponent(token)}`;
+        })
+        .withFailureHandler((err)=> setMsg(1,false, err&&err.message?err.message:'Unexpected error.'))
+        .deleteUser(token, CUR_USER_ID);
     });
 
+    // Save/Reset details
     on($('btnSave2'), 'click', async ()=>{
       setMsg(2,true,''); setMsg(2,false,'');
       if(!CUR_USER_ID || CUR_GROUP_ID==null || !DETAIL_SCHEMA){ setMsg(2,false,'Choose a user first.'); return; }
@@ -433,9 +458,10 @@ textarea{min-height:92px;resize:vertical}
         if (fileCols.has(col)) {
           const f = el.files && el.files[0];
           if (f) {
+            // 👇 Validate type + size BEFORE uploading
             if (!isAllowedFile(f)) {
-              setMsg(2, false, explainFileProblem(f));
-              return;
+              setMsg(2, false, explainFileProblem(f) + '. Allowed: docs (pdf/doc/docx/xls/xlsx/ppt/pptx/txt) & images (jpg/png/gif/webp/heic).');
+              return; // stop the save so the user can pick a valid file
             }
             const b64 = await fileToBase64(f);
             files[col] = { name: f.name, mime: f.type, dataBase64: b64 };
@@ -445,14 +471,17 @@ textarea{min-height:92px;resize:vertical}
         }
       }
 
-      try {
-        const res = await API.saveDetailFormUpdate(token, { userId:CUR_USER_ID, groupId:CUR_GROUP_ID, values, files });
-        if(!res || !res.ok){ setMsg(2,false,(res&&res.msg)||'Failed to save details.'); return; } 
-        setMsg(2,true,res.msg||'Details saved.'); 
-        DIRTY2=false;
-      } catch (err) {
-        setMsg(2,false, err&&err.message?err.message:'Unexpected error.');
-      }
+      google.script.run
+        .withSuccessHandler((res)=>{ 
+          if(!res || !res.ok){ 
+            setMsg(2,false,(res&&res.msg)||'Failed to save details.'); 
+            return; 
+          } 
+          setMsg(2,true,res.msg||'Details saved.'); 
+          DIRTY2=false; 
+        })
+        .withFailureHandler((err)=> setMsg(2,false, err&&err.message?err.message:'Unexpected error.'))
+        .saveDetailFormUpdate(token, { userId:CUR_USER_ID, groupId:CUR_GROUP_ID, values, files });
     });
 
     on($('btnReset2'),'click',()=>{ if(!DETAIL_SCHEMA) return; buildDetailsFormWithValues(DETAIL_SCHEMA); DIRTY2=false; setMsg(2,true,''); setMsg(2,false,''); });
@@ -460,5 +489,8 @@ textarea{min-height:92px;resize:vertical}
     window.addEventListener('beforeunload', (e)=>{ if(DIRTY1||DIRTY2){ e.preventDefault(); e.returnValue=''; }});
   });
   </script>
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/shim.google.run.js"></script>
 </body>
 </html>

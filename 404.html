@@ -1,39 +1,29 @@
-<!-- /404.html -->
 <!doctype html>
-<html lang="en">
+<html>
 <head>
   <meta charset="utf-8" />
   <title>Redirecting…</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 2rem; }
-  </style>
+  <meta name="robots" content="noindex">
 </head>
 <body>
-  <p>Redirecting…</p>
-  <script>
-    (function () {
-      var u = new URL(location.href);
+<script>
+// Handle GitHub Pages deep-link routing:
+// - /?page=dashboard  -> dashboard.html
+// - /dashboard        -> /dashboard.html
+// - else              -> login.html
+(function(){
+  var u = new URL(location.href);
+  var p = u.searchParams.get('page');
+  if (p) { location.replace(p + '.html' + u.search); return; }
 
-      // If query has ?page=foo, redirect to foo.html (preserve other params)
-      var p = u.searchParams.get('page');
-      if (p) {
-        u.searchParams.delete('page');
-        location.replace(p + '.html' + u.search);
-        return;
-      }
-
-      // If path is extensionless (e.g., /dashboard), add .html
-      var path = u.pathname.replace(/\/+$/, '');
-      var last = path.split('/').pop();
-      if (last && !/\.[a-z0-9]+$/i.test(last)) {
-        location.replace(last + '.html' + u.search);
-        return;
-      }
-
-      // Fallback to login
-      location.replace('login.html' + u.search);
-    })();
-  </script>
+  var path = location.pathname.replace(/\/+$/, '');
+  var leaf = path.split('/').pop() || '';
+  if (leaf && !/\.[a-z0-9]+$/i.test(leaf)) {
+    location.replace(leaf + '.html' + location.search);
+    return;
+  }
+  location.replace('login.html');
+})();
+</script>
 </body>
 </html>

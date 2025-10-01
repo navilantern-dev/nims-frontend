@@ -197,9 +197,6 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
   </style>
 </head>
 <body>
-  <script src="js/api.js"></script>
-  <script src="js/nav.js"></script>
-  <script>requireAuth();</script>
   <div class="wrap">
     <div class="card">
       <div class="title">
@@ -392,25 +389,10 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
       <div id="msgSaveErr" class="msg err"></div>
     </div>
   </div>
+
   <script>
-  // NEW (JavaScript):
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get('token') || localStorage.getItem('navi_token') || '';
-
-  if (!token) {
-    window.location.href = 'login.html?err=' + encodeURIComponent('Session expired');
-  }
-
-  // Load user session dynamically if needed
-  let userInfo = null;
-  async function loadSession() {
-    try {
-      const res = await API.getUserSessionInfo(token);
-      if (res?.ok) userInfo = res.user;
-    } catch (err) {
-      console.error('Session load failed:', err);
-    }
-  }
+  const token  = "<?= token ?>";
+  const appUrl = "<?= appUrl ?>";
 
   // ===== File validation rules for Inventory attachments =====
   const MAX_FILE_MB = 10;
@@ -463,7 +445,7 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
   function showShipIdBadge(){ $('shipIdBadge').textContent = 'SHIP_ID: ' + (SHIP_ID || '—'); }
   function requestNewShipId(){
     setMsg('msgTop', true, ''); setMsg('msgTop', false, '');
-    API
+    google.script.run
       .withSuccessHandler((res)=>{ if(!res?.ok || !/^\d{4}$/.test(res.shipId||'')){ setMsg('msgTop', false, res?.msg||'Failed to get SHIP_ID'); return; } SHIP_ID = String(res.shipId); showShipIdBadge(); })
       .withFailureHandler((err)=> setMsg('msgTop', false, err?.message || 'Failed to get SHIP_ID'))
       .getNewShipId(token);
@@ -493,17 +475,15 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
     o.disabled = true; sel.add(o); sel.disabled = true;
   }
 
-  async function loadOwnerNames() {
-    try {
-      const res = await API.getOwnerNames(token);
-      if (res?.ok) {
-        setOwnerNames(res.names || []);
-      } else {
-        showOwnerNamesError(res?.msg || 'Failed to load owner names');
-      }
-    } catch (err) {
-      showOwnerNamesError(err?.message || 'Network error');
-    }
+  function loadOwnerNames(){
+    if (typeof google === 'undefined' || !google.script?.run) { showOwnerNamesError('Apps Script unavailable'); return; }
+    google.script.run
+      .withSuccessHandler(res => {
+        if (res?.ok) setOwnerNames(res.names || []);
+        else showOwnerNamesError(res?.msg);
+      })
+      .withFailureHandler(err => showOwnerNamesError(err?.message))
+      .getOwnerNames(token);
   }
 
   // MAIN
@@ -798,7 +778,7 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
   }
 
   function loadInventoryNames(){
-    API
+    google.script.run
       .withSuccessHandler(res => { if (res?.ok) setInventoryNames(res.names || []); })
       .withFailureHandler(_ => {}) // silent
       .getInventoryNames(token);
@@ -829,7 +809,7 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
 
     $('btnSaveAll').disabled = true;
 
-    API
+    google.script.run
       .withSuccessHandler((res)=>{
         $('btnSaveAll').disabled = false;
         if (!res?.ok) { setMsg('msgSave', false, res?.msg || 'Save failed.'); return; }
@@ -1211,5 +1191,8 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
     window.upgradeInventoryNameSelect = upgradeInventoryNameSelect;
   })();
   </script>
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/shim.google.run.js"></script>
 </body>
 </html>
