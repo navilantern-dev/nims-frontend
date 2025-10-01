@@ -292,8 +292,84 @@ input:focus{border-color:var(--ring); box-shadow:0 0 0 4px color-mix(in oklab, v
 
     })();
   </script>
-  <!-- <script src="js/api.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/nav.js"></script>
-  <script src="js/shim.google.run.js"></script> -->
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const username = $('username');
+    const password = $('password');
+    const btn = $('btnLogin');
+    const errBox = $('errBox');
+    const warnBox = $('warnBox');
+    const strengthIndicator = $('passwordStrength');
+
+    function setError(msg) {
+      errBox.textContent = msg || '';
+      errBox.style.display = msg ? 'block' : 'none';
+      warnBox.style.display = 'none';
+    }
+    function setWarning(msg) {
+      warnBox.textContent = msg || '';
+      warnBox.style.display = msg ? 'block' : 'none';
+      errBox.style.display = 'none';
+    }
+
+    // Optional: quick connectivity check (shows clearer error if GAS_BASE is wrong)
+    async function preflightPing() {
+      try {
+        const res = await API.ping();
+        // If your backend doesn't implement "ping", res.ok will be false but the request succeeded
+        return true;
+      } catch (e) {
+        setError('Cannot reach server. Check your GAS URL / deployment access.');
+        return false;
+      }
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setError(''); setWarning('');
+      const u = username.value.trim();
+      const p = password.value;
+
+      if (!u || !p) return setError('Please enter both username and password.');
+
+      btn.disabled = true;
+      btn.textContent = 'Signing in…';
+
+      // Race login vs. timeout to prevent spinner hang
+      const TIMEOUT_MS = 15000;
+      const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('Request timed out.')), TIMEOUT_MS));
+
+      try {
+        // optional ping first for nicer error if endpoint is wrong
+        await preflightPing();
+
+        const loginPromise = API.authenticate(u, p);
+        const res = await Promise.race([loginPromise, timeout]);
+
+        if (!res || !res.ok) {
+          if (res && res.locked) setWarning(res.msg || 'Account temporarily locked.');
+          else setError((res && res.msg) || 'Login failed.');
+          password.value = '';
+          strengthIndicator.className = 'password-strength';
+          return;
+        }
+
+        // Save token and go dashboard
+        localStorage.setItem('navi_token', res.token);
+        const url = new URL(location.href);
+        url.searchParams.set('token', res.token);
+        history.replaceState(null, '', url.toString());
+        goTo('dashboard', { ts: Date.now() });
+      } catch (ex) {
+        setError(ex.message || 'Connection error. Check your GAS URL or network.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+      }
+    });
+  </script>
 </body>
 </html>
