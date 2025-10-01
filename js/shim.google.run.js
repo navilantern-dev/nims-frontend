@@ -1,4 +1,3 @@
-<script>
 /**
  * google.script.run shim for static hosting.
  * It proxies calls to window.API[method](...args) and triggers the
@@ -61,4 +60,3 @@
   window.google.script = window.google.script || {};
   window.google.script.run = createRunner();
 })();
-</script>

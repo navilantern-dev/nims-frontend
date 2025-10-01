@@ -1,24 +1,23 @@
-<script>
 // =============================
 // Apps Script Web App endpoint
 // =============================
-// TODO: Replace with YOUR deployed GAS Web App URL (latest deployment URL)
+// Replace with YOUR latest deployment URL
 const GAS_BASE = "https://script.google.com/macros/s/AKfycbwepHg0_U6xclvSPqPnXVRv8wlgo7q4AaPHHUNx-HxYREabx5hI8AV7NPHdFx4HZsyNEQ/exec";
 
-// Optional: turn on to see details in console
+// Optional: console diagnostics
 const API_DEBUG = true;
 
-// Helper: fetch with timeout
+// Fetch with timeout
 async function fetchWithTimeout(resource, options = {}) {
-  const { timeout = 15000 } = options; // 15s default
+  const { timeout = 15000 } = options;
   const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
+  const timer = setTimeout(() => controller.abort(), timeout);
   try {
     const res = await fetch(resource, { ...options, signal: controller.signal });
-    clearTimeout(id);
+    clearTimeout(timer);
     return res;
   } catch (err) {
-    clearTimeout(id);
+    clearTimeout(timer);
     throw err.name === 'AbortError'
       ? new Error('Request timed out. Check GAS URL, deployment access, or network.')
       : err;
@@ -34,41 +33,28 @@ async function gasCall(fn, token, args = {}) {
     res = await fetchWithTimeout(GAS_BASE, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-      body,
-      // No credentials/cookies; Apps Script "Anyone" deployment must be used
+      body
     });
   } catch (err) {
     if (API_DEBUG) console.error('gasCall network error:', err);
     return { ok: false, msg: err.message || 'Network error calling server' };
   }
 
-  // If GAS returns HTML (login interstitial, error), json() will throw.
-  let data;
+  // Parse JSON (GAS sometimes returns HTML on auth errors)
   const text = await res.text();
   try {
-    data = JSON.parse(text);
+    const data = JSON.parse(text);
+    if (API_DEBUG && !data?.ok) console.warn('gasCall app error:', data);
+    return data;
   } catch {
-    if (API_DEBUG) {
-      console.warn('gasCall non-JSON response (showing first 200 chars):', text.slice(0, 200));
-    }
-    // Common causes:
-    // - GAS deployment not set to "Anyone" (returns Google login HTML)
-    // - Wrong deployment URL
-    // - Script error produced an HTML stack trace page
-    return {
-      ok: false,
-      msg: 'Server returned an unexpected response (not JSON). ' +
-           'Confirm your GAS web app URL and access level (Anyone).'
-    };
+    if (API_DEBUG) console.warn('Non-JSON response (first 200 chars):', text.slice(0,200));
+    return { ok: false, msg: 'Server returned non-JSON. Verify GAS URL and set deployment access to "Anyone".' };
   }
-
-  if (API_DEBUG && !data?.ok) console.warn('gasCall app error:', data);
-  return data;
 }
 
-// Unified API surface
+// Expose API on window
 window.API = {
-  // Health check (useful in login screen)
+  // Health
   ping: () => gasCall("ping", ""),
 
   // Auth
@@ -111,4 +97,3 @@ window.API = {
   deleteUser:         (t, userId) => gasCall("deleteUser", t, { userId }),
   getMyProfile:       (t, hintUserId, hintUsername) => gasCall("getMyProfile", t, { hintUserId, hintUsername }),
 };
-</script>

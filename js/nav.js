@@ -1,4 +1,3 @@
-<script>
 // ----- token helpers -------------------------------------------------
 function getToken() {
   const q = new URLSearchParams(location.search);
@@ -86,4 +85,3 @@ window.Q = new URLSearchParams(location.search);
 
 // run after DOM is ready
 document.addEventListener('DOMContentLoaded', rewriteLinks);
-</script>
