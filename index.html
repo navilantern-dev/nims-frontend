@@ -580,15 +580,64 @@ input:focus {
     })();
   </script>
   <!-- </div> -->
+  <!-- Load API Client -->
   <script src="./assets/js/bridge.js"></script>
+  
   <script>
-    // Wait a tiny bit for bridge.js to execute
-    setTimeout(() => {
+    // Robust waiting function
+    function waitForNAVI(callback, maxAttempts = 100) {
+      let attempts = 0;
+      
+      const checkNAVI = () => {
+        attempts++;
+        
+        if (typeof NAVI !== 'undefined' && NAVI.API) {
+          callback();
+        } else if (attempts < maxAttempts) {
+          setTimeout(checkNAVI, 50);
+        } else {
+          console.error('NAVI failed to load after', attempts, 'attempts');
+          document.getElementById('errBox').textContent = 'System initialization error. Please refresh the page.';
+          document.getElementById('errBox').style.display = 'block';
+        }
+      };
+      
+      checkNAVI();
+    }
+
+    // Wait for NAVI, then initialize
+    waitForNAVI(function() {
       (async function () {
         'use strict';
-        // Your existing code here
+
+        // DOM Elements
+        const $ = (id) => document.getElementById(id);
+        const username = $('username');
+        const password = $('password');
+        const togglePw = $('togglePw');
+        const errBox = $('errBox');
+        const warnBox = $('warnBox');
+        const btn = $('btnLogin');
+        const form = $('loginForm');
+        const strengthIndicator = $('passwordStrength');
+        const logoImg = $('logo');
+
+        // Load logo
+        try {
+          const logoRes = await NAVI.API.meta.logo();
+          if (logoRes.ok && logoRes.logoUrl) {
+            logoImg.src = logoRes.logoUrl;
+            logoImg.classList.remove('hidden');
+          }
+        } catch (e) {
+          console.warn('Failed to load logo:', e);
+        }
+
+        // ... rest of your existing code ...
+        // (Keep everything else exactly as it is)
+
       })();
-    }, 100);
+    });
   </script>
 </body>
 </html>
