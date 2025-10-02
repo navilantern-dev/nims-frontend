@@ -1,0 +1,190 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-store, max-age=0">
+  <title>NAVI-SIMS — Dashboard</title>
+  <style>
+:root{
+  --bg:#F6F7FB; --card:#ffffff; --panel:#F9FAFB; --text:#0F172A;
+  --muted:#64748B; --border:#E5E7EB; --ring:#2563EB; --primary:#2563EB; 
+  --success:#10B981; --warning:#F59E0B; --radius:18px; 
+  --shadow:0 10px 30px rgba(2,6,23,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#0B1220; --card:#0F172A; --panel:#111827; --text:#E5E7EB; 
+         --muted:#94A3B8; --border:#1F2937; --primary:#60A5FA; 
+         --shadow:0 10px 30px rgba(0,0,0,.45) }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);min-height:100vh;
+     display:flex;align-items:center;justify-content:center;
+     font:400 16px/1.45 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;}
+.wrap{width:min(96vw,1200px)}
+.card{background:var(--card);border:1px solid var(--border);
+      border-radius:var(--radius);padding:28px;box-shadow:var(--shadow)}
+.top{display:flex;align-items:center;gap:18px;margin-bottom:12px}
+.logo{width:52px;height:52px;border-radius:999px;object-fit:cover;
+      background:#fff;box-shadow:0 0 0 2px var(--border)}
+h2{margin:0 0 4px 0;font-size:1.5rem}
+.user-info{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.pill{display:inline-block;margin-right:8px;padding:6px 12px;
+      border:1px solid var(--border);border-radius:999px;font-size:.82rem;
+      color:var(--muted);background:var(--panel)}
+.modules{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+         gap:18px;margin-top:20px}
+.module{background:var(--panel);border:1px solid var(--border);
+        border-radius:16px;padding:20px;transition:all .2s ease}
+.module:hover{box-shadow:0 8px 25px rgba(2,6,23,.12);transform:translateY(-2px)}
+.module h3{margin:0 0 10px;font-size:1.08rem;color:var(--text)}
+.module p{margin:0 0 16px;font-size:.9rem;color:var(--muted);line-height:1.5}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.btn-outline{background:transparent;border:1px solid var(--primary);
+             color:var(--primary);padding:10px 14px;border-radius:12px;
+             cursor:pointer;transition:all .15s ease;text-decoration:none;
+             display:inline-block;font-size:.9rem;font-weight:500;}
+.btn-outline:hover{background:color-mix(in oklab, var(--primary) 8%, transparent);
+                   transform:translateY(-1px)}
+.user-actions{display:flex;gap:12px;margin-top:20px;padding-top:16px;
+              border-top:1px solid var(--border)}
+.btn{background:var(--primary);color:#fff;border:none;border-radius:12px;
+     padding:10px 16px;cursor:pointer;font-weight:600;transition:all .15s ease}
+.btn:hover{filter:brightness(1.05);transform:translateY(-1px)}
+.btn.secondary{background:#6B7280}
+.btn.danger{background:#EF4444}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="top">
+        <img class="logo" id="userLogo" src="" alt="Logo">
+        <div style="flex:1">
+          <h2>Welcome, <span id="userName">...</span></h2>
+          <div class="user-info">
+            <div class="pill">Level: <span id="userLevel">—</span></div>
+            <div class="pill">Group: <span id="userGroup">—</span></div>
+            <div class="pill">ID: <span id="userId">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="modulesContainer" class="modules">
+        <!-- Modules will be injected here based on user level -->
+      </div>
+
+      <div class="user-actions">
+        <button id="btnChangePassword" class="btn secondary">Change Password</button>
+        <div style="flex:1"></div>
+        <button id="btnLogout" class="btn danger">Secure Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/bridge.js"></script>
+  <script>
+    (async function(){
+      const $ = id => document.getElementById(id);
+
+      // Require authentication
+      const user = await NAVI.Guards.requireAuth();
+      if (!user) return; // Will redirect to login
+
+      // Populate user info
+      $('userName').textContent = user.username || 'User';
+      $('userLevel').textContent = user.levelName || '—';
+      $('userGroup').textContent = user.groupName || '—';
+      $('userId').textContent = user.userId || '—';
+
+      // Load logo
+      try {
+        const logoRes = await NAVI.API.meta.logo();
+        if (logoRes.ok && logoRes.logoUrl) {
+          $('userLogo').src = logoRes.logoUrl;
+        }
+      } catch (e) {
+        console.warn('Failed to load logo:', e);
+      }
+
+      // Navigation helper
+      function navigate(page) {
+        window.location.href = `/pages/${page}.html`;
+      }
+
+      // Build modules based on user level
+      const levelName = (user.levelName || '').toLowerCase();
+      const isAdmin = levelName.includes('super') || levelName.includes('admin');
+      const isStaff = user.groupId === '1' || user.groupName?.toLowerCase().includes('staff');
+
+      const modulesContainer = $('modulesContainer');
+
+      if (isAdmin) {
+        // Admin modules
+        modulesContainer.innerHTML = `
+          <div class="module">
+            <h3>👥 User Management</h3>
+            <p>Create, edit, and manage user accounts. Control access levels and permissions.</p>
+            <div class="row">
+              <button class="btn-outline" onclick="navigate('create_user')">Create User</button>
+              <button class="btn-outline" onclick="navigate('edit_user')">Edit Users</button>
+            </div>
+          </div>
+
+          <div class="module">
+            <h3>🏢 Company Management</h3>
+            <p>Register and manage company information and business details.</p>
+            <div class="row">
+              <button class="btn-outline" onclick="navigate('register_client')">Register Company</button>
+              <button class="btn-outline" onclick="navigate('client_list')">Companies List</button>
+            </div>
+          </div>
+
+          <div class="module">
+            <h3>🚢 Vessel Management</h3>
+            <p>Register new vessels and manage existing vessel information and inventories.</p>
+            <div class="row">
+              <button class="btn-outline" onclick="navigate('register_vessel')">Register Vessel</button>
+              <button class="btn-outline" onclick="navigate('edit_vessel')">Edit Vessels</button>
+              <button class="btn-outline" onclick="navigate('view_vessel')">View Vessel</button>
+            </div>
+          </div>
+        `;
+      } else {
+        // User modules
+        modulesContainer.innerHTML = `
+          <div class="module">
+            <h3>🏢 Companies Details</h3>
+            <p>Company information and business details.</p>
+            <div class="row">
+              <button class="btn-outline" onclick="navigate('client_list')">Companies List</button>
+            </div>
+          </div>
+
+          <div class="module">
+            <h3>🚢 My Vessels</h3>
+            <p>View and manage vessel information assigned to your account.</p>
+            <div class="row">
+              <button class="btn-outline" onclick="navigate('view_vessel')">View Vessel</button>
+              ${isStaff ? '<button class="btn-outline" onclick="navigate(\'edit_vessel\')">Edit Vessel Info</button>' : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      // Expose navigate to window for inline onclick
+      window.navigate = navigate;
+
+      // Button handlers
+      $('btnChangePassword').addEventListener('click', () => navigate('change_password'));
+      
+      $('btnLogout').addEventListener('click', () => {
+        if (confirm('Are you sure you want to logout?')) {
+          NAVI.API.auth.logout();
+        }
+      });
+
+    })();
+  </script>
+</body>
+</html>

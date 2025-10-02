@@ -2,3 +2,6 @@
 appsscript.json
 appscript.json
 .ai-contexts.md
+.DS_Store
+node_modules/
+*.log

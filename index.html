@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-store, max-age=0">
+  <meta http-equiv="Content-Security-Policy" 
+        content="default-src 'self'; 
+                 script-src 'self' 'unsafe-inline' https://script.google.com; 
+                 connect-src https://script.google.com;">
+  <title>NAVI-SIMS — Secure Login</title>
+  <style>
+/* ===== NAVI-SIMS Design System (enhanced login) ===== */
+:root{
+  --bg: #F6F7FB;
+  --card: #ffffff;
+  --text: #0F172A;
+  --subtle: #64748B;
+  --muted: #94A3B8;
+  --border: #E5E7EB;
+  --ring: #2563EB;
+  --primary: #2563EB;
+  --primary-contrast: #ffffff;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+  --success: #10B981;
+  --shadow: 0 10px 30px rgba(2,6,23,.08);
+  --radius: 16px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0B1220; --card:#111827; --text:#E5E7EB; --subtle:#CBD5E1;
+    --muted:#94A3B8; --border:#1F2937; --ring:#60A5FA;
+    --primary:#60A5FA; --primary-contrast:#0B1220;
+    --shadow: 0 10px 30px rgba(0,0,0,.45);
+  }
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; display:flex; align-items:center; justify-content:center;
+  background:var(--bg); color:var(--text); font:400 16px/1.45 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+}
+.card{
+  width:min(92vw,440px); background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius); padding:32px 28px; box-shadow:var(--shadow);
+}
+.logo-wrap{display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:12px}
+.logo-banner{
+  width:min(80vw,280px); height:auto; display:block; object-fit:contain; background:#fff;
+  border-radius:10px; box-shadow:0 0 0 1px var(--border), 0 4px 14px rgba(0,0,0,.08)
+}
+h1{margin:0;font:700 22px/1.2 ui-sans-serif,system-ui}
+.subtitle{color:var(--subtle);font-size:.92rem;margin-top:2px}
+form{display:flex;flex-direction:column;gap:16px;margin-top:16px}
+label{font-size:.9rem;color:var(--subtle);margin-bottom:6px}
+.input-wrap{position:relative}
+input[type="text"],input[type="password"]{
+  width:100%; height:46px; padding:12px 14px;
+  border:1px solid var(--border); border-radius:12px; background:#fff; outline:none;
+  font-size:16px;
+}
+input:focus{border-color:var(--ring); box-shadow:0 0 0 4px color-mix(in oklab, var(--ring) 20%, transparent)}
+.btn{
+  height:46px; border:none; border-radius:12px; background:var(--primary);
+  color:var(--primary-contrast); font-weight:700; font-size:.95rem; cursor:pointer;
+  transition:filter .12s ease, transform .02s ease;
+}
+.btn:hover{filter:brightness(1.05)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.6; cursor:not-allowed}
+.error{
+  display:none; padding:12px; border-radius:10px; border:1px solid #FCA5A5;
+  background:#FEE2E2; color:#991B1B; font-size:.9rem;
+}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo-wrap">
+      <img class="logo-banner" id="logo" src="" alt="Logo">
+      <div style="text-align:center">
+        <h1>Secure Sign In</h1>
+        <div class="subtitle">NAVI-SIMS Maritime Management System</div>
+      </div>
+    </div>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="username">Username</label>
+        <div class="input-wrap">
+          <input id="username" type="text" autocomplete="username" required maxlength="50">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="input-wrap">
+          <input id="password" type="password" autocomplete="current-password" required maxlength="100">
+        </div>
+      </div>
+
+      <button id="btnLogin" class="btn" type="submit">Sign In</button>
+      
+      <div id="errBox" class="error"></div>
+    </form>
+  </div>
+
+  <!-- Load API Client -->
+  <script src="../assets/js/bridge.js"></script>
+  
+  <script>
+    (async function () {
+      const $ = (id) => document.getElementById(id);
+      const username = $('username');
+      const password = $('password');
+      const errBox = $('errBox');
+      const btn = $('btnLogin');
+      const form = $('loginForm');
+
+      // Load logo
+      try {
+        const logoRes = await NAVI.API.meta.logo();
+        if (logoRes.ok && logoRes.logoUrl) {
+          $('logo').src = logoRes.logoUrl;
+        }
+      } catch (e) {
+        console.warn('Failed to load logo:', e);
+      }
+
+      function setError(msg) {
+        errBox.textContent = msg || '';
+        errBox.style.display = msg ? 'block' : 'none';
+      }
+
+      // Form submission
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        setError('');
+        
+        const u = username.value.trim();
+        const p = password.value;
+
+        if (!u || !p) {
+          setError('Please enter both username and password.');
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Signing in...';
+
+        try {
+          const result = await NAVI.API.auth.login(u, p);
+          
+          if (!result.ok) {
+            setError(result.msg || 'Login failed.');
+            password.value = '';
+            return;
+          }
+          
+          // Redirect to dashboard
+          window.location.href = '/pages/dashboard.html';
+          
+        } catch (err) {
+          setError(err.message || 'Connection error. Please try again.');
+          password.value = '';
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Sign In';
+        }
+      });
+
+      // Auto-focus username
+      username.focus();
+
+      // Handle URL error parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const err = urlParams.get('err');
+      if (err) setError(err);
+
+    })();
+  </script>
+</body>
+</html>
