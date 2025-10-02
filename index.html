@@ -411,7 +411,7 @@ input:focus {
   </div>
 
   <!-- Load API Client -->
-  <script src="./assets/js/bridge.js"></script>
+  <!-- <script src="./assets/js/bridge.js"></script> -->
   
   <script>
     (async function () {
@@ -579,5 +579,18 @@ input:focus {
 
     })();
   </script>
+  <!-- </div> -->
+  <script src="./assets/js/bridge.js"></script>
+  <script>
+    // Wait a tiny bit for bridge.js to execute
+    setTimeout(() => {
+      (async function () {
+        'use strict';
+        // Your existing code here
+      })();
+    }, 100);
+  </script>
+</body>
+</html>
 </body>
 </html>
