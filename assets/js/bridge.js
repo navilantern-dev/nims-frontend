@@ -6,7 +6,7 @@
 // ===== Configuration =====
 const API_CONFIG = {
   // Replace this with your actual Google Apps Script Web App URL
-  BASE_URL: 'https://script.google.com/macros/s/AKfycbywvDfqB8-oEES73Ms5QRNHyVmirEdAB4fa-gjuBqKx4MIzIlCvHwGvK0cDh9SOQ73klQ/exec',
+  BASE_URL: 'https://script.google.com/macros/s/AKfycbxysJX74MHaIN2MBviY0nj6_w8YvyqHewTQ6zUiDmMbd0wjDv8Xhu2Q_d4EZtZoupzQaw/exec',
   
   // Session management
   TOKEN_KEY: 'navi_token',
