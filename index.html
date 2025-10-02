@@ -410,177 +410,7 @@ input:focus {
     </div>
   </div>
 
-  <!-- Load API Client -->
-  <!-- <script src="./assets/js/bridge.js"></script> -->
-  
-  <script>
-    (async function () {
-      'use strict';
-
-      // DOM Elements
-      const $ = (id) => document.getElementById(id);
-      const username = $('username');
-      const password = $('password');
-      const togglePw = $('togglePw');
-      const errBox = $('errBox');
-      const warnBox = $('warnBox');
-      const btn = $('btnLogin');
-      const form = $('loginForm');
-      const strengthIndicator = $('passwordStrength');
-      const logoImg = $('logo');
-
-      // Load logo
-      try {
-        const logoRes = await NAVI.API.meta.logo();
-        if (logoRes.ok && logoRes.logoUrl) {
-          logoImg.src = logoRes.logoUrl;
-          logoImg.classList.remove('hidden');
-        }
-      } catch (e) {
-        console.warn('Failed to load logo:', e);
-      }
-
-      // Password visibility toggle
-      togglePw.addEventListener('click', () => {
-        const isPassword = password.type === 'password';
-        password.type = isPassword ? 'text' : 'password';
-        togglePw.textContent = isPassword ? 'Hide' : 'Show';
-      });
-
-      // Password strength indicator (for user feedback)
-      password.addEventListener('input', () => {
-        const val = password.value;
-        let strength = 'weak';
-        
-        if (val.length >= 8) {
-          const hasUpper = /[A-Z]/.test(val);
-          const hasLower = /[a-z]/.test(val);
-          const hasNumber = /\d/.test(val);
-          const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(val);
-          
-          const score = [hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
-          
-          if (score >= 3 && val.length >= 12) strength = 'strong';
-          else if (score >= 2 && val.length >= 8) strength = 'medium';
-        }
-        
-        strengthIndicator.className = `password-strength strength-${strength}`;
-      });
-
-      // Message display functions
-      function setError(msg) {
-        errBox.textContent = msg || '';
-        errBox.style.display = msg ? 'block' : 'none';
-        warnBox.style.display = 'none';
-      }
-
-      function setWarning(msg) {
-        warnBox.textContent = msg || '';
-        warnBox.style.display = msg ? 'block' : 'none';
-        errBox.style.display = 'none';
-      }
-
-      function clearMessages() {
-        setError('');
-        setWarning('');
-      }
-
-      // Enhanced form submission with security features
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        clearMessages();
-        
-        const u = username.value.trim();
-        const p = password.value;
-
-        // Basic client-side validation
-        if (!u || !p) {
-          setError('Please enter both username and password.');
-          return;
-        }
-
-        if (u.length > 50) {
-          setError('Username too long.');
-          return;
-        }
-
-        // Disable button and show loading state
-        btn.disabled = true;
-        const originalText = btn.textContent;
-        btn.innerHTML = 'Signing in<span class="spinner"></span>';
-
-        try {
-          const result = await NAVI.API.auth.login(u, p);
-          
-          if (!result || !result.ok) {
-            if (result?.locked) {
-              setWarning(result.msg || 'Account temporarily locked.');
-            } else {
-              setError(result?.msg || 'Login failed.');
-            }
-            
-            // Clear password on failed attempt for security
-            password.value = '';
-            strengthIndicator.className = 'password-strength';
-            return;
-          }
-          
-          // Success - redirect to dashboard
-          window.location.href = './pages/dashboard.html';
-          
-        } catch (err) {
-          setError(err && err.message ? err.message : 'Connection error. Please try again.');
-          password.value = '';
-          strengthIndicator.className = 'password-strength';
-        } finally {
-          btn.disabled = false;
-          btn.innerHTML = originalText;
-        }
-      });
-
-      // Handle forgot password link
-      $('forgotLink').addEventListener('click', (e) => {
-        e.preventDefault();
-        alert('Please contact your system administrator to reset your password.');
-      });
-
-      // Auto-focus username field
-      username.focus();
-
-      // Handle URL error parameter
-      const urlParams = new URLSearchParams(window.location.search);
-      const err = urlParams.get('err');
-      if (err) {
-        setError(decodeURIComponent(err));
-      }
-
-      // Prevent form auto-complete attacks
-      setTimeout(() => {
-        if (username.value && !password.value) {
-          username.value = '';
-        }
-      }, 100);
-
-      // Check if already logged in
-      const existingToken = NAVI.Storage.getToken();
-      if (existingToken) {
-        try {
-          const session = await NAVI.API.auth.getSession();
-          if (session && session.ok) {
-            // Already logged in, redirect to dashboard
-            window.location.href = './pages/dashboard.html';
-          }
-        } catch (e) {
-          // Session invalid, clear and continue
-          NAVI.Storage.clearToken();
-          NAVI.Storage.clearSessionData();
-        }
-      }
-
-    })();
-  </script>
-  <!-- </div> -->
-  <!-- Load API Client -->
+  <!-- Load API Client FIRST -->
   <script src="./assets/js/bridge.js"></script>
   
   <script>
@@ -633,13 +463,139 @@ input:focus {
           console.warn('Failed to load logo:', e);
         }
 
-        // ... rest of your existing code ...
-        // (Keep everything else exactly as it is)
+        // Password visibility toggle
+        togglePw.addEventListener('click', () => {
+          const isPassword = password.type === 'password';
+          password.type = isPassword ? 'text' : 'password';
+          togglePw.textContent = isPassword ? 'Hide' : 'Show';
+        });
+
+        // Password strength indicator
+        password.addEventListener('input', () => {
+          const val = password.value;
+          let strength = 'weak';
+          
+          if (val.length >= 8) {
+            const hasUpper = /[A-Z]/.test(val);
+            const hasLower = /[a-z]/.test(val);
+            const hasNumber = /\d/.test(val);
+            const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(val);
+            
+            const score = [hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
+            
+            if (score >= 3 && val.length >= 12) strength = 'strong';
+            else if (score >= 2 && val.length >= 8) strength = 'medium';
+          }
+          
+          strengthIndicator.className = `password-strength strength-${strength}`;
+        });
+
+        // Message display functions
+        function setError(msg) {
+          errBox.textContent = msg || '';
+          errBox.style.display = msg ? 'block' : 'none';
+          warnBox.style.display = 'none';
+        }
+
+        function setWarning(msg) {
+          warnBox.textContent = msg || '';
+          warnBox.style.display = msg ? 'block' : 'none';
+          errBox.style.display = 'none';
+        }
+
+        function clearMessages() {
+          setError('');
+          setWarning('');
+        }
+
+        // Form submission
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          clearMessages();
+          
+          const u = username.value.trim();
+          const p = password.value;
+
+          if (!u || !p) {
+            setError('Please enter both username and password.');
+            return;
+          }
+
+          if (u.length > 50) {
+            setError('Username too long.');
+            return;
+          }
+
+          btn.disabled = true;
+          const originalText = btn.textContent;
+          btn.innerHTML = 'Signing in<span class="spinner"></span>';
+
+          try {
+            const result = await NAVI.API.auth.login(u, p);
+            
+            if (!result || !result.ok) {
+              if (result?.locked) {
+                setWarning(result.msg || 'Account temporarily locked.');
+              } else {
+                setError(result?.msg || 'Login failed.');
+              }
+              
+              password.value = '';
+              strengthIndicator.className = 'password-strength';
+              return;
+            }
+            
+            window.location.href = './pages/dashboard.html';
+            
+          } catch (err) {
+            setError(err && err.message ? err.message : 'Connection error. Please try again.');
+            password.value = '';
+            strengthIndicator.className = 'password-strength';
+          } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+          }
+        });
+
+        // Forgot password
+        document.getElementById('forgotLink').addEventListener('click', (e) => {
+          e.preventDefault();
+          alert('Please contact your system administrator to reset your password.');
+        });
+
+        // Auto-focus
+        username.focus();
+
+        // URL error parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const err = urlParams.get('err');
+        if (err) {
+          setError(decodeURIComponent(err));
+        }
+
+        // Prevent auto-complete attacks
+        setTimeout(() => {
+          if (username.value && !password.value) {
+            username.value = '';
+          }
+        }, 100);
+
+        // Check if already logged in
+        const existingToken = NAVI.Storage.getToken();
+        if (existingToken) {
+          try {
+            const session = await NAVI.API.auth.getSession();
+            if (session && session.ok) {
+              window.location.href = './pages/dashboard.html';
+            }
+          } catch (e) {
+            NAVI.Storage.clearToken();
+            NAVI.Storage.clearSessionData();
+          }
+        }
 
       })();
     });
   </script>
-</body>
-</html>
 </body>
 </html>
