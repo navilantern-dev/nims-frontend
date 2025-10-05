@@ -145,6 +145,21 @@
 
   <script src="../assets/js/bridge.js"></script>
   <script>
+  (async () => {
+    const session = await Bridge.requireAuth({
+      logoSel:  'img.app-logo',
+      nameSel:  '.js-user-name',
+      levelSel: '.js-user-level',
+      groupSel: '.js-user-group',
+      idSel:    '.js-user-id'
+    });
+    if (!session) return; // redirected
+
+    // safe to render cards here
+    // await Bridge.api.vessels.list() ...
+  })();
+  </script>
+  <script>
     (async function() {
       const user = await NAVI.Guards.requireAuth();
       if (!user) return;

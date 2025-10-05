@@ -1,189 +1,187 @@
 // ===== API Configuration =====
 const API_CONFIG = {
-  BASE_URL: 'https://script.google.com/macros/s/AKfycbw1cfeIWcKKWJd3HjXtbLIXEQwksav-FtgiXfsak7z1YDdXh9YwZr6VnqNrw2Eu7xPvCw/exec',
+  BASE_URL: 'https://script.google.com/macros/s/AKfycbyrvPQGZCM-s2k-qWoltE9eFMeEfpsO0Xr77BJoZ48y3jcbHicZ1L38Q3xQ1rj_j3_y6A/exec',
   TOKEN_KEY: 'navi_token'
 };
 
 // ===== Bridge Client =====
 const Bridge = (() => {
-  const getToken = () => localStorage.getItem(API_CONFIG.TOKEN_KEY) || '';
-  const setToken = (t) => t && localStorage.setItem(API_CONFIG.TOKEN_KEY, t);
+  const getToken   = () => localStorage.getItem(API_CONFIG.TOKEN_KEY) || '';
+  const setToken   = (t) => { if (t) localStorage.setItem(API_CONFIG.TOKEN_KEY, t); };
   const clearToken = () => localStorage.removeItem(API_CONFIG.TOKEN_KEY);
 
   async function call(action, options = {}) {
-    const { body = null } = options;
-    const token = getToken();
-    
-    // Build URL with all parameters (GET request to avoid CORS preflight)
+    const { body = null, token: tokenOverride } = options;
+    const token = tokenOverride ?? getToken();
+
     const url = new URL(API_CONFIG.BASE_URL);
     url.searchParams.set('action', action);
     if (token) url.searchParams.set('token', token);
-    
-    // Encode body as JSON string in URL parameter
     if (body && Object.keys(body).length > 0) {
       url.searchParams.set('data', JSON.stringify(body));
     }
+    // bust caches (important for Apps Script + GitHub Pages)
+    url.searchParams.set('ts', Date.now());
 
+    let data;
     try {
-      // Use GET to avoid CORS preflight issues
       const response = await fetch(url.toString(), {
         method: 'GET',
-        headers: {
-          'Accept': 'application/json'
-        }
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store',
+        mode: 'cors'
       });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      return data;
-      
+
+      // GAS often returns 200 even on errors; we rely on body payload
+      data = await response.json();
     } catch (error) {
       console.error('API call failed:', error);
       throw error;
     }
+
+    // Unified unauthorized handling
+    if (data && data.code === 401) {
+      clearToken();
+    }
+    return data;
   }
 
-  // API Methods
+  // ===== API Facade =====
   const api = {
-    // Auth
     auth: {
-      login: (username, password) => call('login', { body: { username, password } }),
-      getSession: () => call('session'),
-      logout: () => { clearToken(); return call('logout'); },
-      changePassword: (currentPassword, newPassword) => 
-        call('changePassword', { body: { currentPassword, newPassword } })
+      async login(username, password) {
+        const res = await call('login', { body: { username, password } });
+        if (res?.ok && res?.token) setToken(res.token);
+        return res;
+      },
+      async getSession() {
+        const res = await call('session');
+        if (res?.ok && res?.token) setToken(res.token); // support token refresh/rotation
+        return res;
+      },
+      async logout() {
+        // Call server first (so it receives the token), THEN clear locally
+        const res = await call('logout');
+        clearToken();
+        return res;
+      },
+      changePassword(currentPassword, newPassword) {
+        return call('changePassword', { body: { currentPassword, newPassword } });
+      }
     },
 
     // Metadata
     meta: {
       logo: () => call('logo')
     },
-    levels: () => call('levels'),
-    groups: () => call('groups'),
-    companies: () => call('companies'),
+    levels:     () => call('levels'),
+    groups:     () => call('groups'),
+    companies:  () => call('companies'),
 
     // Users
     users: {
-      list: () => call('listUsers'),
-      get: (userId) => call('getUser', { body: { userId } }),
-      create: (payload) => call('createUserLogin', { body: payload }),
-      update: (payload) => call('updateUser', { body: payload }),
-      delete: (userId) => call('deleteUser', { body: { userId } }),
-      saveDetails: (payload) => call('saveUserDetails', { body: payload }),
-      getDetailFormSchema: (groupId) => call('getDetailFormSchema', { body: { groupId } }),
-      getDetailFormSchemaWithValues: (userId, groupId) => 
-        call('getDetailFormSchemaWithValues', { body: { userId, groupId } }),
-      saveDetailFormUpdate: (payload) => call('saveDetailFormUpdate', { body: payload }),
-      getMyProfile: (userId, username) => call('getMyProfile', { body: { userId, username } })
+      list:    () => call('listUsers'),
+      get:     (userId)                 => call('getUser', { body: { userId } }),
+      create:  (payload)                => call('createUserLogin', { body: payload }),
+      update:  (payload)                => call('updateUser', { body: payload }),
+      delete:  (userId)                 => call('deleteUser', { body: { userId } }),
+      saveDetails:                      (payload) => call('saveUserDetails', { body: payload }),
+      getDetailFormSchema:              (groupId) => call('getDetailFormSchema', { body: { groupId } }),
+      getDetailFormSchemaWithValues:    (userId, groupId) => call('getDetailFormSchemaWithValues', { body: { userId, groupId } }),
+      saveDetailFormUpdate:             (payload) => call('saveDetailFormUpdate', { body: payload }),
+      getMyProfile:                     (userId, username) => call('getMyProfile', { body: { userId, username } })
     },
 
     // Clients
     clients: {
-      save: (values, files) => call('saveClientRegistration', { body: { values, files } }),
-      list: (searchQuery) => call('getClientList', { body: { searchQuery } }),
-      getProfile: (clientId) => call('getClientProfile', { body: { clientId } }),
-      getVesselsByCompName: (compName) => call('getVesselsByCompName', { body: { compName } }),
-      update: (clientId, data, files) => 
-        call('updateClientProfile', { body: { clientId, data, files } })
+      save:        (values, files)         => call('saveClientRegistration', { body: { values, files } }),
+      list:        (searchQuery)           => call('getClientList', { body: { searchQuery } }),
+      getProfile:  (clientId)              => call('getClientProfile', { body: { clientId } }),
+      getVesselsByCompName: (compName)     => call('getVesselsByCompName', { body: { compName } }),
+      update:      (clientId, data, files) => call('updateClientProfile', { body: { clientId, data, files } })
     },
 
     // Vessels
     vessels: {
-      newShipId: () => call('getNewShipId'),
-      getOwnerNames: () => call('getOwnerNames'),
-      getInventoryNames: () => call('getInventoryNames'),
-      getKeys: () => call('getVesselKeys'),
-      getByKey: (keyType, keyValue) => 
-        call('getVesselByKey', { body: { keyType, keyValue } }),
-      save: (payload) => call('saveVesselAll', { body: payload }),
-      update: (payload) => call('updateVesselAll', { body: payload }),
-      list: () => call('listVesselsForUser'),
-      getDetail: (shipId) => call('getVesselDetail', { body: { shipId } })
+      newShipId:        ()                    => call('getNewShipId'),
+      getOwnerNames:    ()                    => call('getOwnerNames'),
+      getInventoryNames:()                    => call('getInventoryNames'),
+      getKeys:          ()                    => call('getVesselKeys'),
+      getByKey:         (keyType, keyValue)   => call('getVesselByKey', { body: { keyType, keyValue } }),
+      save:             (payload)             => call('saveVesselAll', { body: payload }),
+      update:           (payload)             => call('updateVesselAll', { body: payload }),
+      list:             ()                    => call('listVesselsForUser'),
+      getDetail:        (shipId)              => call('getVesselDetail', { body: { shipId } })
     }
   };
 
-  // Guards - authentication helpers
+  // ===== Auth Guards & Identity Hydration =====
   const Guards = {
     async requireAuth(selectors = {}) {
       try {
-        const session = await hydrateIdentity(selectors);
-        if (!session?.username) {
-          throw new Error('Not authenticated');
-        }
+        const session = await api.auth.getSession();
+        if (!session || !session.ok) throw new Error('Not authenticated');
+        // hydrate DOM if selectors provided
+        await hydrateIdentity(selectors, session);
         return session;
-      } catch (error) {
-        window.location.href = '../index.html';
+      } catch (_) {
+        // send to login
+        window.location.href = '../index.html?err=' + encodeURIComponent('Please sign in');
         return null;
       }
     }
   };
 
-  // Storage helpers
   const Storage = {
-    getToken,
-    setToken,
-    clearToken,
+    getToken, setToken, clearToken,
     clearSessionData: () => localStorage.clear()
   };
 
-  // Utility functions
-  async function hydrateIdentity(selectors = {}) {
-    const { logoSel, nameSel, levelSel, groupSel, idSel } = selectors;
-    
-    try {
-      const session = await api.auth.getSession();
-      
-      if (session?.token) setToken(session.token);
-      
-      if (logoSel && session?.logoUrl) {
-        document.querySelectorAll(logoSel).forEach(el => el.src = session.logoUrl);
-      }
-      if (nameSel) {
-        document.querySelectorAll(nameSel).forEach(el => 
-          el.textContent = session.username || '—'
-        );
-      }
-      if (levelSel) {
-        document.querySelectorAll(levelSel).forEach(el => 
-          el.textContent = session.levelName || session.userLevel || '—'
-        );
-      }
-      if (groupSel) {
-        document.querySelectorAll(groupSel).forEach(el => 
-          el.textContent = session.userGroup || '—'
-        );
-      }
-      if (idSel) {
-        document.querySelectorAll(idSel).forEach(el => 
-          el.textContent = session.userId || '—'
-        );
-      }
-      
-      return session;
-    } catch (error) {
-      console.error('Failed to hydrate identity:', error);
-      return null;
+  function pick(obj, keys, fallback='—') {
+    for (const k of keys) {
+      const v = obj && obj[k];
+      if (v !== undefined && v !== null && v !== '') return v;
     }
+    return fallback;
+  }
+
+  async function hydrateIdentity(selectors = {}, sessionIn = null) {
+    const s = sessionIn || (await api.auth.getSession());
+    if (!s || !s.ok) return null;
+
+    // Support either top-level or user.* fields
+    const user = s.user || {};
+    const identity = {
+      username:  pick(s,   ['username'],  pick(user, ['username','USER_NAME','USERNAME'], '')),
+      userId:    pick(s,   ['userId'],    pick(user, ['userId','USER_ID'], '')),
+      levelName: pick(s,   ['levelName','userLevel'], pick(user, ['USER_LEVEL','level'], '')),
+      userGroup: pick(s,   ['userGroup'], pick(user, ['USER_GROUP','group'], '')),
+      logoUrl:   s.logoUrl || ''
+    };
+
+    const { logoSel, nameSel, levelSel, groupSel, idSel } = selectors;
+
+    if (logoSel && identity.logoUrl) {
+      document.querySelectorAll(logoSel).forEach(el => { el.src = identity.logoUrl; });
+    }
+    if (nameSel)  document.querySelectorAll(nameSel).forEach(el => { el.textContent  = identity.username || '—'; });
+    if (levelSel) document.querySelectorAll(levelSel).forEach(el => { el.textContent = identity.levelName || '—'; });
+    if (groupSel) document.querySelectorAll(groupSel).forEach(el => { el.textContent = identity.userGroup || '—'; });
+    if (idSel)    document.querySelectorAll(idSel).forEach(el => { el.textContent    = identity.userId || '—'; });
+
+    return Object.assign({}, s, identity);
   }
 
   return {
     api,
-    API: api,  // Alias for compatibility
+    API: api, // alias
     Guards,
     Storage,
-    setToken,
-    getToken,
-    clearToken,
+    setToken, getToken, clearToken,
     hydrateIdentity,
     requireAuth: Guards.requireAuth
   };
 })();
 
-// Make Bridge available globally
 window.Bridge = Bridge;
-
-// IMPORTANT: Create NAVI alias for backward compatibility
-window.NAVI = Bridge;
+window.NAVI   = Bridge; // backward compatibility
