@@ -1,6 +1,6 @@
 // ===== API Configuration =====
 const API_CONFIG = {
-  BASE_URL: 'https://script.google.com/macros/s/AKfycbwxW6nCkYfVXzKDAw8krg-IJsn6vWhG5wFocMx_NxB3bOYWek4OU8dMucGMmYTIADBntQ/exec',
+  BASE_URL: 'https://script.google.com/macros/s/AKfycbyZQGMrLZXlXSoIcFCT7G0ptC3AGZ4te1sHTOO4zXKpbBViITGO-NtjKp-wTq7AT-GhpQ/exec',
   TOKEN_KEY: 'navi_token'
 };
 
