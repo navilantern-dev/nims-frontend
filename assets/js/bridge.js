@@ -1,6 +1,6 @@
 // ===== API Configuration =====
 const API_CONFIG = {
-  BASE_URL: 'https://script.google.com/macros/s/AKfycbyg3LaDcxBwuxXLkDIj3YCIt1-o3U5cP2u3whzExMCz7jLqdwlnXv98VwjhidOxv44n_g/exec',
+  BASE_URL: 'https://script.google.com/macros/s/AKfycbwheh8OtV5OUJcBcUxHo4aMQVPIXZ3PkYT7RX1x_XUTiC85piRu8H6XsfxL6NssLGOZOQ/exec',
   TOKEN_KEY: 'navi_token'
 };
 
@@ -116,6 +116,22 @@ const Bridge = (() => {
   };
 
   // ===== Auth Guards & Identity Hydration =====
+  function normalizeUser(u = {}) {
+    const userId  = u.userId  || u.USER_ID  || '';
+    const levelId = u.levelId || u.USER_LEVELID || '';
+    const groupId = u.groupId || u.USER_GROUP   || '';
+    const levelName = u.levelName || '';
+    const groupName = u.groupName || '';
+    return {
+    ...u,
+    userId: String(userId || ''),
+    levelId: String(levelId || ''),
+    groupId: String(groupId || ''),
+    levelName,
+    groupName
+    };
+  }
+
   const Guards = {
     async requireAuth(selectors = {}) {
       try {
@@ -125,6 +141,9 @@ const Bridge = (() => {
         await hydrateIdentity(selectors, s);
         // ✅ return ONLY the user object so dashboard logic is simple
         return s.user || null;
+        const user = normalizeUser(s.user || {});
+        await hydrateIdentity(selectors, { ...s, user });
+        return user;
       } catch (_) {
         window.location.href = '../index.html?err=' + encodeURIComponent('Please sign in');
         return null;
