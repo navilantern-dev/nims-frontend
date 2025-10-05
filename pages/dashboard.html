@@ -84,179 +84,210 @@
   <script src="./js/bridge.js"></script>
 
   <script>
-  (async () => {
-    // 1) Require auth & get normalized user object
-    const user = await NAVI.Guards.requireAuth({ logoSel: '#userLogo' });
-    if (!user) return; // redirected
+(async () => {
+  // ---- get raw session safely (works even if Guards are old) ----
+  let s = null;
+  try {
+    // Try the guard first
+    s = await (NAVI?.Guards?.requireAuth ? NAVI.Guards.requireAuth({ logoSel:'#userLogo' }) : null);
+    // If the guard returned only `user`, wrap it; if it returned null, fetch session directly
+    if (s && !s.username && !s.userId && !s.levelId && !s.levelName) {
+      // guard likely returned the full session, not user -> leave as-is
+    } else if (!s) {
+      const res = await NAVI.api.auth.getSession();
+      if (!res?.ok) throw new Error('Not authenticated');
+      s = res; // full session
+    }
+  } catch (e) {
+    console.warn('Auth redirect:', e);
+    window.location.href = '../index.html?err=' + encodeURIComponent('Please sign in');
+    return;
+  }
 
-    // 2) Fill identity pills
-    document.getElementById('welcomeName').textContent = user.username || '—';
-    document.getElementById('pillLevel').textContent   = user.levelName || '—';
-    document.getElementById('pillGroup').textContent   = user.groupName || '—';
-    document.getElementById('pillId').textContent      = user.userId    || '—';
+  // ---- normalize: accept (a) full session with .user, (b) user object, (c) legacy top-level ----
+  const raw = (s && s.user) ? s.user : s;      // prefer .user if present
+  const user = {
+    username:  raw.username  || s.username  || raw.USER_NAME || raw.USERNAME || '',
+    userId:    String(raw.userId || raw.USER_ID || s.USER_ID || ''),
+    levelId:   String(raw.levelId || raw.USER_LEVELID || s.USER_LEVELID || ''),
+    groupId:   String(raw.groupId || raw.USER_GROUP || s.USER_GROUP || ''),
+    levelName: raw.levelName || s.levelName || '',
+    groupName: raw.groupName || s.groupName || ''
+  };
 
-    // 3) Render dashboard modules
-    renderModules(user);
+  // visible debug once: open DevTools → Console to verify payload
+  console.log('[NAVI] session raw =', s);
+  console.log('[NAVI] normalized user =', user);
 
-    // 4) Wire interactions
-    wireButtons();
+  // ---- fill header pills (never throw if elements missing) ----
+  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || '—'; };
+  setText('welcomeName', user.username);
+  setText('pillLevel',   user.levelName);
+  setText('pillGroup',   user.groupName);
+  setText('pillId',      user.userId);
 
-    // 5) Optional quick stats for super/admin
-    const level = (user.levelName||'').toLowerCase();
-    if (level === 'super' || level === 'admin') {
-      document.getElementById('quickStats').style.display = 'grid';
+  // ---- render modules (robust checks; always show at least one card) ----
+  renderModules(user);
+
+  // ---- wire buttons after DOM injection ----
+  wireButtons();
+
+  // quick stats for admins (best-effort)
+  const levelLC = (user.levelName || '').toLowerCase();
+  if (levelLC === 'super' || levelLC === 'admin' || user.levelId === '1' || user.levelId === '2') {
+    const qs = document.getElementById('quickStats');
+    if (qs) {
+      qs.style.display = 'grid';
       try {
         const res = await NAVI.api.users.list();
         if (res?.ok && Array.isArray(res.users)) {
-          document.getElementById('totalUsers').textContent = String(res.users.length);
+          const u = document.getElementById('totalUsers'); if (u) u.textContent = String(res.users.length);
         }
       } catch(_) {}
     }
-  })();
+  }
+})();
 
-  // ---- helpers ----
-  function renderModules(user) {
-    const level = (user.levelName||'').toLowerCase();
-    const groupIdStr = String(user.groupId||'');
-    const groupName  = String(user.groupName||'').toLowerCase();
+function renderModules(user) {
+  const levelLC  = (user.levelName || '').toLowerCase();
+  const groupLC  = (user.groupName || '').toLowerCase();
+  const levelId  = user.levelId;           // string
+  const groupId  = user.groupId;           // string
+  const cards = [];
+  const add = (html) => cards.push(`<div class="module">${html}</div>`);
 
-    const cards = [];
-    const add = (html) => cards.push(`<div class="module">${html}</div>`);
+  const isSuper = levelLC === 'super' || levelId === '1';
+  const isAdmin = levelLC === 'admin' || levelId === '2';
+  const isUser  = levelLC === 'user'  || levelId === '3';
 
-    if (level === 'super' || level === 'admin') {
+  if (isSuper || isAdmin) {
+    add(`
+      <h3>👥 User Management</h3>
+      <p>Create, edit, and manage user accounts.</p>
+      <div class="row">
+        <button class="btn-outline" id="btnCreateUser">Create User</button>
+        <button class="btn-outline" id="btnEditUser">Edit Users</button>
+      </div>
+    `);
+    add(`
+      <h3>🏢 Company Management</h3>
+      <p>Register and manage company information.</p>
+      <div class="row">
+        <button class="btn-outline" id="btnRegisterCompany">Register Company</button>
+        <button class="btn-outline" id="btnListCompany">Companies List</button>
+      </div>
+    `);
+    add(`
+      <h3>🚢 Vessel Management</h3>
+      <p>Register and manage vessels.</p>
+      <div class="row">
+        <button class="btn-outline" id="btnRegisterVessel">Register Vessel</button>
+        <button class="btn-outline" id="btnEditVessel">Edit Vessels</button>
+        <button class="btn-outline" id="btnViewVessel">View Vessel</button>
+      </div>
+    `);
+    if (isSuper) {
       add(`
-        <h3>👥 User Management</h3>
-        <p>Create, edit, and manage user accounts and permissions.</p>
+        <h3>⚙️ System Administration</h3>
+        <p>Roles, groups, and system settings.</p>
         <div class="row">
-          <button type="button" class="btn-outline" id="btnCreateUser">Create User</button>
-          <button type="button" class="btn-outline" id="btnEditUser">Edit Users</button>
-        </div>
-      `);
-
-      add(`
-        <h3>🏢 Company Management</h3>
-        <p>Register and manage company information.</p>
-        <div class="row">
-          <button type="button" class="btn-outline" id="btnRegisterCompany">Register Company</button>
-          <button type="button" class="btn-outline" id="btnListCompany">Companies List</button>
-        </div>
-      `);
-
-      add(`
-        <h3>🚢 Vessel Management</h3>
-        <p>Register new vessels and manage existing ones.</p>
-        <div class="row">
-          <button type="button" class="btn-outline" id="btnRegisterVessel">Register Vessel</button>
-          <button type="button" class="btn-outline" id="btnEditVessel">Edit Vessels</button>
-          <button type="button" class="btn-outline" id="btnViewVessel">View Vessel</button>
-        </div>
-      `);
-
-      if (level === 'super') {
-        add(`
-          <h3>⚙️ System Administration</h3>
-          <p>Manage roles, groups, and system settings.</p>
-          <div class="row">
-            <button type="button" class="btn-outline" id="btnAddLevelGroup">Roles & Groups</button>
-            <button type="button" class="btn-outline" id="btnSystemLogs">System Logs</button>
-          </div>
-        `);
-      }
-
-      add(`
-        <h3>📊 Reports & Analytics</h3>
-        <p>View system reports, activity, and KPIs.</p>
-        <div class="row">
-          <button type="button" class="btn-outline" id="btnReports">View Reports</button>
-          <button type="button" class="btn-outline" id="btnActivity">Activity Log</button>
-        </div>
-      `);
-    } else if (level === 'user') {
-      add(`
-        <h3>📋 My Profile</h3>
-        <p>Your account details (read-only).</p>
-        <div class="row">
-          <button type="button" class="btn-outline" id="btnMyProfile">View Profile</button>
-        </div>
-      `);
-
-      add(`
-        <h3>🏢 Companies</h3>
-        <p>Browse company information.</p>
-        <div class="row">
-          <button type="button" class="btn-outline" id="btnListCompany">Companies List</button>
-        </div>
-      `);
-
-      let extra = '';
-      if (groupIdStr === '1' || groupName.includes('staff')) {
-        extra = `<button type="button" class="btn-outline" id="btnEditVessel">Edit Vessel Info</button>`;
-      }
-
-      add(`
-        <h3>🚢 My Vessels</h3>
-        <p>View and manage vessel information assigned to your account.</p>
-        <div class="row">
-          <button type="button" class="btn-outline" id="btnViewVessel">View Vessel</button>
-          ${extra}
-        </div>
-      `);
-    } else {
-      add(`
-        <h3>⚠️ Access Limited</h3>
-        <p>Your current user level has limited access. You can still view assigned vessels.</p>
-        <div class="row">
-          <button type="button" class="btn-outline" id="btnViewVessel">View Vessel</button>
-          <button type="button" class="btn-outline" id="btnContactAdmin">Contact Support</button>
+          <button class="btn-outline" id="btnAddLevelGroup">Roles & Groups</button>
+          <button class="btn-outline" id="btnSystemLogs">System Logs</button>
         </div>
       `);
     }
-
-    document.getElementById('modulesContainer').innerHTML = cards.join('');
+    add(`
+      <h3>📊 Reports & Analytics</h3>
+      <p>View reports and activity.</p>
+      <div class="row">
+        <button class="btn-outline" id="btnReports">View Reports</button>
+        <button class="btn-outline" id="btnActivity">Activity Log</button>
+      </div>
+    `);
+  } else if (isUser) {
+    add(`
+      <h3>📋 My Profile</h3>
+      <p>Your account details.</p>
+      <div class="row"><button class="btn-outline" id="btnMyProfile">View Profile</button></div>
+    `);
+    add(`
+      <h3>🏢 Companies</h3>
+      <p>Browse company information.</p>
+      <div class="row"><button class="btn-outline" id="btnListCompany">Companies List</button></div>
+    `);
+    let extra = '';
+    if (groupId === '1' || groupLC.includes('staff')) {
+      extra = `<button class="btn-outline" id="btnEditVessel">Edit Vessel Info</button>`;
+    }
+    add(`
+      <h3>🚢 My Vessels</h3>
+      <p>View vessels assigned to you.</p>
+      <div class="row">
+        <button class="btn-outline" id="btnViewVessel">View Vessel</button>
+        ${extra}
+      </div>
+    `);
+  } else {
+    // Fallback — user had unknown level; still show something usable
+    add(`
+      <h3>🚢 Vessels</h3>
+      <p>Access permitted features.</p>
+      <div class="row">
+        <button class="btn-outline" id="btnViewVessel">View Vessel</button>
+      </div>
+    `);
   }
 
-  function wireButtons() {
-    const go = (page) => {
-      // Navigate relative to this dashboard file
-      const base = location.pathname.replace(/[^/]+$/, '');
-      window.location.href = `${base}${page}.html`;
-    };
+  // Final safety: if nothing added, show a minimal card
+  if (cards.length === 0) {
+    add(`
+      <h3>⚠️ Access Limited</h3>
+      <p>Your account has limited permissions. Contact an administrator if this seems wrong.</p>
+    `);
+  }
 
-    const map = {
-      'btnCreateUser':      () => go('create_user'),
-      'btnEditUser':        () => go('edit_user'),
-      'btnRegisterVessel':  () => go('register_vessel'),
-      'btnEditVessel':      () => go('edit_vessel'),
-      'btnViewVessel':      () => go('view_vessel'),
-      'btnRegisterCompany': () => go('register_client'),
-      'btnListCompany':     () => go('client_list'),
-      'btnAddLevelGroup':   () => alert('Coming soon'),
-      'btnSystemLogs':      () => alert('Coming soon'),
-      'btnReports':         () => alert('Coming soon'),
-      'btnActivity':        () => alert('Coming soon'),
-      'btnContactAdmin':    () => alert('Email support@…'),
-      'btnMyProfile':       () => go('client_profile'),
-      'btnChangePassword':  () => go('change_password'),
-      'btnSecurityInfo':    () => alert('Security info page coming soon')
-    };
+  const host = document.getElementById('modulesContainer');
+  if (host) host.innerHTML = cards.join('');
+}
 
-    Object.entries(map).forEach(([id, fn]) => {
-      const el = document.getElementById(id);
-      if (el) el.addEventListener('click', fn);
+function wireButtons() {
+  const base = location.pathname.replace(/[^/]+$/, '');
+  const go = (page) => window.location.href = `${base}${page}.html`;
+
+  const map = {
+    btnCreateUser:      () => go('create_user'),
+    btnEditUser:        () => go('edit_user'),
+    btnRegisterVessel:  () => go('register_vessel'),
+    btnEditVessel:      () => go('edit_vessel'),
+    btnViewVessel:      () => go('view_vessel'),
+    btnRegisterCompany: () => go('register_client'),
+    btnListCompany:     () => go('client_list'),
+    btnAddLevelGroup:   () => alert('Coming soon'),
+    btnSystemLogs:      () => alert('Coming soon'),
+    btnReports:         () => alert('Coming soon'),
+    btnActivity:        () => alert('Coming soon'),
+    btnContactAdmin:    () => alert('Email support@…'),
+    btnMyProfile:       () => go('client_profile'),
+    btnChangePassword:  () => go('change_password'),
+    btnSecurityInfo:    () => alert('Security info coming soon')
+  };
+
+  Object.keys(map).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', map[id]);
+  });
+
+  const logoutBtn = document.getElementById('btnLogout');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      if (confirm('Are you sure you want to logout?')) {
+        NAVI.api.auth.logout().finally(() => {
+          window.location.href = `${base}index.html`;
+        });
+      }
     });
-
-    const logoutBtn = document.getElementById('btnLogout');
-    if (logoutBtn) {
-      logoutBtn.addEventListener('click', () => {
-        if (confirm('Are you sure you want to logout?')) {
-          NAVI.api.auth.logout().finally(() => {
-            const base = location.pathname.replace(/[^/]+$/, '');
-            window.location.href = `${base}index.html`;
-          });
-        }
-      });
-    }
   }
-  </script>
+}
+</script>
 </body>
 </html>
