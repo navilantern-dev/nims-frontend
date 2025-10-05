@@ -18,8 +18,8 @@
   body{ margin:0; font:14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color:var(--text); background:var(--bg); }
   .wrap{ max-width:1100px; margin:24px auto; padding:0 16px; }
   .h1{ font-size:22px; font-weight:700; margin:6px 0 16px; }
-  .cards{ display:grid; grid-template-columns:1fr; gap:16px; }
-  .card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; }
+  .cards{ width:100%; display:grid; grid-template-columns:1fr; gap:16px;}
+  .card{ width:100%; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; }
   .row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
   .field{ display:flex; flex-direction:column; gap:6px; min-width:220px; }
   label{ font-weight:600; color:var(--muted); }
@@ -124,11 +124,36 @@
 
   @page { margin: 12mm; }
 
+  /* Footnote legend for dates (screen + print) */
+  .note-dates {
+    margin-top: 8px;
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+  @media print {
+    .note-dates {
+      color: #000 !important;
+      font-size: 9pt !important;
+      border-top: 1px solid #000;
+      padding-top: 6px;
+      break-inside: avoid;
+    }
+  }
+
+  /* Inventory table column rules (keep dates in one line) */
+  .tbl-inv { table-layout:auto; }
+  .tbl-inv th, .tbl-inv td { vertical-align:top; }
+  .tbl-inv .col-desc { width:auto; }                 /* flex buffer */
+  .tbl-inv .col-dates { white-space:nowrap; width:1%; } /* never wrap */
+  .tbl-inv .col-qty   { width:60px; text-align:center; white-space:nowrap; }
+  .tbl-inv .col-days  { width:80px; text-align:center; white-space:nowrap; }
+  .tbl-inv .col-status{ width:90px; text-align:center; white-space:nowrap; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">
+    <?!= include('banner'); ?>
+    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px; margin-top: 1rem;">
       <div class="h1" style="margin:0">View Vessel</div>
       <button id="btnBack" class="btn alt small" type="button" aria-label="Back to Dashboard">← Back</button>
     </div>
@@ -327,7 +352,7 @@
     return {key:'VALID', cls:'ok'};
   }
   function daysLeft(expiryStr){
-    if (!expiryStr) return '';
+    if (!expiryStr) return 'Inf';
     const today = new Date(); today.setHours(0,0,0,0);
     const exp   = new Date(expiryStr);
     if (isNaN(exp.getTime())) return '';
@@ -370,7 +395,11 @@
       rows.map(r => `<tr>${allKeys.map(k => `<td>${(r[k]??'-')}</td>`).join('')}</tr>`).join('')
     }</tbody>`;
 
-    return `<table class="tbl">${thead}${tbody}</table>`;
+    return `<table class="tbl">${thead}${tbody}</table>
+      <div class="note-dates">
+        <strong>Dates legend:</strong> Mfd = Date Manufactured, Reg = Date Registered, Exp = Date Expiry.<br>
+        <strong>Day(s) Left:</strong> “Inf” means no expiry date provided; item is treated as <em>Valid</em>.
+      </div>`;
   }
 
   function invDisplayName(it){
@@ -378,6 +407,21 @@
     const name = String(it?.['NAME'] ?? '').trim();
     if (!name) return '-';
     return sub ? `${sub} ${name}` : name;
+  }
+
+  // Helper to render Dates in priority order, each on its own line
+  function renderDatesCell(it){
+    const mfd = (it['DATE_MANUFACTURED'] || '').trim();
+    const reg = (it['DATE_REGISTERED']   || '').trim();
+    const exp = (it['DATE_EXPIRY']       || '').trim();
+
+    const lines = [];
+    if (mfd) lines.push(`Mfd: ${mfd}`);
+    if (reg) lines.push(`Reg: ${reg}`);
+    if (exp) lines.push(`Exp: ${exp}`);
+
+    // Show each date on separate line; hide entirely if no date
+    return lines.length ? lines.join('<br>') : '-';
   }
 
   function renderDetail(detail){
@@ -389,8 +433,8 @@
       <table class="tbl">
         <tr><th>Ship Name</th><td>${m.SHIP_NAME||'-'}</td></tr>
         <tr><th>Owner Name</th><td>${m.OWNER_NAME||'-'}</td></tr>
-        <tr><th>Official Number</th><td>${m.OFFICIAL_NUMBER||'-'}</td></tr>
-        <tr><th>IMO Number</th><td>${m.IMO_NUMBER||'-'}</td></tr>
+        <tr><th>Official Number</th><td>${m.OFFICIAL_NO||'-'}</td></tr>
+        <tr><th>IMO Number</th><td>${m.IMO_NO||'-'}</td></tr>
         <tr><th>Ship Type</th><td>${m.SHIP_TYPE||'-'}</td></tr>
       </table>`;
 
@@ -402,33 +446,35 @@
       return `<table class="tbl">${out || '<tr><td class="muted">No data</td></tr>'}</table>`;
     }).join('') || '<div class="muted">No propulsion records</div>';
 
-    // Engines — consolidated printable table with pretty headers
     const enginesTbl = `
       <div class="sec">Vessel Engine Info</div>
       ${renderEngines(detail.engines||[])}
     `;
 
-    // Inventory (with Day(s) Left column)
+    // Inventory
     const invRows = inv.map(it=>{
       const s = statusOf(it['DATE_EXPIRY']);
       const d = daysLeft(it['DATE_EXPIRY']);
       return `<tr>
-        <td>${it['NAME']||'-'}</td>
-        <td>${it['DESCRIPTION']||'-'}</td>
-        <td>${it['QUANTITY']||'-'}</td>
-        <td>${it['DATE_MANUFACTURED']||'-'}</td>
-        <td>${it['DATE_EXPIRY']||'-'}</td>
-        <td>${d}</td>
-        <td><span class="tag ${s.cls}">${s.key}</span></td>
+        <td class="col-name">${it['NAME']||'-'}</td>
+        <td class="col-desc">${it['DESCRIPTION']||'-'}</td>
+        <td class="col-qty">${it['QUANTITY']||'-'}</td>
+        <td class="col-dates">${renderDatesCell(it)}</td>
+        <td class="col-days">${d}</td>
+        <td class="col-status"><span class="tag ${s.cls}">${s.key}</span></td>
       </tr>`;
-    }).join('') || `<tr><td colspan="7" class="muted">No inventory items</td></tr>`;
+    }).join('') || `<tr><td colspan="6" class="muted">No inventory items</td></tr>`;
 
     const invTbl = `
       <div class="sec">Vessel Inventory</div>
-      <table class="tbl">
+      <table class="tbl tbl-inv">
         <thead><tr>
-          <th>Name</th><th>Description</th><th>Qty</th>
-          <th>Date Manufactured</th><th>Date Expiry</th><th>Day(s) Left</th><th>Status</th>
+          <th class="col-name">Name</th>
+          <th class="col-desc">Description</th>
+          <th class="col-qty">Qty</th>
+          <th class="col-dates" title="Mfd = Date Manufactured, Reg = Date Registered, Exp = Date Expiry">Dates</th>
+          <th class="col-days">Day(s) Left</th>
+          <th class="col-status">Status</th>
         </tr></thead>
         <tbody>${invRows}</tbody>
       </table>`;

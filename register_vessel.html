@@ -116,7 +116,6 @@ textarea{min-height:92px;resize:vertical}
 .inv-hd .meta{display:flex;gap:14px;color:var(--muted);font-size:.86rem;flex-wrap:wrap}
 .inv-hd .actions{display:flex;gap:8px}
 /* Theme-aware collapse toggle */
-/* Theme-aware, obvious “+ / –” toggle */
 .inv-toggle{
   -webkit-appearance:none; appearance:none;
   width:34px; height:34px; border-radius:10px;
@@ -128,19 +127,13 @@ textarea{min-height:92px;resize:vertical}
   position:relative;
 }
 .inv-toggle::before{
-  content: "–";               /* expanded by default */
+  content: "–";
   font: 700 18px/1 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-  transform: translateY(-1px); /* optically center the dash */
+  transform: translateY(-1px);
 }
-.inv-item.collapsed .inv-toggle::before{
-  content: "+";               /* when collapsed, show plus */
-}
-
+.inv-item.collapsed .inv-toggle::before{ content: "+"; }
 .inv-toggle:hover{ border-color: var(--ring); }
-.inv-toggle:focus{
-  outline:none;
-  box-shadow:0 0 0 4px color-mix(in oklab, var(--ring) 18%, transparent);
-}
+.inv-toggle:focus{ outline:none; box-shadow:0 0 0 4px color-mix(in oklab, var(--ring) 18%, transparent); }
 
 .inv-body{
   padding:14px;
@@ -152,15 +145,16 @@ textarea{min-height:92px;resize:vertical}
 }
 .inv-field textarea{min-height:140px; line-height:1.45;}
 .inv-name{grid-column:1 / span 5}
-.inv-qty{grid-column:6 / span 2}
-.inv-mfd{grid-column:8 / span 2}
-.inv-exp{grid-column:10 / span 3}
-.inv-file{grid-column:1 / span 5}
-.inv-status{grid-column:6 / span 3}
-.inv-class{grid-column:9 / span 3}
-.inv-desc{grid-column:1 / span 12}
+.inv-qty{ grid-column:6 / span 2 }        /* row 1 right after Name */
+.inv-mfd{ grid-column:8 / span 3 }        /* row 1 (no overlap with qty) */
+.inv-exp{ grid-column:9 / span 4; grid-row:2 }  /* row 2 */
+.inv-file{  grid-column:1 / span 5; grid-row:3 }
+/* repurpose previous Status slot for Date Registered */
+.inv-reg{ grid-column:6 / span 3; grid-row:2 }  /* row 2 */
+.inv-class{ grid-column:9 / span 3; grid-row:3 }
+.inv-desc{  grid-column:1 / span 12 }           /* stays full width */
 .inv-desc .wordcount{font-size:.76rem;color:var(--muted);margin-top:4px}
-.inv-actions{grid-column:12 / span 1; display:flex; align-items:flex-start; justify-content:flex-end}
+.inv-actions{grid-column:12 / span 1;}
 
 /* collapsed state */
 .inv-item.collapsed .inv-body{display:none}
@@ -169,18 +163,24 @@ textarea{min-height:92px;resize:vertical}
 @media (max-width: 1024px){
   .inv-body{grid-template-columns: repeat(6,1fr)}
   .inv-name{grid-column:1 / span 6}
-  .inv-qty{grid-column:1 / span 2}
-  .inv-mfd{grid-column:3 / span 2}
-  .inv-exp{grid-column:5 / span 2}
-  .inv-file{grid-column:1 / span 6}
-  .inv-status{grid-column:1 / span 3}
-  .inv-class{grid-column:4 / span 3}
-  .inv-desc{grid-column:1 / span 6}
+  /* row 1 */
+  .inv-qty{ grid-column:1 / span 2 }
+  .inv-mfd{ grid-column:3 / span 2 }
+  /* row 2 */
+  .inv-reg{ grid-column:1 / span 3; grid-row:auto }
+  .inv-exp{ grid-column:4 / span 3; grid-row:auto }
+  /* row 3 */
+  .inv-file{ grid-column:1 / span 6 }
+  /* row 4 */
+  .inv-class{ grid-column:1 / span 3 }
+  /* row 5 */
+  .inv-desc{ grid-column:1 / span 6 }
 }
+/* ≤640px: stacked, but still in good reading order */
 @media (max-width: 640px){
   .inv-body{grid-template-columns: repeat(4,1fr)}
   .inv-name,.inv-file,.inv-desc{grid-column:1 / span 4}
-  .inv-qty,.inv-mfd,.inv-exp,.inv-status,.inv-class{grid-column:1 / span 2}
+  .inv-qty,.inv-mfd,.inv-reg,.inv-exp,.inv-class{grid-column:1 / span 2}
 }
 
 /* pager buttons look tidy */
@@ -194,10 +194,66 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
   .pill, select { background:#0F172A !important; color:#F8FAFC !important; border-color:#334155 !important; }
   select option { background:#0F172A; color:#F8FAFC; }
 }
+
+/* === INVENTORY: reset to a simple, predictable grid === */
+/* Desktop: 12 columns */
+#tab-inventory .inv-body { grid-template-columns: repeat(12, 1fr) !important; }
+
+/* Row 1 */
+#tab-inventory .inv-name  { grid-column: 1 / span 12 !important; }
+
+/* Row 2 — three dates, even widths */
+#tab-inventory .inv-mfd   { grid-column: 1 / span 4  !important; }
+#tab-inventory .inv-reg   { grid-column: 5 / span 4  !important; }
+#tab-inventory .inv-exp   { grid-column: 9 / span 4  !important; }
+
+/* Row 3 — file / qty / class */
+#tab-inventory .inv-file  { grid-column: 1 / span 6  !important; }
+#tab-inventory .inv-qty   { grid-column: 7 / span 3  !important; }
+#tab-inventory .inv-class { grid-column: 10 / span 3 !important; }
+
+/* Row 4 — description full width */
+#tab-inventory .inv-desc  { grid-column: 1 / span 12 !important; }
+
+/* ---------- Tablet: 6 columns ---------- */
+@media (max-width: 1024px){
+  #tab-inventory .inv-body { grid-template-columns: repeat(6, 1fr) !important; }
+
+  #tab-inventory .inv-name  { grid-column: 1 / span 6 !important; }
+
+  /* Dates on two neat halves */
+  #tab-inventory .inv-mfd   { grid-column: 1 / span 3 !important; }
+  #tab-inventory .inv-reg   { grid-column: 4 / span 3 !important; }
+  #tab-inventory .inv-exp   { grid-column: 1 / span 3 !important; } /* next row */
+  
+  #tab-inventory .inv-file  { grid-column: 4 / span 3 !important; }
+  #tab-inventory .inv-qty   { grid-column: 1 / span 3 !important; }
+  #tab-inventory .inv-class { grid-column: 4 / span 3 !important; }
+
+  #tab-inventory .inv-desc  { grid-column: 1 / span 6 !important; }
+}
+
+/* ---------- Mobile: 4 columns (stack cleanly) ---------- */
+@media (max-width: 640px){
+  #tab-inventory .inv-body { grid-template-columns: repeat(4, 1fr) !important; }
+
+  #tab-inventory .inv-name,
+  #tab-inventory .inv-mfd,
+  #tab-inventory .inv-reg,
+  #tab-inventory .inv-exp,
+  #tab-inventory .inv-file,
+  #tab-inventory .inv-qty,
+  #tab-inventory .inv-class,
+  #tab-inventory .inv-desc {
+    grid-column: 1 / span 4 !important;
+  }
+}
+
   </style>
 </head>
 <body>
   <div class="wrap">
+    <?!= include('banner'); ?>
     <div class="card">
       <div class="title">
         <img class="logo-banner" src="<?!= logoUrl ?>" alt="Logo" onerror="this.style.display='none'">
@@ -237,14 +293,13 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
             <h3>Main Information</h3>
             <div class="grid">
               <div>
-                <label class="req">Ship Name</label>
-                <input data-main="SHIP_NAME">
-
                 <label class="req">Owner Name</label>
-                <!-- DROPDOWN (populated from Company_Id tab) -->
                 <select id="ownerNameSel" class="pill" data-main="OWNER_NAME">
                   <option selected disabled value="">— Loading companies —</option>
                 </select>
+
+                <label class="req">Ship Name</label>
+                <input data-main="SHIP_NAME">
 
                 <label>Flag</label><input data-main="FLAG">
                 <label class="req">Port of Registry</label><input data-main="PORT_OF_REGISTRY">
@@ -269,22 +324,12 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
                 <label>Date of Construction</label><input type="date" data-main="DATE_OF_CONSTRUCTION">
                 <label>Date of Delivery</label><input type="date" data-main="DATE_OF_DELIVERY">
                 <label>Ship Manager</label><input data-main="SHIP_MANAGER">
+                <label>Ship Manager document of compliance number</label>
+                <input data-main="SHIP_MANAGER_DOC" placeholder="">
+                <label>Ship Manager register of company number</label>
+                <input data-main="SHIP_MANAGER_ROC" placeholder="">
                 <label>Ship Manager Address</label><textarea data-main="SHIP_MANAGER_ADDRESS"></textarea>
               </div>
-            </div>
-
-            <div class="divider"></div>
-            <div class="grid">
-              <div>
-                <label>Ship Manager Doc</label><input data-main="SHIP_MANAGER_DOC" placeholder="(Drive File ID or URL)">
-              </div>
-              <div>
-                <label>Ship Manager Roc</label><input data-main="SHIP_MANAGER_ROC" placeholder="(Drive File ID or URL)">
-              </div>
-            </div>
-
-            <div class="row">
-              <button id="btnResetMain" class="btn alt" type="button">Reset Main</button>
             </div>
           </div>
         </div>
@@ -452,9 +497,7 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
   }
 
   // ====== Owner Names (Company_Id tab) ======
-  
   let OWNER_NAMES = [];
-
   function setOwnerNames(list){
     OWNER_NAMES = Array.isArray(list) ? list : [];
     const sel = document.getElementById('ownerNameSel');
@@ -467,21 +510,16 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
     const ph = new Option('— Select company —','',true,true); ph.disabled = true; sel.add(ph);
     OWNER_NAMES.forEach(name => sel.add(new Option(name, name)));
   }
-
   function showOwnerNamesError(msg){
     const sel = document.getElementById('ownerNameSel');
     sel.innerHTML = '';
     const o = new Option('— ' + (msg || 'Failed to load companies') + ' —','',true,true);
     o.disabled = true; sel.add(o); sel.disabled = true;
   }
-
   function loadOwnerNames(){
     if (typeof google === 'undefined' || !google.script?.run) { showOwnerNamesError('Apps Script unavailable'); return; }
     google.script.run
-      .withSuccessHandler(res => {
-        if (res?.ok) setOwnerNames(res.names || []);
-        else showOwnerNamesError(res?.msg);
-      })
+      .withSuccessHandler(res => { if (res?.ok) setOwnerNames(res.names || []); else showOwnerNamesError(res?.msg); })
       .withFailureHandler(err => showOwnerNamesError(err?.message))
       .getOwnerNames(token);
   }
@@ -573,39 +611,51 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
     counter.textContent = `${countWords(textarea.value)}/${INV_DESC_MAX_WORDS} words`;
   }
 
-  // Returns { el, value, label } for the NAME field inside a single inventory card (div)
   function getInvName(div){
     const el = div.querySelector('[data-inv="NAME"]');
     if (!el) return { el:null, value:'', label:'' };
-
-    // Works for <select> and <input>
     const raw = (el.value || '').trim();
     let label = raw;
-
     if (el.tagName === 'SELECT' && el.selectedIndex >= 0) {
       const opt = el.options[el.selectedIndex];
-      label = (opt?.text || raw).trim();   // SUB_CATEGORY NAME label
+      label = (opt?.text || raw).trim();
     }
     return { el, value: raw, label };
   }
 
   function summarizeItem(div){
     const get = k => div.querySelector(`[data-inv="${k}"]`)?.value?.trim() || '';
-    const { label } = getInvName(div);   // <-- pretty label
+    const { label } = getInvName(div);
     const qty = get('QUANTITY') || '0';
     const mfd = get('DATE_MANUFACTURED') || '—';
     const exp = get('DATE_EXPIRY') || '—';
-    const st  = get('STATUS') || '—';
+    const reg = get('DATE_REGISTERED') || '—';
     const cls = get('CLASS') || '—';
-    return { name:(label||'—'), qty, mfd, exp, st, cls };
+    return { name:(label||'—'), qty, mfd, exp, reg, cls };
   }
 
   function setHeaderFromInputs(div){
-    const {name, qty, mfd, exp, st, cls} = summarizeItem(div);
+    const {name, qty, mfd, exp, reg, cls} = summarizeItem(div);
     div.querySelector('[data-hd-name]').textContent = name;
     div.querySelector('[data-hd-qty]').textContent  = qty;
     div.querySelector('[data-hd-dates]').textContent= `${mfd} → ${exp}`;
-    div.querySelector('[data-hd-sc]').textContent   = `${st} / ${cls}`;
+    div.querySelector('[data-hd-reg]').textContent  = reg;
+    div.querySelector('[data-hd-class]').textContent= cls;
+  }
+
+  function blankInvDatesIfEmpty(container, data){
+    const keys = ['DATE_MANUFACTURED','DATE_REGISTERED','DATE_EXPIRY'];
+    keys.forEach(k=>{
+      const el = container.querySelector(`input[data-inv="${k}"]`);
+      if (!el) return;
+      const hasData = data && typeof data[k] === 'string' && data[k].trim() !== '';
+      if (!hasData){
+        el.value = '';
+        el.defaultValue = '';
+        el.setAttribute('value','');
+        el.autocomplete = 'off';
+      }
+    });
   }
 
   function newInvItem(data){
@@ -621,7 +671,8 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
         <div class="meta">
           <span>Qty: <b data-hd-qty>0</b></span>
           <span><b data-hd-dates>— → —</b></span>
-          <span><b data-hd-sc>— / —</b></span>
+          <span>Reg: <b data-hd-reg>—</b></span>
+          <span>Class: <b data-hd-class>—</b></span>
         </div>
         <div class="actions">
           <button class="btn danger small btnDel" type="button">Delete</button>
@@ -633,13 +684,13 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
           <label>Name</label>
           <select data-inv="NAME" data-current="${(data?.NAME||'').replace(/"/g,'&quot;')}"></select>
         </div>
-        <div class="inv-field inv-qty">
-          <label>Quantity</label>
-          <input type="number" step="1" value="${data?.QUANTITY||''}" data-inv="QUANTITY" placeholder="0">
-        </div>
         <div class="inv-field inv-mfd">
           <label>Date Manufactured</label>
           <input type="date" value="${data?.DATE_MANUFACTURED||''}" data-inv="DATE_MANUFACTURED">
+        </div>
+        <div class="inv-field inv-reg">
+          <label>Date Registered</label>
+          <input type="date" value="${data?.DATE_REGISTERED||''}" data-inv="DATE_REGISTERED">
         </div>
         <div class="inv-field inv-exp">
           <label>Date Expiry</label>
@@ -650,9 +701,9 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
           <input type="file" data-inv-file="ATTACHMENT"
                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.gif,.webp,.heic,image/*">
         </div>
-        <div class="inv-field inv-status">
-          <label>Status</label>
-          <input value="${data?.STATUS||''}" data-inv="STATUS" placeholder="e.g. Active">
+        <div class="inv-field inv-qty">
+          <label>Quantity</label>
+          <input type="number" step="1" value="${data?.QUANTITY||''}" data-inv="QUANTITY" placeholder="0">
         </div>
         <div class="inv-field inv-class">
           <label>Class</label>
@@ -666,29 +717,24 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
       </div>
     `;
 
-    // delete
     div.querySelector('.btnDel').addEventListener('click', ()=> { div.remove(); renderInvPagination(); });
 
-    // collapse toggle
     div.querySelector('.inv-toggle').addEventListener('click', ()=> div.classList.toggle('collapsed'));
 
-    // live header summary
     const update = ()=> setHeaderFromInputs(div);
     div.querySelectorAll('[data-inv]').forEach(el=> el.addEventListener('input', update));
-    // description counter
     const ta = div.querySelector('textarea[data-inv="DESCRIPTION"]');
     const counter = div.querySelector('[data-inv="DESC_COUNTER"]');
-    ta.addEventListener('input', ()=> clampDescriptionToLimit(ta, counter));
-    // set initial values
     ta.value = (data?.DESCRIPTION || '').trim();
+    ta.addEventListener('input', ()=> clampDescriptionToLimit(ta, counter));
     clampDescriptionToLimit(ta, counter);
     setHeaderFromInputs(div);
 
-    // hydrate Name <select> with options + preselect
     const nameSel = div.querySelector('[data-inv="NAME"]');
     fillNameSelect(nameSel, data?.NAME || '');
-    nameSel.addEventListener('change', ()=> setHeaderFromInputs(div)); // keep header summary live
+    nameSel.addEventListener('change', ()=> setHeaderFromInputs(div));
 
+    blankInvDatesIfEmpty(div, data);
     return div;
   }
 
@@ -717,7 +763,6 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
     const out = [];
 
     for (const item of items) {
-      // local field getter for this card
       const get = (k)=> item.querySelector(`[data-inv="${k}"]`)?.value?.trim() || '';
 
       // build "<SUB_CATEGORY> <NAME>" (or just NAME if no sub)
@@ -728,7 +773,7 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
         : '';
       const combinedName = sub ? `${sub} ${rawName}` : rawName;
 
-      // attachment (unchanged)
+      // attachment
       const input = item.querySelector('[data-inv-file="ATTACHMENT"]');
       let filePayload = null;
       const f = input && input.files && input.files[0];
@@ -743,13 +788,13 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
       }
 
       out.push({
-        NAME: combinedName, // <-- save combined string
+        NAME: combinedName,
         QUANTITY: get('QUANTITY'),
         DATE_MANUFACTURED: get('DATE_MANUFACTURED'),
         DATE_EXPIRY: get('DATE_EXPIRY'),
+        DATE_REGISTERED: get('DATE_REGISTERED'),
         ATTACHMENT: filePayload,
         DESCRIPTION: get('DESCRIPTION'),
-        STATUS: get('STATUS'),
         CLASS: get('CLASS')
       });
     }
@@ -765,7 +810,6 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
       selectEl.dispatchEvent(new Event('change'));
     }
   }
-
   function refreshAllNameSelects(){
     document.querySelectorAll('#invList [data-inv="NAME"]').forEach(sel=>{
       const keep = sel.getAttribute('data-current') || sel.value || '';
@@ -774,13 +818,12 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
   }
   function setInventoryNames(names){
     INV_NAMES = Array.isArray(names) ? names.filter(n => n && n.NAME && n.CATEGORY) : [];
-    refreshAllNameSelects(); // uses fillNameSelect under the hood
+    refreshAllNameSelects();
   }
-
   function loadInventoryNames(){
     google.script.run
       .withSuccessHandler(res => { if (res?.ok) setInventoryNames(res.names || []); })
-      .withFailureHandler(_ => {}) // silent
+      .withFailureHandler(_ => {})
       .getInventoryNames(token);
   }
 
@@ -850,197 +893,13 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
     requestNewShipId();
     addPropRow();
     addEngineRow();
-    addInvRow();           // creates first inventory card
-    renderInvPagination(); // if you use pagination
-    loadInventoryNames();  // inventory item names
-    loadOwnerNames();      // <-- NEW: populate Owner Name dropdown from Company_Id
+    addInvRow();
+    renderInvPagination();
+    loadInventoryNames();
+    loadOwnerNames();
   });
 
-  // ====== Searchable Inventory Name Dropdown (CATEGORY SUB_CATEGORY NAME) ======
-  // Expect raw items with columns: NAME, CATEGORY, SUB_CATEGORY (and optionally ID).
-  // KISS: no external libs, progressive enhancement on <select>.
-
-  (function(){
-    function formatInvName(row){
-      const sub = (row.SUB_CATEGORY || '').trim();
-      const nm  = (row.NAME || '').trim();
-      if (!nm) return '';
-      return sub ? `${sub} ${nm}` : nm;
-    }
-
-    function normalize(str){ return (str||'').toLowerCase(); }
-
-    // Upgrade a native <select> into a searchable dropdown.
-    // selectEl: HTMLSelectElement
-    // items: Array<{NAME, CATEGORY, SUB_CATEGORY, ID?}>
-    // opts.valueField: 'ID' | 'NAME' (default: 'NAME')
-    function upgradeInventoryNameSelect(selectEl, items, opts){
-      if (!selectEl) throw new Error('upgradeInventoryNameSelect: select element not found');
-      opts = opts || {};
-      const valueField = opts.valueField || 'NAME';
-
-      // Build options list (value + label)
-      const options = items
-        .filter(r => (r && r.NAME && r.CATEGORY)) // minimal validation
-        .map(r => ({
-          value: (r[valueField] || r.NAME).toString(),
-          label: formatInvName(r),
-          raw: r
-        }))
-        // sort by CATEGORY, SUB_CATEGORY, NAME (case-insensitive)
-        .sort((a,b)=>{
-          const ca = normalize(a.raw.CATEGORY), cb = normalize(b.raw.CATEGORY);
-          if (ca !== cb) return ca < cb ? -1 : 1;
-          const sa = normalize(a.raw.SUB_CATEGORY||''), sb = normalize(b.raw.SUB_CATEGORY||'');
-          if (sa !== sb) return sa < sb ? -1 : 1;
-          const na = normalize(a.raw.NAME), nb = normalize(b.raw.NAME);
-          return na < nb ? -1 : (na > nb ? 1 : 0);
-        });
-
-      // Fill original <select> (for forms / existing code)
-      // Keep the same id/name so other code still works.
-      selectEl.innerHTML = '';
-      for (const o of options) {
-        const opt = document.createElement('option');
-        opt.value = o.value;
-        opt.textContent = o.label; // display formatted label even on fallback
-        selectEl.appendChild(opt);
-      }
-
-      // Progressive enhancement UI
-      const wrap = document.createElement('div');
-      wrap.className = 'sdd';
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'sdd-btn';
-      btn.innerHTML = `<span class="sdd-label">${selectEl.options[selectEl.selectedIndex]?.text || 'Select item...'}</span>
-                      <span class="sdd-kbd">/ to search</span>`;
-      const panel = document.createElement('div');
-      panel.className = 'sdd-panel';
-      panel.innerHTML = `
-        <div class="sdd-search">
-          <input type="text" placeholder="Search CATEGORY / SUB_CATEGORY / NAME…" aria-label="Search inventory names">
-        </div>
-        <div class="sdd-list" role="listbox"></div>
-      `;
-      wrap.appendChild(btn);
-      wrap.appendChild(panel);
-
-      // Insert UI right after select; hide original but keep in DOM
-      selectEl.style.position = 'absolute';
-      selectEl.style.opacity = '0';
-      selectEl.style.pointerEvents = 'none';
-      selectEl.style.height = '0';
-      selectEl.parentNode.insertBefore(wrap, selectEl.nextSibling);
-
-      const labelEl = btn.querySelector('.sdd-label');
-      const inputEl = panel.querySelector('input');
-      const listEl  = panel.querySelector('.sdd-list');
-
-      let filtered = options.slice();
-      let activeIndex = -1;
-
-      function renderList(){
-        listEl.innerHTML = '';
-        if (!filtered.length) {
-          const emp = document.createElement('div');
-          emp.className = 'sdd-empty';
-          emp.textContent = 'No matches';
-          listEl.appendChild(emp);
-          return;
-        }
-        filtered.forEach((o, idx)=>{
-          const it = document.createElement('div');
-          it.className = 'sdd-opt';
-          it.setAttribute('role', 'option');
-          it.setAttribute('data-value', o.value);
-          it.textContent = o.label;
-          if (idx === activeIndex) it.setAttribute('aria-selected','true');
-          it.addEventListener('click', ()=> choose(o));
-          listEl.appendChild(it);
-        });
-      }
-
-      function open(){
-        wrap.classList.add('open');
-        inputEl.value = '';
-        filtered = options.slice();
-        activeIndex = -1;
-        renderList();
-        setTimeout(()=>inputEl.focus(), 0);
-      }
-      function close(){ wrap.classList.remove('open'); }
-
-      function choose(o){
-        // Update select
-        selectEl.value = o.value;
-        // Update button label
-        labelEl.textContent = o.label;
-        // Fire change event for any existing listeners
-        selectEl.dispatchEvent(new Event('change'));
-        close();
-      }
-
-      function filter(q){
-        const nq = normalize(q);
-        filtered = options.filter(o=>{
-          const r = o.raw;
-          return (
-            normalize(r.CATEGORY).includes(nq) ||
-            normalize(r.SUB_CATEGORY||'').includes(nq) ||
-            normalize(r.NAME).includes(nq)  ||
-            normalize(o.label).includes(nq)
-          );
-        });
-        activeIndex = -1;
-        renderList();
-      }
-
-      // Events
-      btn.addEventListener('click', ()=>{
-        if (wrap.classList.contains('open')) close(); else open();
-      });
-      inputEl.addEventListener('input', (e)=> filter(e.target.value));
-      inputEl.addEventListener('keydown', (e)=>{
-        if (e.key === 'Escape'){ close(); btn.focus(); }
-        else if (e.key === 'ArrowDown'){ e.preventDefault(); move(1); }
-        else if (e.key === 'ArrowUp'){ e.preventDefault(); move(-1); }
-        else if (e.key === 'Enter'){
-          e.preventDefault();
-          if (filtered.length && activeIndex >= 0) choose(filtered[activeIndex]);
-        }
-      });
-      document.addEventListener('keydown', (e)=>{
-        // Quick open with "/" when button has focus
-        if (document.activeElement === btn && e.key === '/') {
-          e.preventDefault(); open();
-        }
-      });
-      document.addEventListener('click', (e)=>{
-        if (!wrap.contains(e.target)) close();
-      });
-
-      function move(delta){
-        if (!filtered.length) return;
-        activeIndex = (activeIndex + delta + filtered.length) % filtered.length;
-        renderList();
-        // ensure item is visible
-        const node = listEl.children[activeIndex];
-        if (node) node.scrollIntoView({block:'nearest'});
-      }
-
-      // Keep UI in sync if value was preset programmatically
-      selectEl.addEventListener('change', ()=>{
-        const opt = options.find(o => o.value == selectEl.value);
-        if (opt) labelEl.textContent = opt.label;
-      });
-    }
-
-    // Expose globally for your pages
-    window.upgradeInventoryNameSelect = upgradeInventoryNameSelect;
-    window.formatInvNameForDebug = formatInvName; // optional
-  })();
-
+  /* ====== Searchable Inventory Name Dropdown (CATEGORY SUB_CATEGORY NAME) ====== */
   (function(){
     function formatInvLabel(r){
       const sub = (r.SUB_CATEGORY||'').trim();
@@ -1048,27 +907,20 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
       if (!nm) return '';
       return sub ? `${sub} ${nm}` : nm;
     }
-
     function normalize(s){ return (s||'').toLowerCase(); }
-
-    // Turn a <select> into a searchable dropdown using an items array of {NAME,CATEGORY,SUB_CATEGORY}
     function upgradeInventoryNameSelect(selectEl, items){
       if (!selectEl) return;
-
-      // Build value/label list
       const options = (Array.isArray(items)?items:[])
         .filter(r => r && r.NAME && r.CATEGORY)
         .map(r => ({ value: r.NAME, label: formatInvLabel(r), raw:r }))
         .sort((a,b)=>{
           const ca=normalize(a.raw.CATEGORY), cb=normalize(b.raw.CATEGORY);
           if (ca!==cb) return ca<cb?-1:1;
-          const sa=normalize(a.raw.SUB_CATEGORY), sb=normalize(b.raw.SUB_CATEGORY);
+          const sa=normalize(a.raw.SUB_CATEGORY||''), sb=normalize(b.raw.SUB_CATEGORY||'');
           if (sa!==sb) return sa<sb?-1:1;
           const na=normalize(a.raw.NAME), nb=normalize(b.raw.NAME);
           return na<nb?-1:(na>nb?1:0);
         });
-
-      // Fill native select (kept for form submits + existing listeners)
       const current = selectEl.value || selectEl.getAttribute('data-current') || '';
       selectEl.innerHTML = '';
       if (!options.length){
@@ -1079,33 +931,23 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
       selectEl.disabled = false;
       const phSel = !current; const ph = new Option('— Select —','',phSel,phSel);
       ph.disabled = true; selectEl.add(ph);
-
       options.forEach(o => {
         const isSel = current && (
-          o.value.toLowerCase() === current.toLowerCase() ||   // raw NAME match
-          o.label.toLowerCase() === current.toLowerCase()      // combined "<SUB> <NAME>" match
+          o.value.toLowerCase() === current.toLowerCase() ||
+          o.label.toLowerCase() === current.toLowerCase()
         );
         const opt = new Option(o.label, o.value, false, isSel);
         opt.dataset.category = o.raw.CATEGORY || '';
-        opt.dataset.sub      = o.raw.SUB_CATEGORY || '';       // <-- store sub-category
+        opt.dataset.sub      = o.raw.SUB_CATEGORY || '';
         selectEl.add(opt);
       });
-
-      // Build the searchable wrapper UI
-      // If already enhanced, rebuild label and exit
-      if (selectEl._sdd && selectEl._sdd.wrap && selectEl._sdd.labelEl){
-        const chosen = options.find(o => o.value.toLowerCase() === (selectEl.value||'').toLowerCase());
-        selectEl._sdd.labelEl.textContent = chosen ? chosen.label : 'Select item...';
-        return;
-      }
-
+      // enhance UI
       const wrap = document.createElement('div'); wrap.className = 'sdd';
       const btn  = document.createElement('button'); btn.type='button'; btn.className='sdd-btn';
       const labelEl = document.createElement('span'); labelEl.className='sdd-label';
       labelEl.textContent = selectEl.options[selectEl.selectedIndex]?.text || 'Select item...';
       const kbd = document.createElement('span'); kbd.className='sdd-kbd'; kbd.textContent = '/ to search';
       btn.appendChild(labelEl); btn.appendChild(kbd);
-
       const panel = document.createElement('div'); panel.className='sdd-panel';
       panel.innerHTML = `
         <div class="sdd-search">
@@ -1114,16 +956,11 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
         <div class="sdd-list" role="listbox"></div>
       `;
       wrap.appendChild(btn); wrap.appendChild(panel);
-
-      // Insert after select (keep select hidden but functional)
       selectEl.style.position='absolute'; selectEl.style.opacity='0'; selectEl.style.pointerEvents='none'; selectEl.style.height='0';
       selectEl.parentNode.insertBefore(wrap, selectEl.nextSibling);
-
       const inputEl = panel.querySelector('input');
       const listEl  = panel.querySelector('.sdd-list');
-      let filtered = options.slice();
-      let activeIndex = -1;
-
+      let filtered = options.slice(); let activeIndex = -1;
       function renderList(){
         listEl.innerHTML='';
         if (!filtered.length){
@@ -1162,7 +999,6 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
         selectEl.dispatchEvent(new Event('change'));
         close();
       }
-
       btn.addEventListener('click', ()=> wrap.classList.contains('open') ? close() : open());
       document.addEventListener('click', (e)=>{ if (!wrap.contains(e.target)) close(); });
       inputEl.addEventListener('input', (e)=> filter(e.target.value));
@@ -1175,19 +1011,12 @@ select:disabled, option[disabled] { color:#94A3B8 !important; }
       document.addEventListener('keydown', (e)=>{
         if (document.activeElement === btn && e.key === '/') { e.preventDefault(); open(); }
       });
-
-      // Keep in sync if value changes programmatically
       selectEl.addEventListener('change', ()=>{
         const sel = options.find(o => o.value.toLowerCase() === (selectEl.value||'').toLowerCase());
         labelEl.textContent = sel ? sel.label : 'Select item...';
       });
-
-      // expose for later updates
       selectEl._sdd = { wrap, labelEl };
     }
-
-    // Expose globally
-    window._invLabel = formatInvLabel;
     window.upgradeInventoryNameSelect = upgradeInventoryNameSelect;
   })();
   </script>

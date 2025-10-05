@@ -26,13 +26,7 @@
     }
 
     * { box-sizing: border-box; }
-    body {
-      margin: 0; background: var(--bg); color: var(--text);
-      font-family: ui-sans-serif, system-ui, sans-serif;
-      min-height: 100vh;
-      display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-      padding: 2rem 1rem;
-    }
+    body{margin:0;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;font:400 16px/1.45 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;}
     .wrapper { max-width: 900px; width: 100%; }
     .spacer {width:100%; height:1rem;}
     .header { text-align: center; margin-bottom: 2rem; }
@@ -96,7 +90,7 @@
       display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;
     }
     .btn {
-      padding: 0.75rem 1.5rem; border: none; border-radius: 8px;
+      padding: 0.75rem 1.5rem; border: none; border-radius: 8px; margin-top:1rem;
       cursor: pointer; font-size: 0.875rem; font-weight: 600;
       transition: background 0.2s, color 0.2s;
     }
@@ -260,6 +254,7 @@
   <script> const clientProfile = <?!= JSON.stringify(clientProfileData)?>; </script>
 
   <div class="wrapper">
+    <?!= include('banner'); ?>
     <button id="btnBack" class="btn alt" type="button" style="float:right">Back</button>
     <div class="header">
       <h1>Client Profile</h1>
