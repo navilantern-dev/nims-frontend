@@ -614,14 +614,26 @@ input:focus {
         }, 100);
 
         // Check if already logged in
+        // Optional: add ?noauto=1 to URL to force showing the login form
         const existingToken = NAVI.Storage.getToken();
-        if (existingToken) {
+        const skipAuto = new URLSearchParams(location.search).get('noauto') === '1';
+
+        if (existingToken && !skipAuto) {
           try {
             const session = await NAVI.API.auth.getSession();
-            if (session && session.ok) {
+
+            // Only trust a session that has a real user id
+            const hasUser =
+              !!(session?.user?.userId || session?.USER_ID);
+
+            if (session?.ok && hasUser) {
               window.location.href = './pages/dashboard.html';
+              return; // stop initializing login UI
             }
-          } catch (e) {
+
+            // Token is stale or invalid — purge it so we don't loop
+            NAVI.Storage.clearToken();
+          } catch (_) {
             NAVI.Storage.clearToken();
           }
         }
