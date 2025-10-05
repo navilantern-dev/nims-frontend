@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NAVI-SIMS – Edit Vessel</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Oswald:wght@700&display=swap');
+    :root { --bg: #F6F7FB; --card: #ffffff; --panel: #F9FAFB; --text: #0F172A; --muted: #64748B; --border: #E5E7EB; --ring: #2563EB; --primary: #2563EB; --danger: #EF4444; --ok: #059669; --radius: 18px; --shadow: 0 10px 30px rgba(2, 6, 23, .08); }
+    @media (prefers-color-scheme: dark) { :root { --bg: #0B1220; --card: #0F172A; --panel: #111827; --text: #E5E7EB; --muted: #94A3B8; --border: #1F2937; --primary: #60A5FA; --shadow: 0 10px 30px rgba(0, 0, 0, .45); } }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; font: 400 16px/1.45 ui-sans-serif, system-ui; padding: 2rem 1rem; }
+    .wrap { width: min(96vw, 1200px); }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px; box-shadow: var(--shadow); margin-bottom: 1rem; }
+    .banner-container { width: 100%; text-align: center; padding: 2rem 1rem; background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 1rem; }
+    .banner-heading { font-family: "Arial Unicode MS", Arial, sans-serif; font-weight: 700; font-size: clamp(3rem, 12vw, 6rem); letter-spacing: 0.65vw; margin: 0 -1rem 0; }
+    .banner-heading .part-one { color: #231F20; }
+    .banner-heading .part-two { color: #965A37; }
+    .banner-subheading { font-family: 'Montserrat', sans-serif; text-transform: uppercase; color: #231F20; letter-spacing: 5px; margin-top: 0; font-weight: 500; font-size: clamp(0.6rem, 2.5vw, 0.9rem); }
+    .title { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
+    .muted { color: var(--muted); }
+    .msg { margin-top: 12px; display: none; padding: 10px; border-radius: 10px; }
+    .msg.ok { background: #E6FFED; color: #065F46; border: 1px solid #A7F3D0; }
+    .msg.err { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+    .hint { font-size: .8rem; color: var(--muted); }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #EEF2FF; color: #3730A3; font-size: .78rem; border: 1px solid #E0E7FF; }
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 16px; }
+    .tab { border: 1px solid var(--border); background: var(--panel); padding: 8px 12px; border-radius: 999px; cursor: pointer; }
+    .tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .tabpanes > .pane { display: none; }
+    .tabpanes > .pane.active { display: block; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+    .panel h3 { margin: 0 0 10px; font-size: 1.04rem; }
+    label { font-size: .9rem; color: var(--muted); display: block; margin: 8px 0 6px; }
+    input, select, textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; outline: none; background: #fff; }
+    @media (prefers-color-scheme: dark) { input, select, textarea { background: #0F172A; color: var(--text); } }
+    input:focus, select:focus, textarea:focus { border-color: var(--ring); box-shadow: 0 0 0 4px color-mix(in oklab, var(--ring) 18%, transparent); }
+    input, select { height: 44px; }
+    textarea { min-height: 92px; resize: vertical; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+    .btn { background: var(--primary); color: #fff; border: none; border-radius: 12px; padding: 10px 14px; cursor: pointer; }
+    .btn.alt { background: #334155; color: #fff; }
+    .btn.soft { background: #E5E7EB; color: #111827; }
+    .btn[disabled] { opacity: .6; cursor: not-allowed; }
+    .searchbar { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 12px; display: grid; grid-template-columns: 1fr 2fr auto; gap: 10px; align-items: end; }
+    @media (max-width: 800px) { .searchbar { grid-template-columns: 1fr 1fr; } .searchbar .act { grid-column: 1/-1; } }
+    .pill { border-radius: 999px; border: 1px solid var(--border); padding: 6px 10px; background: #fff; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="banner-container">
+      <h1 class="banner-heading"><span class="part-one">NAVI</span><span class="part-two">LANTERN</span></h1>
+      <p class="banner-subheading">NAVAL ARCHITECTURE . MARINE SURVEY . MARINE ENGINEERING</p>
+    </div>
+
+    <div class="card">
+      <div class="title">
+        <div>
+          <h2 style="margin:0">Edit Vessel</h2>
+          <div class="muted">Your level: <span id="userLevel">—</span></div>
+        </div>
+        <button id="btnBack" class="btn alt" type="button" style="margin-left:auto">Back</button>
+      </div>
+
+      <div class="panel" style="margin-bottom:12px">
+        <div class="row" style="align-items:center">
+          <div>
+            <div class="hint">Editing vessel</div>
+            <div class="badge" id="shipIdBadge">SHIP_ID: —</div>
+          </div>
+        </div>
+        <div id="msgTopOk" class="msg ok"></div>
+        <div id="msgTopErr" class="msg err"></div>
+      </div>
+
+      <div class="searchbar">
+        <div>
+          <label>Search by</label>
+          <select id="keyType" class="pill">
+            <option value="MMSI">MMSI No</option>
+            <option value="IMO">IMO No</option>
+            <option value="SHIP_NAME">Ship Name</option>
+            <option value="OWNER_NAME">Owner Name</option>
+          </select>
+        </div>
+        <div>
+          <label id="keyLabel">Select MMSI No</label>
+          <select id="keyValue" class="pill">
+            <option selected disabled value="">— Loading —</option>
+          </select>
+        </div>
+        <div class="act">
+          <button id="btnLoad" class="btn" type="button">Load Vessel</button>
+        </div>
+      </div>
+
+      <div class="tabs" id="tabs" style="margin-top:14px">
+        <div class="tab active" data-pane="tab-main">Vessel Main Info</div>
+        <div class="tab" data-pane="tab-propulsion">Propulsion System</div>
+        <div class="tab" data-pane="tab-engines">Engine Info</div>
+        <div class="tab" data-pane="tab-inventory">Inventory</div>
+      </div>
+
+      <div class="tabpanes">
+        <div id="tab-main" class="pane active">
+          <div class="panel">
+            <h3>Main Information</h3>
+            <div class="grid">
+              <div>
+                <label>Owner Name</label>
+                <select id="ownerNameSel" data-main="OWNER_NAME">
+                  <option value="">— Loading companies —</option>
+                </select>
+
+                <label>Ship Name</label>
+                <input data-main="SHIP_NAME">
+
+                <label>Flag</label><input data-main="FLAG">
+                <label>Port of Registry</label><input data-main="PORT_OF_REGISTRY">
+                <label>Official No</label><input data-main="OFFICIAL_NO">
+                <label>Call Sign No</label><input data-main="CALL_SIGN_NO">
+                <label>MMSI No</label><input data-main="MMSI_NO">
+                <label>IMO No</label><input data-main="IMO_NO">
+                <label>Ship Type</label><input data-main="SHIP_TYPE">
+              </div>
+              <div>
+                <label>Gross Tonnage</label><input type="number" step="0.01" data-main="GROSS_TONNAGE">
+                <label>Net Tonnage</label><input type="number" step="0.01" data-main="NET_TONNAGE">
+                <label>Length</label><input type="number" step="0.01" data-main="LENGTH">
+                <label>Breadth</label><input type="number" step="0.01" data-main="BREADTH">
+                <label>Depth</label><input type="number" step="0.01" data-main="DEPTH">
+                <label>Classification Society</label><input data-main="SHIP_CLASSIFICATION_SOCIETY">
+                <label>Class No</label><input data-main="CLASS_NO">
+                <label>Date of Construction</label><input type="date" data-main="DATE_OF_CONSTRUCTION">
+                <label>Ship Manager</label><input data-main="SHIP_MANAGER">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-propulsion" class="pane">
+          <div class="panel">
+            <h3>Propulsion System</h3>
+            <div id="propulsionList"></div>
+            <div class="row">
+              <button id="btnAddProp" class="btn soft" type="button">+ Add Propulsion</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-engines" class="pane">
+          <div class="panel">
+            <h3>Engine Info</h3>
+            <div id="enginesList"></div>
+            <div class="row">
+              <button id="btnAddEngine" class="btn soft" type="button">+ Add Engine</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-inventory" class="pane">
+          <div class="panel">
+            <h3>Inventory</h3>
+            <div id="inventoryList"></div>
+            <div class="row">
+              <button id="btnAddInv" class="btn soft" type="button">+ Add Item</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:16px">
+        <button id="btnSaveAll" class="btn" type="button" disabled>Save Changes</button>
+      </div>
+      <div id="msgSaveOk" class="msg ok"></div>
+      <div id="msgSaveErr" class="msg err"></div>
+    </div>
+  </div>
+
+  <script src="../assets/js/bridge.js"></script>
+  <script>
+    (async function() {
+      const user = await NAVI.Guards.requireAuth();
+      if (!user) return;
+
+      document.getElementById('userLevel').textContent = user.levelName || '—';
+
+      const $ = (id) => document.getElementById(id);
+      let SHIP_ID = '';
+      let MMSI_LIST = [], IMO_LIST = [], SHIPNAME_LIST = [], OWNERNAME_LIST = [];
+
+      function setMsg(baseId, ok, text) {
+        const okBox = $(baseId + 'Ok'), errBox = $(baseId + 'Err');
+        if (okBox) okBox.style.display = 'none';
+        if (errBox) errBox.style.display = 'none';
+        const tgt = ok ? okBox : errBox;
+        if (tgt) { tgt.textContent = text; tgt.style.display = 'block'; }
+      }
+
+      function showShipIdBadge() { $('shipIdBadge').textContent = 'SHIP_ID: ' + (SHIP_ID || '—'); }
+      function enableSaveIfLoaded() { $('btnSaveAll').disabled = !SHIP_ID; }
+
+      function uniqueSorted(arr) {
+        return Array.from(new Set(arr.filter(Boolean).map(s => s.trim()))).sort();
+      }
+
+      function fillKeyDropdown() {
+        const type = $('keyType').value;
+        const map = {
+          'MMSI': { list: MMSI_LIST, label: 'Select MMSI No' },
+          'IMO': { list: IMO_LIST, label: 'Select IMO No' },
+          'SHIP_NAME': { list: SHIPNAME_LIST, label: 'Select Ship Name' },
+          'OWNER_NAME': { list: OWNERNAME_LIST, label: 'Select Owner Name' }
+        };
+        const { list, label } = map[type] || { list: [], label: 'Select' };
+        const sel = $('keyValue');
+        $('keyLabel').textContent = label;
+        sel.innerHTML = '';
+
+        if (!list.length) {
+          const o = document.createElement('option');
+          o.textContent = '— None found —';
+          o.value = '';
+          o.selected = true;
+          o.disabled = true;
+          sel.add(o);
+          sel.disabled = true;
+          return;
+        }
+
+        sel.disabled = false;
+        const ph = document.createElement('option');
+        ph.textContent = '— Select —';
+        ph.value = '';
+        ph.selected = true;
+        ph.disabled = true;
+        sel.add(ph);
+        list.forEach(v => {
+          const opt = document.createElement('option');
+          opt.value = v;
+          opt.textContent = v;
+          sel.add(opt);
+        });
+      }
+
+      async function loadVesselKeys() {
+        try {
+          const res = await NAVI.API.vessels.listKeys();
+          if (!res?.ok) { setMsg('msgTop', false, res?.msg || 'Failed to load keys'); return; }
+          MMSI_LIST = res.mmsi || [];
+          IMO_LIST = res.imo || [];
+          SHIPNAME_LIST = res.shipNames || [];
+          OWNERNAME_LIST = res.ownerNames || [];
+          fillKeyDropdown();
+        } catch (err) {
+          setMsg('msgTop', false, err?.message || 'Failed to load keys');
+        }
+      }
+
+      async function loadOwnerNames() {
+        try {
+          const res = await NAVI.API.companies();
+          const sel = $('ownerNameSel');
+          if (res?.ok && Array.isArray(res.names)) {
+            sel.innerHTML = '<option value="">— Select company —</option>' +
+              res.names.map(n => `<option value="${n}">${n}</option>`).join('');
+          }
+        } catch (err) {
+          console.error('Failed to load owner names', err);
+        }
+      }
+
+      function setMain(obj) {
+        document.querySelectorAll('[data-main]').forEach(el => {
+          const k = el.getAttribute('data-main');
+          el.value = (obj && obj[k]) ? obj[k] : '';
+        });
+      }
+
+      function collectMain() {
+        const obj = {};
+        document.querySelectorAll('[data-main]').forEach(el => {
+          obj[el.getAttribute('data-main')] = (el.value || '').trim();
+        });
+        return obj;
+      }
+
+      function addPropRow(data = {}) {
+        const div = document.createElement('div');
+        div.className = 'grid';
+        div.style.marginBottom = '12px';
+        div.innerHTML = `
+          <div><label>Engine Type</label><input value="${data.ENGINE_TYPE || ''}" data-prop="ENGINE_TYPE"></div>
+          <div><label>Propulsion Type</label><input value="${data.PROPULSION_TYPE || ''}" data-prop="PROPULSION_TYPE"></div>
+          <button class="btn soft btnDel" type="button" style="height:44px;align-self:end">Delete</button>
+        `;
+        div.querySelector('.btnDel').addEventListener('click', () => div.remove());
+        $('propulsionList').appendChild(div);
+      }
+
+      function addEngineRow(data = {}) {
+        const div = document.createElement('div');
+        div.className = 'grid';
+        div.style.marginBottom = '12px';
+        div.innerHTML = `
+          <div><label>Position</label><input value="${data.ENGINE_POSITION || ''}" data-eng="ENGINE_POSITION"></div>
+          <div><label>Maker</label><input value="${data.MAKER || ''}" data-eng="MAKER"></div>
+          <div><label>Model</label><input value="${data.MODEL || ''}" data-eng="MODEL"></div>
+          <button class="btn soft btnDel" type="button" style="height:44px;align-self:end">Delete</button>
+        `;
+        div.querySelector('.btnDel').addEventListener('click', () => div.remove());
+        $('enginesList').appendChild(div);
+      }
+
+      function addInvRow(data = {}) {
+        const div = document.createElement('div');
+        div.className = 'grid';
+        div.style.marginBottom = '12px';
+        div.innerHTML = `
+          <div><label>Name</label><input value="${data.NAME || ''}" data-inv="NAME"></div>
+          <div><label>Quantity</label><input type="number" value="${data.QUANTITY || ''}" data-inv="QUANTITY"></div>
+          <button class="btn soft btnDel" type="button" style="height:44px;align-self:end">Delete</button>
+        `;
+        div.querySelector('.btnDel').addEventListener('click', () => div.remove());
+        $('inventoryList').appendChild(div);
+      }
+
+      function collectProp() {
+        return Array.from($('propulsionList').children).map(div => ({
+          ENGINE_TYPE: div.querySelector('[data-prop="ENGINE_TYPE"]')?.value || '',
+          PROPULSION_TYPE: div.querySelector('[data-prop="PROPULSION_TYPE"]')?.value || ''
+        }));
+      }
+
+      function collectEngines() {
+        return Array.from($('enginesList').children).map(div => ({
+          ENGINE_POSITION: div.querySelector('[data-eng="ENGINE_POSITION"]')?.value || '',
+          MAKER: div.querySelector('[data-eng="MAKER"]')?.value || '',
+          MODEL: div.querySelector('[data-eng="MODEL"]')?.value || ''
+        }));
+      }
+
+      function collectInventory() {
+        return Array.from($('inventoryList').children).map(div => ({
+          NAME: div.querySelector('[data-inv="NAME"]')?.value || '',
+          QUANTITY: div.querySelector('[data-inv="QUANTITY"]')?.value || ''
+        }));
+      }
+
+      function hydrateAll(data) {
+        SHIP_ID = data?.shipId || '';
+        showShipIdBadge();
+        enableSaveIfLoaded();
+        setMain(data?.main || {});
+
+        $('propulsionList').innerHTML = '';
+        (data?.propulsion || []).forEach(addPropRow);
+        if (!(data?.propulsion || []).length) addPropRow();
+
+        $('enginesList').innerHTML = '';
+        (data?.engines || []).forEach(addEngineRow);
+        if (!(data?.engines || []).length) addEngineRow();
+
+        $('inventoryList').innerHTML = '';
+        (data?.inventory || []).forEach(addInvRow);
+        if (!(data?.inventory || []).length) addInvRow();
+      }
+
+      async function loadVessel() {
+        const type = $('keyType').value;
+        const val = $('keyValue').value;
+        if (!val) { setMsg('msgTop', false, 'Please select a value.'); return; }
+
+        setMsg('msgTop', true, '');
+        setMsg('msgTop', false, '');
+
+        try {
+          const res = await NAVI.API.vessels.get(type, val);
+          if (res?.multiple && Array.isArray(res.candidates)) {
+            MMSI_LIST = res.candidates.map(c => c.MMSI_NO).filter(Boolean).sort();
+            $('keyType').value = 'MMSI';
+            fillKeyDropdown();
+            setMsg('msgTop', false, res.msg || 'Multiple vessels found. Choose MMSI No.');
+            return;
+          }
+          if (!res?.ok) { setMsg('msgTop', false, res?.msg || 'Not found.'); return; }
+          hydrateAll(res);
+        } catch (err) {
+          setMsg('msgTop', false, err?.message || 'Failed to load vessel');
+        }
+      }
+
+      $('tabs').addEventListener('click', (e) => {
+        const t = e.target.closest('.tab');
+        if (!t) return;
+        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+        document.querySelectorAll('.pane').forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        $(t.dataset.pane).classList.add('active');
+      });
+
+      $('keyType').addEventListener('change', fillKeyDropdown);
+      $('btnLoad').addEventListener('click', loadVessel);
+      $('btnAddProp').addEventListener('click', () => addPropRow());
+      $('btnAddEngine').addEventListener('click', () => addEngineRow());
+      $('btnAddInv').addEventListener('click', () => addInvRow());
+
+      $('btnSaveAll').addEventListener('click', async () => {
+        setMsg('msgSave', true, '');
+        setMsg('msgSave', false, '');
+        
+        if (!SHIP_ID) { setMsg('msgSave', false, 'No vessel loaded.'); return; }
+
+        const main = collectMain();
+        const propulsion = collectProp();
+        const engines = collectEngines();
+        const inventory = collectInventory();
+
+        $('btnSaveAll').disabled = true;
+
+        try {
+          const res = await NAVI.API.vessels.update({ shipId: SHIP_ID, main, propulsion, engines, inventory });
+          $('btnSaveAll').disabled = false;
+          
+          if (!res?.ok) {
+            setMsg('msgSave', false, res?.msg || 'Update failed.');
+            return;
+          }
+          
+          setMsg('msgSave', true, res.msg || 'Updated successfully!');
+        } catch (err) {
+          $('btnSaveAll').disabled = false;
+          setMsg('msgSave', false, err?.message || 'Unexpected error.');
+        }
+      });
+
+      $('btnBack').addEventListener('click', () => window.location.href = './dashboard.html');
+
+      showShipIdBadge();
+      loadVesselKeys();
+      loadOwnerNames();
+    })();
+  </script>
+</body>
+</html>

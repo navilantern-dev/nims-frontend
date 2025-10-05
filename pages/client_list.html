@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NAVI-SIMS – Client List</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Oswald:wght@700&display=swap');
+    :root { --bg: #F6F7FB; --card: #ffffff; --panel: #F9FAFB; --text: #0F172A; --muted: #64748B; --border: #E5E7EB; --ring: #2563EB; --primary: #2563EB; --radius: 18px; --shadow: 0 10px 30px rgba(2, 6, 23, .08); }
+    @media (prefers-color-scheme: dark) { :root { --bg: #0B1220; --card: #0F172A; --panel: #020617; --text: #F8FAFC; --muted: #94A3B8; --border: #1E293B; } }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; font: 400 16px/1.45 ui-sans-serif, system-ui; }
+    .container { width: min(96vw, 1200px); }
+    .card { width: 100%; background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1rem 2rem; }
+    h1 { font-size: 1.75rem; font-weight: 600; margin: 0 0 1rem; }
+    .search-bar { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+    .search-bar select, .search-bar input { padding: 0.75rem 1rem; border-radius: 12px; border: 1px solid var(--border); background: var(--panel); color: var(--text); font-size: 1rem; }
+    .search-bar input { flex-grow: 1; }
+    .loading { display: none; align-items: center; justify-content: center; padding: 2rem; }
+    .loading .fa-spinner { font-size: 2rem; color: var(--primary); }
+    .msg { padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+    .msg.ok { color: #059669; background: #D1FAE5; }
+    .msg.err { color: #DC2626; background: #FEE2E2; }
+    .back-button { position: absolute; top: 1.5rem; right: 2rem; text-decoration: none; background: var(--panel); color: var(--muted); padding: 0.6rem 1.2rem; border-radius: 12px; font-weight: 500; border: 1px solid var(--border); }
+    .back-button:hover { background: var(--primary); color: white; border-color: var(--primary); }
+    .banner-container { width: 100%; text-align: center; padding: 2rem 1rem; background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 2rem; }
+    .banner-heading { font-family: "Arial Unicode MS", Arial, sans-serif; font-weight: 700; font-size: clamp(3rem, 12vw, 6rem); letter-spacing: 0.65vw; margin: 0 -1rem 0; }
+    .banner-heading .part-one { color: #231F20; }
+    .banner-heading .part-two { color: #965A37; }
+    .banner-subheading { font-family: 'Montserrat', sans-serif; text-transform: uppercase; color: #231F20; letter-spacing: 5px; margin-top: 0; font-weight: 500; font-size: clamp(0.6rem, 2.5vw, 0.9rem); }
+  </style>
+</head>
+<body>
+  <a id="backButton" class="back-button" href="./dashboard.html">
+    <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+  </a>
+  
+  <div class="container">
+    <div class="banner-container">
+      <h1 class="banner-heading"><span class="part-one">NAVI</span><span class="part-two">LANTERN</span></h1>
+      <p class="banner-subheading">NAVAL ARCHITECTURE . MARINE SURVEY . MARINE ENGINEERING</p>
+    </div>
+
+    <div class="card">
+      <h1><i class="fa-solid fa-users"></i> Client List</h1>
+      <p style="color:var(--muted); margin-top: -1rem; margin-bottom: 2rem;">Browse and manage registered client companies.</p>
+
+      <div class="search-bar">
+        <select id="searchType">
+          <option value="COMP_NAME">Company Name</option>
+          <option value="COMP_REGNO">Registration No.</option>
+          <option value="COMP_EMAIL">Email</option>
+        </select>
+        <input type="text" id="searchValue" placeholder="Type to search...">
+      </div>
+
+      <div id="loading" class="loading"><i class="fa-solid fa-spinner fa-spin"></i></div>
+      <div id="msg" style="display:none"></div>
+      <table id="clientTable" class="display" style="width:100%"></table>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+  <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+  <script src="../assets/js/bridge.js"></script>
+  <script>
+    (async function() {
+      const user = await NAVI.Guards.requireAuth();
+      if (!user) return;
+
+      const $ = (id) => document.getElementById(id);
+      let table;
+
+      function showLoading(isLoading) {
+        $('loading').style.display = isLoading ? 'flex' : 'none';
+      }
+
+      function setMsg(ok, msg) {
+        const el = $('msg');
+        el.textContent = msg;
+        el.className = ok ? 'msg ok' : 'msg err';
+        el.style.display = msg ? 'block' : 'none';
+      }
+
+      function initTable(data) {
+        if (table) table.destroy();
+        table = new DataTable('#clientTable', {
+          data: data,
+          columns: [
+            { data: 'COMP_NAME', title: 'Company Name' },
+            { data: 'COMP_REGNO', title: 'Registration No.' },
+            { data: 'COMP_CONTACT_M', title: 'Mobile' },
+            { data: 'COMP_EMAIL', title: 'Email' },
+            {
+              data: 'COMP_ID',
+              title: 'Actions',
+              render: (data) => `<i class="fa-solid fa-eye" style="cursor:pointer;" onclick="viewClient('${data}')"></i>`,
+              orderable: false,
+              searchable: false
+            }
+          ],
+          paging: true,
+          ordering: true,
+          info: true,
+          responsive: true,
+          searching: false
+        });
+      }
+
+      window.viewClient = (clientId) => {
+        window.location.href = `./client_profile.html?client_id=${clientId}`;
+      };
+
+      async function loadClientData(searchQuery) {
+        showLoading(true);
+        setMsg(false, '');
+        try {
+          const result = await NAVI.API.clients.list(searchQuery);
+          if (result.ok) {
+            initTable(result.data);
+            setMsg(true, result.data.length > 0 ? 'Client list loaded.' : 'No clients found.');
+          } else {
+            setMsg(false, result.msg || 'Failed to load client list.');
+          }
+        } catch (e) {
+          setMsg(false, e.message || 'An unexpected error occurred.');
+        } finally {
+          showLoading(false);
+        }
+      }
+
+      loadClientData(null);
+
+      let searchTimeout;
+      $('searchValue').addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          const searchType = $('searchType').value;
+          const searchValue = $('searchValue').value.trim();
+          const searchQuery = searchValue ? { [searchType]: searchValue } : null;
+          loadClientData(searchQuery);
+        }, 500);
+      });
+
+      $('searchType').addEventListener('change', () => {
+        const searchType = $('searchType').value;
+        const searchValue = $('searchValue').value.trim();
+        if (searchValue) loadClientData({ [searchType]: searchValue });
+      });
+    })();
+  </script>
+</body>
+</html>

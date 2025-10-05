@@ -1,331 +1,166 @@
-/** ===============================
- *  NAVI-SIMS — Frontend API Client
- *  Connects GitHub Pages frontend to Google Apps Script backend
- * =============================== */
-
-// ===== Configuration =====
+// ===== API Configuration =====
 const API_CONFIG = {
-  // Replace this with your actual Google Apps Script Web App URL
-  BASE_URL: 'https://script.google.com/macros/s/AKfycbxysJX74MHaIN2MBviY0nj6_w8YvyqHewTQ6zUiDmMbd0wjDv8Xhu2Q_d4EZtZoupzQaw/exec',
-  
-  // Session management
-  TOKEN_KEY: 'navi_token',
-  SESSION_TTL: 3600000 // 1 hour in milliseconds
+  // REPLACE THIS with your deployed Apps Script Web App URL
+  BASE_URL: 'https://script.google.com/macros/s/AKfycbwxW6nCkYfVXzKDAw8krg-IJsn6vWhG5wFocMx_NxB3bOYWek4OU8dMucGMmYTIADBntQ/exec',
+  TOKEN_KEY: 'navi_token'
 };
 
-// ===== Storage Helpers =====
-const Storage = {
-  getToken: () => localStorage.getItem(API_CONFIG.TOKEN_KEY) || '',
-  setToken: (token) => token && localStorage.setItem(API_CONFIG.TOKEN_KEY, token),
-  clearToken: () => localStorage.removeItem(API_CONFIG.TOKEN_KEY),
-  
-  getSessionData: () => {
-    try {
-      const data = localStorage.getItem('session_data');
-      return data ? JSON.parse(data) : null;
-    } catch {
-      return null;
-    }
-  },
-  
-  setSessionData: (data) => {
-    localStorage.setItem('session_data', JSON.stringify(data));
-  },
-  
-  clearSessionData: () => {
-    localStorage.removeItem('session_data');
-  }
-};
+// ===== Bridge Client =====
+const Bridge = (() => {
+  const getToken = () => localStorage.getItem(API_CONFIG.TOKEN_KEY) || '';
+  const setToken = (t) => t && localStorage.setItem(API_CONFIG.TOKEN_KEY, t);
+  const clearToken = () => localStorage.removeItem(API_CONFIG.TOKEN_KEY);
 
-// ===== HTTP Client =====
-const HTTP = {
-  /**
-   * Make API request
-   * @param {string} endpoint - API action name
-   * @param {object} options - Request options
-   * @returns {Promise<object>} Response data
-   */
-  async request(endpoint, options = {}) {
-    const {
-      method = 'GET',
-      query = {},
-      body = null,
-      formData = null,
-      requireAuth = true
-    } = options;
+  async function call(action, options = {}) {
+    const { body = null, query = {} } = options;
+    const token = getToken();
     
-    // Build URL with query parameters
     const url = new URL(API_CONFIG.BASE_URL);
-    url.searchParams.set('action', endpoint);
+    url.searchParams.set('action', action);
+    if (token) url.searchParams.set('token', token);
     
-    // Add token if required
-    const token = Storage.getToken();
-    if (requireAuth && token) {
-      url.searchParams.set('token', token);
-    }
-    
-    // Add additional query parameters
-    Object.entries(query).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        url.searchParams.set(key, String(value));
+    Object.entries(query).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) {
+        url.searchParams.set(k, v);
       }
     });
-    
-    // Prepare fetch options
-    const fetchOptions = {
-      method,
-      mode: 'cors',
-      cache: 'no-cache',
-      headers: {}
+
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: body ? JSON.stringify({ action, token, ...body }) : JSON.stringify({ action, token })
     };
-    
-    // Handle different body types
-    if (formData) {
-      fetchOptions.body = formData;
-      // Don't set Content-Type for FormData - browser will set it with boundary
-    } else if (body) {
-      fetchOptions.headers['Content-Type'] = 'application/json';
-      fetchOptions.body = JSON.stringify(body);
-    }
-    
+
     try {
-      const response = await fetch(url.toString(), fetchOptions);
+      const response = await fetch(url.toString(), requestOptions);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
       const data = await response.json();
-      
-      // Handle auth errors
-      if (!data.ok && data.msg && data.msg.includes('Unauthorized')) {
-        Storage.clearToken();
-        Storage.clearSessionData();
-        window.location.href = '/login.html';
-        throw new Error('Session expired. Please login again.');
-      }
-      
       return data;
       
     } catch (error) {
-      console.error('API Request Error:', error);
+      console.error('API call failed:', error);
       throw error;
     }
-  },
-  
-  // Convenience methods
-  get: (endpoint, query = {}, requireAuth = true) => 
-    HTTP.request(endpoint, { method: 'GET', query, requireAuth }),
-    
-  post: (endpoint, body, requireAuth = true) => 
-    HTTP.request(endpoint, { method: 'POST', body, requireAuth }),
-    
-  upload: (endpoint, formData, requireAuth = true) => 
-    HTTP.request(endpoint, { method: 'POST', formData, requireAuth })
-};
-
-// ===== API Methods =====
-const API = {
-  // ===== Authentication =====
-  auth: {
-    login: async (username, password) => {
-      const result = await HTTP.post('login', { username, password }, false);
-      if (result.ok && result.token) {
-        Storage.setToken(result.token);
-      }
-      return result;
-    },
-    
-    logout: () => {
-      Storage.clearToken();
-      Storage.clearSessionData();
-      window.location.href = '/login.html';
-    },
-    
-    getSession: async () => {
-      const result = await HTTP.get('session');
-      if (result.ok && result.token) {
-        Storage.setToken(result.token);
-        Storage.setSessionData(result.user);
-      }
-      return result;
-    },
-    
-    changePassword: (currentPassword, newPassword) => 
-      HTTP.post('changePassword', { currentPassword, newPassword })
-  },
-  
-  // ===== Metadata =====
-  meta: {
-    logo: () => HTTP.get('logo', {}, false),
-    levels: () => HTTP.get('levels', {}, false),
-    groups: () => HTTP.get('groups', {}, false),
-    companies: () => HTTP.get('companies')
-  },
-  
-  // ===== User Management =====
-  users: {
-    list: (scope) => HTTP.get('listUsers', { scope }),
-    
-    get: (userId) => HTTP.get('getUser', { userId }),
-    
-    create: (userData) => HTTP.post('createUserLogin', userData),
-    
-    update: (userData) => HTTP.post('updateUser', userData),
-    
-    delete: (userId) => HTTP.post('deleteUser', { userId }),
-    
-    saveDetails: (detailsData) => HTTP.post('saveUserDetails', detailsData)
-  },
-  
-  // ===== Client Management =====
-  clients: {
-    list: (searchQuery) => HTTP.get('getClientList', { 
-      searchQuery: searchQuery ? JSON.stringify(searchQuery) : null 
-    }),
-    
-    get: (clientId) => HTTP.get('getClientProfile', { clientId }),
-    
-    register: (values, files) => HTTP.post('saveClientRegistration', { values, files }),
-    
-    update: (clientId, data, files) => HTTP.post('updateClientProfile', { clientId, data, files })
-  },
-  
-  // ===== Vessel Management =====
-  vessels: {
-    newShipId: () => HTTP.get('newShipId'),
-    
-    listKeys: (keyType) => HTTP.get('listVesselKeys', { keyType }),
-    
-    get: (keyType, keyValue) => HTTP.get('getVessel', { keyType, keyValue }),
-    
-    save: (vesselData) => HTTP.post('saveVesselMain', vesselData),
-    
-    update: (vesselData) => HTTP.post('updateVesselAll', vesselData),
-    
-    list: () => HTTP.get('listVesselsForUser'),
-    
-    detail: (shipId) => HTTP.get('getVesselDetail', { shipId }),
-    
-    inventoryNames: () => HTTP.get('getInventoryNames')
-  },
-  
-  // ===== File Upload =====
-  files: {
-    upload: async (fileInput, additionalData = {}) => {
-      const formData = new FormData();
-      
-      // Add file
-      if (fileInput.files && fileInput.files[0]) {
-        formData.append('file', fileInput.files[0]);
-      }
-      
-      // Add additional data
-      Object.entries(additionalData).forEach(([key, value]) => {
-        formData.append(key, value);
-      });
-      
-      return HTTP.upload('uploadFile', formData);
-    }
   }
-};
 
-// ===== Auth Guards =====
-const Guards = {
-  /**
-   * Ensure user is authenticated
-   * Redirects to login if not
-   */
-  requireAuth: async () => {
-    const token = Storage.getToken();
-    if (!token) {
-      window.location.href = '/login.html';
-      return null;
-    }
+  // API Methods
+  const api = {
+    // Auth
+    login: (username, password) => call('login', { body: { username, password } }),
+    session: () => call('session'),
+    logout: () => { clearToken(); return call('logout'); },
+    changePassword: (currentPassword, newPassword) => 
+      call('changePassword', { body: { currentPassword, newPassword } }),
+
+    // Metadata
+    logo: () => call('logo'),
+    levels: () => call('levels'),
+    groups: () => call('groups'),
+    companies: () => call('companies'),
+
+    // Users
+    listUsers: () => call('listUsers'),
+    getUser: (userId) => call('getUser', { body: { userId } }),
+    createUserLogin: (payload) => call('createUserLogin', { body: payload }),
+    updateUser: (payload) => call('updateUser', { body: payload }),
+    deleteUser: (userId) => call('deleteUser', { body: { userId } }),
+    saveUserDetails: (payload) => call('saveUserDetails', { body: payload }),
+    getDetailFormSchema: (groupId) => call('getDetailFormSchema', { body: { groupId } }),
+    getDetailFormSchemaWithValues: (userId, groupId) => 
+      call('getDetailFormSchemaWithValues', { body: { userId, groupId } }),
+    saveDetailFormUpdate: (payload) => call('saveDetailFormUpdate', { body: payload }),
+    getMyProfile: (userId, username) => call('getMyProfile', { body: { userId, username } }),
+
+    // Clients
+    saveClientRegistration: (values, files) => 
+      call('saveClientRegistration', { body: { values, files } }),
+    getClientList: (searchQuery) => call('getClientList', { body: { searchQuery } }),
+    getClientProfile: (clientId) => call('getClientProfile', { body: { clientId } }),
+    getVesselsByCompName: (compName) => call('getVesselsByCompName', { body: { compName } }),
+    updateClientProfile: (clientId, data, files) => 
+      call('updateClientProfile', { body: { clientId, data, files } }),
+
+    // Vessels
+    getNewShipId: () => call('getNewShipId'),
+    getOwnerNames: () => call('getOwnerNames'),
+    getInventoryNames: () => call('getInventoryNames'),
+    getVesselKeys: () => call('getVesselKeys'),
+    getVesselByKey: (keyType, keyValue) => 
+      call('getVesselByKey', { body: { keyType, keyValue } }),
+    saveVesselAll: (payload) => call('saveVesselAll', { body: payload }),
+    updateVesselAll: (payload) => call('updateVesselAll', { body: payload }),
+    listVesselsForUser: () => call('listVesselsForUser'),
+    getVesselDetail: (shipId) => call('getVesselDetail', { body: { shipId } }),
+  };
+
+  // Utility functions
+  async function hydrateIdentity(selectors = {}) {
+    const { logoSel, nameSel, levelSel, groupSel, idSel } = selectors;
     
     try {
-      const session = await API.auth.getSession();
-      if (!session.ok) {
-        window.location.href = '/login.html';
-        return null;
-      }
-      return session.user;
-    } catch {
-      window.location.href = '/login.html';
-      return null;
-    }
-  },
-  
-  /**
-   * Check if user has required permission level
-   * @param {number} requiredLevel - 0=super, 1=admin, 2=staff, 3=user
-   */
-  hasPermission: (requiredLevel) => {
-    const session = Storage.getSessionData();
-    if (!session) return false;
-    
-    const userLevel = parseInt(session.levelId) || 999;
-    return userLevel <= requiredLevel;
-  },
-  
-  /**
-   * Redirect to login if not authenticated
-   */
-  redirectIfNotAuth: () => {
-    const token = Storage.getToken();
-    if (!token) {
-      window.location.href = '/login.html';
-    }
-  }
-};
-
-// ===== UI Helpers =====
-const UI = {
-  /**
-   * Populate identity information in page
-   */
-  hydrateIdentity: async (selectors = {}) => {
-    const {
-      logoSel,
-      nameSel,
-      levelSel,
-      groupSel,
-      idSel
-    } = selectors;
-    
-    const session = await API.auth.getSession();
-    
-    if (session?.ok) {
-      if (logoSel && session.logoUrl) {
+      const session = await api.session();
+      
+      if (session?.token) setToken(session.token);
+      
+      if (logoSel && session?.logoUrl) {
         document.querySelectorAll(logoSel).forEach(el => el.src = session.logoUrl);
       }
       if (nameSel) {
-        document.querySelectorAll(nameSel).forEach(el => el.textContent = session.user?.username || '—');
+        document.querySelectorAll(nameSel).forEach(el => 
+          el.textContent = session.username || '—'
+        );
       }
       if (levelSel) {
-        document.querySelectorAll(levelSel).forEach(el => el.textContent = session.user?.levelName || '—');
+        document.querySelectorAll(levelSel).forEach(el => 
+          el.textContent = session.userLevel || '—'
+        );
       }
       if (groupSel) {
-        document.querySelectorAll(groupSel).forEach(el => el.textContent = session.user?.groupName || '—');
+        document.querySelectorAll(groupSel).forEach(el => 
+          el.textContent = session.userGroup || '—'
+        );
       }
       if (idSel) {
-        document.querySelectorAll(idSel).forEach(el => el.textContent = session.user?.userId || '—');
+        document.querySelectorAll(idSel).forEach(el => 
+          el.textContent = session.userId || '—'
+        );
       }
+      
+      return session;
+    } catch (error) {
+      console.error('Failed to hydrate identity:', error);
+      return null;
     }
-    
-    return session;
   }
-};
 
-// ===== Export =====
-// Make available globally
-window.NAVI = {
-  API,
-  Guards,
-  UI,
-  Storage,
-  CONFIG: API_CONFIG
-};
+  async function requireAuth(selectors) {
+    try {
+      const session = await hydrateIdentity(selectors);
+      if (!session?.username) {
+        throw new Error('Not authenticated');
+      }
+      return session;
+    } catch (error) {
+      window.location.href = 'login.html';
+      return null;
+    }
+  }
 
-// Export for ES modules
-// export { API, Guards, UI, Storage, API_CONFIG };
+  return {
+    api,
+    setToken,
+    getToken,
+    clearToken,
+    hydrateIdentity,
+    requireAuth
+  };
+})();
+
+// Make Bridge available globally
+window.Bridge = Bridge;

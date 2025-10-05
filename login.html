@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-store, max-age=0">
+  <title>NAVI-SIMS — Secure Login</title>
+  <style>
+    /* Keep all your existing styles */
+    :root {
+      --bg: #F6F7FB; --card: #ffffff; --text: #0F172A;
+      --subtle: #64748B; --muted: #94A3B8; --border: #E5E7EB;
+      --ring: #2563EB; --primary: #2563EB; --primary-contrast: #ffffff;
+      --danger: #EF4444; --warning: #F59E0B; --success: #10B981;
+      --shadow: 0 10px 30px rgba(2,6,23,.08); --radius: 16px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:#0B1220; --card:#111827; --text:#E5E7EB; --subtle:#CBD5E1;
+        --muted:#94A3B8; --border:#1F2937; --ring:#60A5FA;
+        --primary:#60A5FA; --primary-contrast:#0B1220;
+        --shadow: 0 10px 30px rgba(0,0,0,.45);
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; display: flex; align-items: center; justify-content: center;
+      background: var(--bg); color: var(--text);
+      font: 400 16px/1.45 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    }
+    .card {
+      width: min(92vw, 440px); background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 32px 28px; box-shadow: var(--shadow);
+    }
+    .banner-container {
+      text-align: center; padding: 1rem 0;
+      background: #ffffff; border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 1rem;
+    }
+    .banner-heading {
+      font-family: "Arial Unicode MS", Arial, sans-serif;
+      font-weight: 700; font-size: clamp(2.5rem, 10vw, 4rem);
+      letter-spacing: 0.5vw; margin: 0;
+    }
+    .banner-heading .part-one { color: #231F20; }
+    .banner-heading .part-two { color: #965A37; }
+    .banner-subheading {
+      font-family: 'Montserrat', sans-serif; text-transform: uppercase;
+      color: #231F20; letter-spacing: 4px; margin-top: 0.5rem;
+      font-weight: 500; font-size: clamp(0.5rem, 2vw, 0.8rem);
+    }
+    h1 { margin: 0; font: 700 22px/1.2 ui-sans-serif, system-ui; }
+    .subtitle { color: var(--subtle); font-size: .92rem; margin-top: 2px; }
+    form { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
+    label { font-size: .9rem; color: var(--subtle); margin-bottom: 6px; }
+    .input-wrap { position: relative; }
+    input[type="text"], input[type="password"] {
+      width: 100%; height: 46px; padding: 12px 14px; padding-right: 78px;
+      border: 1px solid var(--border); border-radius: 12px;
+      background: #fff; outline: none; font-size: 16px;
+    }
+    @media (prefers-color-scheme: dark) {
+      input[type="text"], input[type="password"] { background: #0F172A; color: var(--text); }
+    }
+    input:focus {
+      border-color: var(--ring);
+      box-shadow: 0 0 0 4px color-mix(in oklab, var(--ring) 20%, transparent);
+    }
+    .toggle-btn {
+      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+      height: 32px; padding: 0 12px; font-size: .82rem;
+      border: 1px solid var(--border); border-radius: 10px;
+      background: #F8FAFC; color: #334155; cursor: pointer;
+    }
+    @media (prefers-color-scheme: dark) {
+      .toggle-btn { background: #111827; color: #E5E7EB; }
+    }
+    .btn {
+      height: 46px; border: none; border-radius: 12px;
+      background: var(--primary); color: var(--primary-contrast);
+      font-weight: 700; font-size: .95rem; cursor: pointer;
+      transition: filter .12s ease, transform .02s ease;
+    }
+    .btn:hover { filter: brightness(1.05); }
+    .btn:active { transform: translateY(1px); }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
+    .error {
+      display: none; padding: 12px; border-radius: 10px;
+      border: 1px solid #FCA5A5; background: #FEE2E2;
+      color: #991B1B; font-size: .9rem;
+    }
+    .small { color: var(--muted); font-size: .78rem; text-align: center; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="banner-container">
+      <h1 class="banner-heading">
+        <span class="part-one">NAVI</span><span class="part-two">LANTERN</span>
+      </h1>
+      <p class="banner-subheading">
+        NAVAL ARCHITECTURE . MARINE SURVEY . MARINE ENGINEERING
+      </p>
+    </div>
+    
+    <div style="text-align:center">
+      <h1>Secure Sign In</h1>
+      <div class="subtitle">NAVI-SIMS Maritime Management System</div>
+    </div>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="username">Username</label>
+        <div class="input-wrap">
+          <input id="username" type="text" autocomplete="username" required maxlength="50">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="input-wrap">
+          <input id="password" type="password" autocomplete="current-password" required maxlength="100">
+          <button id="togglePw" class="toggle-btn" type="button">Show</button>
+        </div>
+      </div>
+
+      <button id="btnLogin" class="btn" type="submit">Sign In</button>
+      
+      <div id="errBox" class="error"></div>
+      
+      <div class="small">
+        Protected by advanced security measures
+        <br>Maximum 5 attempts • 15 min lockout
+      </div>
+    </form>
+  </div>
+
+  <!-- Include bridge.js -->
+  <script src="./assets/js/bridge.js"></script>
+  
+  <script>
+    (function () {
+      const $ = (id) => document.getElementById(id);
+      const username = $('username');
+      const password = $('password');
+      const togglePw = $('togglePw');
+      const errBox = $('errBox');
+      const btn = $('btnLogin');
+      const form = $('loginForm');
+
+      // Password visibility toggle
+      togglePw.addEventListener('click', () => {
+        const hidden = password.type === 'password';
+        password.type = hidden ? 'text' : 'password';
+        togglePw.textContent = hidden ? 'Hide' : 'Show';
+      });
+
+      function setError(msg) {
+        errBox.textContent = msg || '';
+        errBox.style.display = msg ? 'block' : 'none';
+      }
+
+      // Form submission
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        setError('');
+        
+        const u = username.value.trim();
+        const p = password.value;
+
+        if (!u || !p) {
+          setError('Please enter both username and password.');
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Signing in...';
+
+        try {
+          const res = await Bridge.api.login(u, p);
+          
+          btn.disabled = false;
+          btn.textContent = 'Sign In';
+          
+          if (!res || !res.ok) {
+            setError(res?.msg || 'Login failed.');
+            password.value = '';
+            return;
+          }
+          
+          // Store token and redirect
+          Bridge.setToken(res.token);
+          window.location.href = 'dashboard.html';
+          
+        } catch (err) {
+          btn.disabled = false;
+          btn.textContent = 'Sign In';
+          setError(err?.message || 'Connection error. Please try again.');
+          password.value = '';
+        }
+      });
+
+      // Auto-focus username
+      username.focus();
+
+      // Handle URL error parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const err = urlParams.get('err');
+      if (err) setError(err);
+    })();
+  </script>
+</body>
+</html>

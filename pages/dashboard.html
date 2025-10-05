@@ -1,301 +1,114 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Cache-Control" content="no-store, max-age=0">
-  <title>NAVI-SIMS — Dashboard</title>
+  <title>NAVI-SIMS – Dashboard</title>
   <style>
-/* ===== NAVI-SIMS Design System (enhanced dashboard) ===== */
-:root {
-  --bg: #F6F7FB;
-  --card: #ffffff;
-  --panel: #F9FAFB;
-  --text: #0F172A;
-  --muted: #64748B;
-  --border: #E5E7EB;
-  --ring: #2563EB;
-  --primary: #2563EB;
-  --success: #10B981;
-  --warning: #F59E0B;
-  --radius: 18px;
-  --shadow: 0 10px 30px rgba(2, 6, 23, .08);
-}
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Oswald:wght@700&display=swap');
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0B1220;
-    --card: #0F172A;
-    --panel: #111827;
-    --text: #E5E7EB;
-    --muted: #94A3B8;
-    --border: #1F2937;
-    --ring: #3B82F6;
-    --primary: #3B82F6;
-    --danger: #F87171;
-    --ok: #10B981;
-    --shadow: 0 10px 30px rgba(0, 0, 0, .45);
-  }
-}
+    :root {
+      --bg: #F6F7FB; --card: #ffffff; --panel: #F9FAFB; --text: #0F172A;
+      --muted: #64748B; --border: #E5E7EB; --ring: #2563EB; --primary: #2563EB;
+      --success: #10B981; --warning: #F59E0B;
+      --radius: 18px; --shadow: 0 10px 30px rgba(2, 6, 23, .08);
+    }
 
-* {
-  box-sizing: border-box;
-}
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0B1220; --card: #0F172A; --panel: #111827; --text: #E5E7EB;
+        --muted: #94A3B8; --border: #1F2937; --primary: #60A5FA;
+        --shadow: 0 10px 30px rgba(0, 0, 0, .45);
+      }
+    }
 
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font: 400 16px/1.45 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  padding: 2rem 1rem;
-}
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      font: 400 16px/1.45 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    }
 
-.wrap {
-  width: min(96vw, 1200px);
-}
+    .wrap { width: min(96vw, 1200px); }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow); }
+    .top { display: flex; align-items: center; gap: 18px; margin-bottom: 12px; }
+    .logo { width: 52px; height: 52px; border-radius: 999px; object-fit: cover; background: #fff; box-shadow: 0 0 0 2px var(--border); }
+    h2 { margin: 0 0 4px 0; font-size: 1.5rem; }
+    .user-info { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .pill { display: inline-block; margin-right: 8px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 999px; font-size: .82rem; color: var(--muted); background: var(--panel); }
+    .security-status { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+    .status-indicator { width: 8px; height: 8px; border-radius: 50%; }
+    .status-indicator.secure { background: var(--success); }
+    .status-indicator.warning { background: var(--warning); }
+    .security-text { font-size: .8rem; color: var(--muted); }
 
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 28px;
-  box-shadow: var(--shadow);
-}
+    .modules { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-top: 20px; }
+    .module { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 20px; transition: all .2s ease; }
+    .module:hover { box-shadow: 0 8px 25px rgba(2, 6, 23, .12); transform: translateY(-2px); }
+    .module h3 { margin: 0 0 10px; font-size: 1.08rem; color: var(--text); }
+    .module p { margin: 0 0 16px; font-size: .9rem; color: var(--muted); line-height: 1.5; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn-outline {
+      background: transparent; border: 1px solid var(--primary); color: var(--primary);
+      padding: 10px 14px; border-radius: 12px; cursor: pointer; transition: all .15s ease;
+      text-decoration: none; display: inline-block; font-size: .9rem; font-weight: 500;
+    }
+    .btn-outline:hover { background: color-mix(in oklab, var(--primary) 8%, transparent); transform: translateY(-1px); }
 
-.top {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  margin-bottom: 12px;
-}
+    .user-actions { display: flex; gap: 12px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+    .btn { background: var(--primary); color: #fff; border: none; border-radius: 12px; padding: 10px 16px; cursor: pointer; font-weight: 600; transition: all .15s ease; }
+    .btn:hover { filter: brightness(1.05); transform: translateY(-1px); }
+    .btn.secondary { background: #6B7280; }
+    .btn.danger { background: #EF4444; }
 
-.logo {
-  width: 52px;
-  height: 52px;
-  border-radius: 999px;
-  object-fit: cover;
-  background: #fff;
-  box-shadow: 0 0 0 2px var(--border);
-}
+    .quick-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 16px 0; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+    .stat-number { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+    .stat-label { font-size: .85rem; color: var(--muted); margin-top: 4px; }
 
-h2 {
-  margin: 0 0 4px 0;
-  font-size: 1.5rem;
-}
+    .banner-container {
+      width: 100%; text-align: center; padding: 2rem 1rem;
+      background-color: #ffffff; border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      margin-bottom: 2rem;
+    }
+    .banner-heading {
+      font-family: "Arial Unicode MS", Arial, sans-serif;
+      font-weight: 700; font-size: clamp(3rem, 12vw, 6rem);
+      letter-spacing: 0.65vw; margin: 0; margin-bottom: -1rem; padding: 0;
+    }
+    .banner-heading .part-one { color: #231F20; }
+    .banner-heading .part-two { color: #965A37; }
+    .banner-subheading {
+      font-family: 'Montserrat', sans-serif; text-transform: uppercase;
+      color: #231F20; letter-spacing: 5px; margin-top: 0; font-weight: 500;
+      font-size: clamp(0.6rem, 2.5vw, 0.9rem);
+    }
 
-.user-info {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.pill {
-  display: inline-block;
-  margin-right: 8px;
-  padding: 6px 12px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  font-size: .82rem;
-  color: var(--muted);
-  background: var(--panel);
-}
-
-.security-status {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-top: 8px;
-}
-
-.status-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.status-indicator.secure {
-  background: var(--success);
-}
-
-.status-indicator.warning {
-  background: var(--warning);
-}
-
-.security-text {
-  font-size: .8rem;
-  color: var(--muted);
-}
-
-.modules {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 18px;
-  margin-top: 20px;
-}
-
-.module {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 20px;
-  transition: all .2s ease;
-}
-
-.module:hover {
-  box-shadow: 0 8px 25px rgba(2, 6, 23, .12);
-  transform: translateY(-2px);
-}
-
-.module h3 {
-  margin: 0 0 10px;
-  font-size: 1.08rem;
-  color: var(--text);
-}
-
-.module p {
-  margin: 0 0 16px;
-  font-size: .9rem;
-  color: var(--muted);
-  line-height: 1.5;
-}
-
-.row {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.btn-outline {
-  background: transparent;
-  border: 1px solid var(--primary);
-  color: var(--primary);
-  padding: 10px 14px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all .15s ease;
-  text-decoration: none;
-  display: inline-block;
-  font-size: .9rem;
-  font-weight: 500;
-}
-
-.btn-outline:hover {
-  background: color-mix(in oklab, var(--primary) 8%, transparent);
-  transform: translateY(-1px);
-}
-
-.user-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
-  flex-wrap: wrap;
-}
-
-.btn {
-  background: var(--primary);
-  color: #fff;
-  border: none;
-  border-radius: 12px;
-  padding: 10px 16px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all .15s ease;
-}
-
-.btn:hover {
-  filter: brightness(1.05);
-  transform: translateY(-1px);
-}
-
-.btn.secondary {
-  background: #6B7280;
-}
-
-.btn.danger {
-  background: #EF4444;
-}
-
-.quick-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin: 16px 0;
-}
-
-.stat-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
-  text-align: center;
-}
-
-.stat-number {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: var(--primary);
-}
-
-.stat-label {
-  font-size: .85rem;
-  color: var(--muted);
-  margin-top: 4px;
-}
-
-.loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  color: var(--muted);
-}
-
-.spinner {
-  display: inline-block;
-  width: 24px;
-  height: 24px;
-  border: 3px solid var(--border);
-  border-top-color: var(--primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin-right: 12px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-@media (max-width: 768px) {
-  .top {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  
-  .user-actions {
-    flex-direction: column;
-  }
-  
-  .modules {
-    grid-template-columns: 1fr;
-  }
-}
+    @media (max-width: 768px) {
+      .top { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .user-actions { flex-direction: column; }
+      .modules { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
+    <div class="banner-container">
+      <h1 class="banner-heading">
+        <span class="part-one">NAVI</span><span class="part-two">LANTERN</span>
+      </h1>
+      <p class="banner-subheading">
+        NAVAL ARCHITECTURE . MARINE SURVEY . MARINE ENGINEERING
+      </p>
+    </div>
+
     <div class="card">
       <div class="top">
         <img class="logo" id="userLogo" src="" alt="Logo" onerror="this.style.display='none'">
         <div style="flex:1">
-          <h2>Welcome, <span id="userName">...</span></h2>
+          <h2 id="welcomeText">Welcome</h2>
           <div class="user-info">
             <div class="pill">Level: <span id="userLevel">—</span></div>
             <div class="pill">Group: <span id="userGroup">—</span></div>
@@ -317,18 +130,9 @@ h2 {
           <div class="stat-number" id="totalVessels">-</div>
           <div class="stat-label">Registered Vessels</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-number" id="recentActivity">-</div>
-          <div class="stat-label">Recent Activities</div>
-        </div>
       </div>
 
-      <div id="modulesContainer" class="modules">
-        <div class="loading">
-          <span class="spinner"></span>
-          Loading dashboard...
-        </div>
-      </div>
+      <div id="modulesContainer"></div>
 
       <div class="user-actions">
         <button id="btnChangePassword" class="btn secondary">Change Password</button>
@@ -339,278 +143,103 @@ h2 {
     </div>
   </div>
 
-  <!-- Load API Client -->
   <script src="../assets/js/bridge.js"></script>
-  
   <script>
     (async function() {
-      'use strict';
-
-      const $ = id => document.getElementById(id);
-
-      // Require authentication
       const user = await NAVI.Guards.requireAuth();
-      if (!user) return; // Will redirect to login
+      if (!user) return;
 
-      // Populate user info
-      $('userName').textContent = user.username || 'User';
-      $('userLevel').textContent = user.levelName || '—';
-      $('userGroup').textContent = user.groupName || '—';
-      $('userId').textContent = user.userId || '—';
-
-      // Load logo
-      try {
-        const logoRes = await NAVI.API.meta.logo();
-        if (logoRes.ok && logoRes.logoUrl) {
-          $('userLogo').src = logoRes.logoUrl;
-        }
-      } catch (e) {
-        console.warn('Failed to load logo:', e);
+      const session = await NAVI.API.auth.getSession();
+      if (!session?.ok) {
+        window.location.href = '../index.html';
+        return;
       }
 
-      // Navigation helper
+      // Populate user info
+      document.getElementById('welcomeText').textContent = `Welcome, ${user.username}`;
+      document.getElementById('userLevel').textContent = user.levelName || '—';
+      document.getElementById('userGroup').textContent = user.groupName || '—';
+      document.getElementById('userId').textContent = user.userId || '—';
+      
+      if (session.logoUrl) {
+        document.getElementById('userLogo').src = session.logoUrl;
+      }
+
+      // Navigation
       function navigate(page) {
         window.location.href = `./${page}.html`;
       }
 
-      // Expose navigate globally for module buttons
-      window.navigate = navigate;
+      // Logout
+      document.getElementById('btnLogout').addEventListener('click', () => {
+        if (confirm('Are you sure you want to logout?')) {
+          NAVI.API.auth.logout();
+        }
+      });
 
-      // Determine user permissions
-      const levelName = (user.levelName || '').toLowerCase();
+      // Render modules based on user level
       const levelId = parseInt(user.levelId) || 999;
-      const groupId = String(user.groupId || '');
-      const groupName = (user.groupName || '').toLowerCase();
+      const groupId = String(user.groupId || '').trim();
+      const modulesHtml = [];
 
-      const isSuper = levelName.includes('super') || levelId === 0;
-      const isAdmin = levelName.includes('admin') || levelId === 1;
-      const isStaff = groupId === '1' || groupName.includes('staff');
-      const isUser = levelId === 3 || levelName.includes('user');
-
-      // Build modules based on user level
-      const modulesContainer = $('modulesContainer');
-
-      if (isSuper || isAdmin) {
-        // Admin/Super modules
-        modulesContainer.innerHTML = `
+      if (levelId <= 1) { // Super/Admin
+        modulesHtml.push(`
           <div class="module">
-            <h3>User Management</h3>
-            <p>Create, edit, and manage user accounts. Control access levels and permissions.</p>
+            <h3>👥 User Management</h3>
+            <p>Create, edit, and manage user accounts.</p>
             <div class="row">
               <button class="btn-outline" onclick="navigate('create_user')">Create User</button>
               <button class="btn-outline" onclick="navigate('edit_user')">Edit Users</button>
             </div>
           </div>
-
           <div class="module">
-            <h3>Company Management</h3>
-            <p>Register and manage company information and business details.</p>
+            <h3>🏢 Company Management</h3>
+            <p>Register and manage company information.</p>
             <div class="row">
               <button class="btn-outline" onclick="navigate('register_client')">Register Company</button>
               <button class="btn-outline" onclick="navigate('client_list')">Companies List</button>
             </div>
           </div>
-
           <div class="module">
-            <h3>Vessel Management</h3>
-            <p>Register new vessels and manage existing vessel information and inventories.</p>
+            <h3>🚢 Vessel Management</h3>
+            <p>Register and manage vessel information.</p>
             <div class="row">
               <button class="btn-outline" onclick="navigate('register_vessel')">Register Vessel</button>
               <button class="btn-outline" onclick="navigate('edit_vessel')">Edit Vessels</button>
               <button class="btn-outline" onclick="navigate('view_vessel')">View Vessel</button>
             </div>
           </div>
-
-          ${isSuper ? `
+        `);
+      } else if (levelId === 3) { // Regular user
+        modulesHtml.push(`
           <div class="module">
-            <h3>System Administration</h3>
-            <p>Manage user roles, groups, and system-wide configurations.</p>
-            <div class="row">
-              <button class="btn-outline" onclick="alert('Feature coming soon')">Roles & Groups</button>
-              <button class="btn-outline" onclick="alert('Feature coming soon')">System Logs</button>
-            </div>
-          </div>
-          ` : ''}
-
-          <div class="module">
-            <h3>Reports & Analytics</h3>
-            <p>View system reports, user activity, and vessel statistics.</p>
-            <div class="row">
-              <button class="btn-outline" onclick="alert('Feature coming soon')">View Reports</button>
-              <button class="btn-outline" onclick="alert('Feature coming soon')">Activity Log</button>
-            </div>
-          </div>
-        `;
-
-        // Load quick stats for admins
-        $('quickStats').style.display = 'grid';
-        loadQuickStats();
-
-      } else if (isUser) {
-        // Regular user modules
-        modulesContainer.innerHTML = `
-          <div class="module">
-            <h3>My Profile</h3>
-            <p>Your account details (read-only).</p>
-            <div id="myProfileView" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:8px;font-size:0.9rem;color:var(--muted)">
-              Loading profile...
-            </div>
-          </div>
-
-          <div class="module">
-            <h3>Companies Details</h3>
-            <p>Company information and business details.</p>
+            <h3>🏢 Companies Details</h3>
+            <p>View company information.</p>
             <div class="row">
               <button class="btn-outline" onclick="navigate('client_list')">Companies List</button>
             </div>
           </div>
-
           <div class="module">
-            <h3>My Vessels</h3>
-            <p>View and manage vessel information assigned to your account.</p>
+            <h3>🚢 My Vessels</h3>
+            <p>View vessel information.</p>
             <div class="row">
               <button class="btn-outline" onclick="navigate('view_vessel')">View Vessel</button>
-              ${isStaff ? '<button class="btn-outline" onclick="navigate(\'edit_vessel\')">Edit Vessel Info</button>' : ''}
+              ${groupId === '1' ? '<button class="btn-outline" onclick="navigate(\'edit_vessel\')">Edit Vessel Info</button>' : ''}
             </div>
           </div>
-        `;
-
-        // Load user profile
-        loadMyProfile();
-
-      } else {
-        // Limited access
-        modulesContainer.innerHTML = `
-          <div class="module">
-            <h3>Access Limited</h3>
-            <p>Your current user level has limited access. You can still view vessels assigned to you.</p>
-            <div class="row">
-              <button class="btn-outline" onclick="navigate('view_vessel')">View Vessel</button>
-              <button class="btn-outline" onclick="alert('Please contact your administrator for support')">Contact Support</button>
-            </div>
-          </div>
-        `;
+        `);
       }
 
-      // Load quick stats for admins
-      async function loadQuickStats() {
-        try {
-          const users = await NAVI.API.users.list();
-          if (users.ok) {
-            $('totalUsers').textContent = users.users?.length || '0';
-          }
-        } catch (e) {
-          $('totalUsers').textContent = 'N/A';
-        }
+      document.getElementById('modulesContainer').innerHTML = `<div class="modules">${modulesHtml.join('')}</div>`;
+      window.navigate = navigate;
 
-        try {
-          const vessels = await NAVI.API.vessels.list();
-          if (vessels.ok) {
-            $('totalVessels').textContent = vessels.vessels?.length || '0';
-          }
-        } catch (e) {
-          $('totalVessels').textContent = 'N/A';
-        }
+      // Change password
+      document.getElementById('btnChangePassword').addEventListener('click', () => navigate('change_password'));
 
-        // Activity placeholder
-        $('recentActivity').textContent = '-';
-      }
-
-      // Load user profile
-      async function loadMyProfile() {
-        const profileBox = document.getElementById('myProfileView');
-        if (!profileBox) return;
-
-        try {
-          const profile = await NAVI.API.users.get(user.userId);
-          
-          if (!profile.ok || !profile.data) {
-            profileBox.textContent = 'Unable to load profile.';
-            return;
-          }
-
-          // Display profile data
-          const data = profile.data;
-          const fields = Object.keys(data).filter(k => k !== 'PASSWORD' && k !== 'SALT');
-          
-          let html = '<table style="width:100%;border-collapse:collapse;font-size:0.85rem">';
-          fields.forEach(key => {
-            const label = key.replace(/_/g, ' ');
-            const value = data[key] || '—';
-            html += `<tr>
-              <th style="text-align:left;padding:4px 8px;color:var(--muted);font-weight:600">${label}</th>
-              <td style="padding:4px 8px">${value}</td>
-            </tr>`;
-          });
-          html += '</table>';
-          
-          profileBox.innerHTML = html;
-          
-        } catch (e) {
-          console.error('Failed to load profile:', e);
-          profileBox.textContent = 'Error loading profile.';
-        }
-      }
-
-      // Button handlers
-      $('btnChangePassword').addEventListener('click', () => navigate('change_password'));
-      
-      $('btnSecurity').addEventListener('click', async () => {
-        try {
-          const session = await NAVI.API.auth.getSession();
-          if (session?.ok) {
-            const info = `Security Information:
-
-Session Active: Yes
-User Level: ${user.levelName}
-User Group: ${user.groupName}
-Session ID: ${user.userId}
-
-Your account is protected with advanced security measures including password encryption, session management, and activity logging.`;
-            alert(info);
-          }
-        } catch (e) {
-          alert('Unable to retrieve security information.');
-        }
+      // Security info (placeholder)
+      document.getElementById('btnSecurity').addEventListener('click', () => {
+        alert('Security Information:\n\nYour session is encrypted and secure.\nPassword: Protected with industry-standard encryption\nSession: Auto-expires after inactivity');
       });
-      
-      $('btnLogout').addEventListener('click', () => {
-        if (confirm('Are you sure you want to logout?')) {
-          NAVI.API.auth.logout();
-        }
-      });
-
-      // Security indicator update
-      function updateSecurityStatus() {
-        const indicator = $('securityIndicator');
-        const text = $('securityText');
-        
-        // Check session age (placeholder - you can enhance this)
-        const sessionAge = Date.now();
-        
-        if (sessionAge > 3000000) { // 50 minutes
-          indicator.className = 'status-indicator warning';
-          text.textContent = 'Session expiring soon';
-        } else {
-          indicator.className = 'status-indicator secure';
-          text.textContent = 'Secure session active';
-        }
-      }
-
-      updateSecurityStatus();
-      setInterval(updateSecurityStatus, 60000); // Update every minute
-
-      // Session timeout prompt (50 mins)
-      setTimeout(() => {
-        if (confirm('Your session will expire soon. Would you like to extend it?')) {
-          NAVI.API.auth.getSession().then(() => {
-            alert('Session extended successfully.');
-          }).catch(() => {
-            alert('Failed to extend session. Please login again.');
-          });
-        }
-      }, 50 * 60 * 1000);
-
     })();
   </script>
 </body>

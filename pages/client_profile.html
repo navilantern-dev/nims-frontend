@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NAVI-SIMS – Client Profile</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Oswald:wght@700&display=swap');
+    :root { --bg: #F6F7FB; --card: #ffffff; --panel: #F9FAFB; --text: #0F172A; --muted: #64748B; --border: #E5E7EB; --ring: #2563EB; --primary: #2563EB; --danger: #EF4444; --ok: #059669; --radius: 18px; --shadow: 0 10px 30px rgba(2, 6, 23, .08); }
+    @media (prefers-color-scheme: dark) { :root { --bg: #0B1220; --card: #0F172A; --panel: #111827; --text: #E5E7EB; --muted: #94A3B8; --border: #1F2937; --ring: #60A5FA; --primary: #60A5FA; --shadow: 0 10px 30px rgba(0, 0, 0, .45); } }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; font: 400 16px/1.45 ui-sans-serif, system-ui; }
+    .wrapper { max-width: 900px; width: 100%; padding: 2rem 1rem; }
+    .header { text-align: center; margin-bottom: 2rem; }
+    .header h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .header p { font-size: 0.875rem; color: var(--muted); margin: 0; }
+    .card-grid { display: grid; gap: 1.5rem; grid-template-columns: 1fr; }
+    @media (min-width: 768px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.5rem; position: relative; }
+    .card-header { margin-bottom: 0.5rem; }
+    .card-header h2 { font-size: 1.25rem; font-weight: 600; margin: 0; }
+    .profile-section { padding: 20px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1rem; }
+    .profile-picture { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); }
+    .profile-name { font-size: 1.5rem; font-weight: 600; margin: 0; }
+    .profile-title { font-size: 1rem; color: var(--muted); margin: 0; }
+    .details-list { display: grid; gap: 1rem; grid-template-columns: 1fr; }
+    @media (min-width: 768px) { .details-list { grid-template-columns: repeat(2, 1fr); } }
+    .detail-item { display: flex; flex-direction: column; }
+    .detail-label { font-size: 0.75rem; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+    .detail-value { font-size: 0.875rem; color: var(--text); word-wrap: break-word; }
+    .detail-value a { color: var(--primary); text-decoration: none; }
+    .detail-value a:hover { text-decoration: underline; }
+    .edit-icon { position: absolute; top: 25px; right: 25px; z-index: 10; cursor: pointer; color: var(--primary); background: var(--card); padding: 8px; border-radius: 50%; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); transition: transform 0.2s; }
+    .edit-icon:hover { transform: scale(1.1); }
+    .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem; font-weight: 600; transition: background 0.2s; }
+    .btn.alt { background: #334155; color: #fff; }
+    .banner-container { width: 100%; text-align: center; padding: 2rem 1rem; background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 2rem; }
+    .banner-heading { font-family: "Arial Unicode MS", Arial, sans-serif; font-weight: 700; font-size: clamp(3rem, 12vw, 6rem); letter-spacing: 0.65vw; margin: 0 -1rem 0; }
+    .banner-heading .part-one { color: #231F20; }
+    .banner-heading .part-two { color: #965A37; }
+    .banner-subheading { font-family: 'Montserrat', sans-serif; text-transform: uppercase; color: #231F20; letter-spacing: 5px; margin-top: 0; font-weight: 500; font-size: clamp(0.6rem, 2.5vw, 0.9rem); }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="banner-container">
+      <h1 class="banner-heading"><span class="part-one">NAVI</span><span class="part-two">LANTERN</span></h1>
+      <p class="banner-subheading">NAVAL ARCHITECTURE . MARINE SURVEY . MARINE ENGINEERING</p>
+    </div>
+
+    <button id="btnBack" class="btn alt" style="float:right;margin-bottom:1rem">Back</button>
+    
+    <div class="header">
+      <h1>Client Profile</h1>
+      <p>View the full details of the client.</p>
+    </div>
+
+    <div id="profileContainer"></div>
+  </div>
+
+  <script src="../assets/js/bridge.js"></script>
+  <script>
+    (async function() {
+      const user = await NAVI.Guards.requireAuth();
+      if (!user) return;
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const clientId = urlParams.get('client_id');
+
+      if (!clientId) {
+        alert('No client ID provided');
+        window.location.href = './client_list.html';
+        return;
+      }
+
+      const container = document.getElementById('profileContainer');
+
+      try {
+        const result = await NAVI.API.clients.get(clientId);
+        
+        if (!result || !result.ok) {
+          container.innerHTML = `<div class="card"><p style="color:var(--danger)">Failed to load client profile: ${result?.msg || 'Unknown error'}</p></div>`;
+          return;
+        }
+
+        const data = result.data;
+        const canEdit = parseInt(user.levelId) <= 2; // Super/Admin can edit
+
+        container.innerHTML = `
+          <div class="card-grid">
+            <div class="card profile-section">
+              ${canEdit ? `<i class="fa-solid fa-pen edit-icon" onclick="alert('Edit feature coming soon')"></i>` : ''}
+              <img class="profile-picture" src="${data.COMP_LOGOPIC || 'https://via.placeholder.com/100'}" alt="Company Logo">
+              <h3 class="profile-name">${data.COMP_NAME || '—'}</h3>
+              <p class="profile-title">${data.CLIENT_TITLE || '—'}</p>
+            </div>
+
+            <div class="card">
+              ${canEdit ? `<i class="fa-solid fa-pen edit-icon" onclick="alert('Edit feature coming soon')"></i>` : ''}
+              <div class="card-header"><h2>Company Details</h2></div>
+              <div class="details-list">
+                <div class="detail-item"><span class="detail-label">Registration No.</span><span class="detail-value">${data.COMP_REGNO || '—'}</span></div>
+                <div class="detail-item"><span class="detail-label">IMO No.</span><span class="detail-value">${data.COMP_IMONO || '—'}</span></div>
+                <div class="detail-item"><span class="detail-label">TIN No.</span><span class="detail-value">${data.COMP_TIN || '—'}</span></div>
+                <div class="detail-item"><span class="detail-label">Contract No.</span><span class="detail-value">${data.COMP_CONTRACTNO || '—'}</span></div>
+                <div class="detail-item"><span class="detail-label">Contact (Office)</span><span class="detail-value">${data.COMP_CONTACT_O || '—'}</span></div>
+                <div class="detail-item"><span class="detail-label">Contact (Mobile)</span><span class="detail-value">${data.COMP_CONTACT_M || '—'}</span></div>
+                <div class="detail-item"><span class="detail-label">Email</span><span class="detail-value">${data.COMP_EMAIL || '—'}</span></div>
+                <div class="detail-item" style="grid-column:1/-1"><span class="detail-label">Registered Address</span><span class="detail-value">${data.COMP_ADD_R || '—'}</span></div>
+                <div class="detail-item" style="grid-column:1/-1"><span class="detail-label">Business Address</span><span class="detail-value">${data.COMP_ADD_B || '—'}</span></div>
+              </div>
+            </div>
+
+            <div class="card" style="grid-column:1/-1">
+              ${canEdit ? `<i class="fa-solid fa-pen edit-icon" onclick="alert('Edit feature coming soon')"></i>` : ''}
+              <div class="card-header"><h2>Company Documentation</h2></div>
+              <div class="details-list">
+                <div class="detail-item"><span class="detail-label">Contract Issuance</span><span class="detail-value">${data.COMP_CI_DATE || '—'}</span></div>
+                <div class="detail-item"><span class="detail-label">Contract Expiry</span><span class="detail-value">${data.COMP_CE_DATE || '—'}</span></div>
+              </div>
+            </div>
+          </div>
+        `;
+      } catch (err) {
+        container.innerHTML = `<div class="card"><p style="color:var(--danger)">Error loading profile: ${err.message}</p></div>`;
+      }
+
+      document.getElementById('btnBack').addEventListener('click', () => {
+        const from = urlParams.get('from') || 'client_list';
+        window.location.href = `./${from}.html`;
+      });
+    })();
+  </script>
+</body>
+</html>

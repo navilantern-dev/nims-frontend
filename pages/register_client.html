@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NAVI-SIMS – Register Client</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Oswald:wght@700&display=swap');
+    :root { --bg: #F6F7FB; --card: #ffffff; --panel: #F9FAFB; --text: #0F172A; --muted: #64748B; --border: #E5E7EB; --ring: #2563EB; --primary: #2563EB; --danger: #EF4444; --ok: #059669; --radius: 18px; --shadow: 0 10px 30px rgba(2, 6, 23, .08); }
+    @media (prefers-color-scheme: dark) { :root { --bg: #0B1220; --card: #0F172A; --panel: #111827; --text: #E5E7EB; --muted: #94A3B8; --border: #1F2937; --ring: #60A5FA; --primary: #60A5FA; --shadow: 0 10px 30px rgba(0, 0, 0, .45); } }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+    .wrapper { max-width: 900px; width: 100%; }
+    .header { text-align: center; margin-bottom: 2rem; }
+    .header h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .header p { font-size: 0.875rem; color: var(--muted); margin: 0; }
+    .cards-container { display: grid; gap: 1.5rem; grid-template-columns: 1fr; }
+    @media (min-width: 768px) { .cards-container { grid-template-columns: repeat(2, 1fr); } }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+    .card-header { margin-bottom: 0.5rem; }
+    .card-header h2 { font-size: 1.25rem; font-weight: 600; margin: 0; }
+    .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .form-group label { font-size: 0.875rem; font-weight: 500; color: var(--text); }
+    .form-group input, .form-group select, .form-group textarea { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.875rem; color: var(--text); transition: border-color 0.2s, box-shadow 0.2s; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--ring); box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25); }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .actions { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem; }
+    .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem; font-weight: 600; transition: background 0.2s, color 0.2s; }
+    .btn.primary { background: var(--primary); color: #fff; }
+    .btn.primary:hover { background: #1D53B2; }
+    .btn.secondary { background: var(--panel); color: var(--text); border: 1px solid var(--border); }
+    .btn.secondary:hover { background: #EAECEF; }
+    .msg-box { padding: 1rem; border-radius: 8px; font-size: 0.875rem; margin-top: 1rem; display: none; }
+    .msg-ok { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
+    .msg-error { background: #FEF2F2; color: #991B1B; border: 1px solid #FCA5A5; }
+    .back-button { position: absolute; top: 1.5rem; right: 2rem; text-decoration: none; background: var(--panel); color: var(--muted); padding: 0.6rem 1.2rem; border-radius: 12px; font-weight: 500; border: 1px solid var(--border); }
+    .back-button:hover { background: var(--primary); color: white; border-color: var(--primary); }
+    .banner-container { width: 100%; text-align: center; padding: 2rem 1rem; background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 2rem; }
+    .banner-heading { font-family: "Arial Unicode MS", Arial, sans-serif; font-weight: 700; font-size: clamp(3rem, 12vw, 6rem); letter-spacing: 0.65vw; margin: 0 -1rem 0; }
+    .banner-heading .part-one { color: #231F20; }
+    .banner-heading .part-two { color: #965A37; }
+    .banner-subheading { font-family: 'Montserrat', sans-serif; text-transform: uppercase; color: #231F20; letter-spacing: 5px; margin-top: 0; font-weight: 500; font-size: clamp(0.6rem, 2.5vw, 0.9rem); }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="banner-container">
+      <h1 class="banner-heading"><span class="part-one">NAVI</span><span class="part-two">LANTERN</span></h1>
+      <p class="banner-subheading">NAVAL ARCHITECTURE . MARINE SURVEY . MARINE ENGINEERING</p>
+    </div>
+
+    <a class="back-button" href="./dashboard.html">
+      <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+    </a>
+
+    <div class="header">
+      <h1>Register Client</h1>
+      <p>Fill out the form below to register a new client.</p>
+    </div>
+
+    <form id="registerClientForm">
+      <div class="cards-container">
+        <div class="card">
+          <div class="card-header"><h2>Company Details</h2></div>
+          <div class="form-group">
+            <label for="clientTitle">Client Title</label>
+            <select id="clientTitle" name="CLIENT_TITLE" required>
+              <option value="" disabled selected>— Select —</option>
+              <option value="SHIP OWNER">SHIP OWNER</option>
+              <option value="SHIP MANAGER">SHIP MANAGER</option>
+              <option value="SHIP AGENT">SHIP AGENT</option>
+              <option value="CHARTERER">CHARTERER</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="comp_name">Company Name</label>
+            <input type="text" id="comp_name" data-col="COMP_NAME" required>
+          </div>
+          <div class="form-group">
+            <label for="comp_regno">Company Registration No.</label>
+            <input type="text" id="comp_regno" data-col="COMP_REGNO">
+          </div>
+          <div class="form-group">
+            <label for="comp_imono">Company IMO No.</label>
+            <input type="text" id="comp_imono" data-col="COMP_IMONO">
+          </div>
+          <div class="form-group">
+            <label for="comp_tin">Company TIN No.</label>
+            <input type="text" id="comp_tin" data-col="COMP_TIN">
+          </div>
+          <div class="form-group">
+            <label for="comp_contractno">Company Contract No.</label>
+            <input type="text" id="comp_contractno" data-col="COMP_CONTRACTNO">
+          </div>
+          <div class="form-group">
+            <label for="comp_contact_office">Company Contact (Office)</label>
+            <input type="tel" id="comp_contact_office" data-col="COMP_CONTACT_O">
+          </div>
+          <div class="form-group">
+            <label for="comp_contact_mobile">Company Contact (Mobile)</label>
+            <input type="tel" id="comp_contact_mobile" data-col="COMP_CONTACT_M">
+          </div>
+          <div class="form-group">
+            <label for="comp_email">Company Email</label>
+            <input type="email" id="comp_email" data-col="COMP_EMAIL">
+          </div>
+          <div class="form-group">
+            <label for="comp_address_reg">Registered Address</label>
+            <textarea id="comp_address_reg" data-col="COMP_ADD_R" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="comp_address_bus">Business Address</label>
+            <textarea id="comp_address_bus" data-col="COMP_ADD_B" rows="3"></textarea>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h2>Company's Documentation</h2></div>
+          <div class="form-group">
+            <label for="comp_ci_date">Contract Issuance Date</label>
+            <input type="date" id="comp_ci_date" data-col="COMP_CI_DATE">
+          </div>
+          <div class="form-group">
+            <label for="comp_ce_date">Contract Expiry Date</label>
+            <input type="date" id="comp_ce_date" data-col="COMP_CE_DATE">
+          </div>
+          <div class="form-group">
+            <label for="comp_ioc">Information of Certificate (PDF)</label>
+            <input type="file" id="comp_ioc" data-col="COMP_IOC" accept="application/pdf">
+          </div>
+          <div class="form-group">
+            <label for="comp_corp_info">Corporate Information (PDF)</label>
+            <input type="file" id="comp_corp_info" data-col="COMP_CORP_INFO" accept="application/pdf">
+          </div>
+          <div class="form-group">
+            <label for="comp_contract_agt">Contract Agreement (PDF)</label>
+            <input type="file" id="comp_contract_agt" data-col="COMP_CONTRACT_AGT" accept="application/pdf">
+          </div>
+          <div class="form-group">
+            <label for="comp_logopic">Company Logo/Image</label>
+            <input type="file" id="comp_logopic" data-col="COMP_LOGOPIC" accept="image/*">
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn secondary" id="btnReset">Reset</button>
+        <button type="submit" class="btn primary" id="btnRegister">Register Client</button>
+      </div>
+    </form>
+    <div id="statusMessage" class="msg-box"></div>
+  </div>
+
+  <script src="../assets/js/bridge.js"></script>
+  <script>
+    (async function() {
+      const user = await NAVI.Guards.requireAuth();
+      if (!user) return;
+
+      const $ = (id) => document.getElementById(id);
+
+      function showStatus(isSuccess, message) {
+        const statusDiv = $('statusMessage');
+        statusDiv.innerHTML = message;
+        statusDiv.className = `msg-box ${isSuccess ? 'msg-ok' : 'msg-error'}`;
+        statusDiv.style.display = 'block';
+      }
+
+      async function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      $('registerClientForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const registerButton = $('btnRegister');
+        registerButton.disabled = true;
+        registerButton.textContent = 'Registering...';
+        showStatus(false, 'Processing your request...');
+
+        try {
+          const values = {};
+          const files = {};
+
+          document.querySelectorAll('#registerClientForm [data-col]').forEach(el => {
+            if (el.type !== 'file') {
+              values[el.getAttribute('data-col')] = el.value.trim();
+            }
+          });
+          values['CLIENT_TITLE'] = $('clientTitle').value;
+
+          const fileInputs = document.querySelectorAll('input[type="file"][data-col]');
+          for (const el of fileInputs) {
+            if (el.files && el.files[0]) {
+              const file = el.files[0];
+              const col = el.getAttribute('data-col');
+              const base64 = await fileToBase64(file);
+              files[col] = { name: file.name, mime: file.type, dataBase64: base64 };
+            }
+          }
+
+          const result = await NAVI.API.clients.register(values, files);
+
+          if (result && result.ok) {
+            showStatus(true, result.msg);
+            registerButton.textContent = 'View Client Profile';
+            registerButton.disabled = false;
+            registerButton.onclick = () => window.location.href = `./client_profile.html?client_id=${result.clientId}`;
+          } else {
+            registerButton.disabled = false;
+            registerButton.textContent = 'Register Client';
+            showStatus(false, result.msg || 'Failed to register client.');
+          }
+        } catch (err) {
+          registerButton.disabled = false;
+          registerButton.textContent = 'Register Client';
+          showStatus(false, 'Error: ' + err.message);
+        }
+      });
+
+      $('btnReset').addEventListener('click', () => {
+        $('registerClientForm').reset();
+        $('statusMessage').style.display = 'none';
+      });
+    })();
+  </script>
+</body>
+</html>

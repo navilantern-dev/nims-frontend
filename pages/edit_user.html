@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NAVI-SIMS – Edit User</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Oswald:wght@700&display=swap');
+    :root { --bg: #F6F7FB; --card: #ffffff; --panel: #F9FAFB; --text: #0F172A; --muted: #64748B; --border: #E5E7EB; --ring: #2563EB; --primary: #2563EB; --danger: #EF4444; --radius: 18px; --shadow: 0 10px 30px rgba(2, 6, 23, .08); }
+    @media (prefers-color-scheme: dark) { :root { --bg: #0B1220; --card: #0F172A; --panel: #111827; --text: #E5E7EB; --muted: #94A3B8; --border: #1F2937; --primary: #60A5FA; --shadow: 0 10px 30px rgba(0, 0, 0, .45); } }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; font: 400 16px/1.45 ui-sans-serif, system-ui; }
+    .wrap { width: min(96vw, 1100px); }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px; box-shadow: var(--shadow); }
+    .banner-container { width: 100%; text-align: center; padding: 2rem 1rem; background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 1rem; }
+    .banner-heading { font-family: "Arial Unicode MS", Arial, sans-serif; font-weight: 700; font-size: clamp(3rem, 12vw, 6rem); letter-spacing: 0.65vw; margin: 0 -1rem 0; }
+    .banner-heading .part-one { color: #231F20; }
+    .banner-heading .part-two { color: #965A37; }
+    .banner-subheading { font-family: 'Montserrat', sans-serif; text-transform: uppercase; color: #231F20; letter-spacing: 5px; margin-top: 0; font-weight: 500; font-size: clamp(0.6rem, 2.5vw, 0.9rem); }
+    .title { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
+    .muted { color: var(--muted); }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+    .panel h3 { margin: 0 0 10px; font-size: 1.04rem; }
+    label { font-size: .9rem; color: var(--muted); display: block; margin: 8px 0 6px; }
+    input, select, textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; outline: none; background: #fff; }
+    @media (prefers-color-scheme: dark) { input, select, textarea { background: #0F172A; color: var(--text); } }
+    input:focus, select:focus, textarea:focus { border-color: var(--ring); box-shadow: 0 0 0 4px color-mix(in oklab, var(--ring) 18%, transparent); }
+    input, select { height: 44px; }
+    textarea { min-height: 92px; resize: vertical; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+    .btn { background: var(--primary); color: #fff; border: none; border-radius: 12px; padding: 10px 14px; cursor: pointer; }
+    .btn.alt { background: #334155; color: #fff; }
+    .btn.soft { background: #E5E7EB; color: #111827; }
+    .btn.danger { background: var(--danger); }
+    .msg { margin-top: 10px; display: none; padding: 10px; border-radius: 10px; }
+    .msg.ok { background: #E6FFED; color: #065F46; border: 1px solid #A7F3D0; }
+    .msg.err { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+    .hint { font-size: .8rem; color: var(--muted); }
+    .pager-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: -6px 0 10px; }
+    .steps { display: flex; gap: 6px; align-items: center; }
+    .step-dot { width: 9px; height: 9px; border-radius: 50%; background: #CBD5E1; border: 1px solid #94A3B8; }
+    .step-dot.active { background: var(--primary); border-color: var(--primary); }
+    #detailsPager .page { display: none; }
+    #detailsPager .page.active { display: block; }
+    .pager-controls { display: flex; gap: 10px; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="banner-container">
+      <h1 class="banner-heading"><span class="part-one">NAVI</span><span class="part-two">LANTERN</span></h1>
+      <p class="banner-subheading">NAVAL ARCHITECTURE . MARINE SURVEY . MARINE ENGINEERING</p>
+    </div>
+
+    <div class="card">
+      <div class="title">
+        <div>
+          <h2 style="margin:0">Edit User</h2>
+          <div class="muted">Your level: <span id="userLevel">—</span></div>
+        </div>
+        <button id="btnBack" class="btn alt" type="button" style="margin-left:auto">Back</button>
+      </div>
+
+      <div class="grid">
+        <div class="panel" id="card0">
+          <h3>Find User</h3>
+          <label for="selUser">Select User</label>
+          <select id="selUser"><option value="">— Loading… —</option></select>
+          <div class="hint">Admins see only Level 1 & 2 users.</div>
+          <div id="msg0Ok" class="msg ok"></div>
+          <div id="msg0Err" class="msg err"></div>
+        </div>
+
+        <div class="panel" id="card1" style="display:none;">
+          <h3>Login Information</h3>
+          <div class="hint">Editing USER_ID <span id="hUserId"></span></div>
+
+          <label>USER_ID</label>
+          <input id="userIdDisplay" type="text" disabled>
+
+          <label for="username">Username</label>
+          <input id="username" type="text" required readonly>
+
+          <label for="password">New Password (leave blank to keep current)</label>
+          <div class="row">
+            <input id="password" type="password" placeholder="••••••••" style="flex:1">
+            <button id="togglePw" class="btn soft" type="button">Show</button>
+            <button id="btnDelete" class="btn danger" type="button" style="margin-left:auto">Delete User</button>
+          </div>
+
+          <label for="level">User Level</label>
+          <select id="level" required></select>
+
+          <label for="group">User Group</label>
+          <select id="group" required></select>
+
+          <div class="row">
+            <button id="btnSave1" class="btn" type="button">Save</button>
+            <button id="btnReset1" class="btn alt" type="button">Reset</button>
+          </div>
+
+          <div id="msg1Ok" class="msg ok"></div>
+          <div id="msg1Err" class="msg err"></div>
+        </div>
+
+        <div class="panel" id="card2" style="display:none;">
+          <div class="pager-top">
+            <h3 id="card2Title" style="margin:0">Details</h3>
+            <div class="steps" id="steps"></div>
+          </div>
+
+          <div id="detailsPager"></div>
+
+          <div class="pager-controls">
+            <button id="btnPrev" class="btn soft" type="button">← Prev</button>
+            <button id="btnNext" class="btn soft" type="button" style="margin-left:auto">Next →</button>
+          </div>
+
+          <div class="row">
+            <button id="btnSave2" class="btn" type="button">Save</button>
+            <button id="btnReset2" class="btn alt" type="button">Reset</button>
+          </div>
+          <div id="msg2Ok" class="msg ok"></div>
+          <div id="msg2Err" class="msg err"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/bridge.js"></script>
+  <script>
+    (async function() {
+      const user = await NAVI.Guards.requireAuth();
+      if (!user) return;
+
+      document.getElementById('userLevel').textContent = user.levelName || '—';
+
+      const $ = (id) => document.getElementById(id);
+      const PAGE_SIZE = 8;
+      let currentPage = 0, totalPages = 0;
+      let CUR_USER_ID = null, CUR_GROUP_ID = null, DETAIL_SCHEMA = null, SNAPSHOT_BASIC = null;
+      let DIRTY1 = false, DIRTY2 = false;
+
+      function setMsg(which, ok, text) {
+        const okBox = $(`msg${which}Ok`), errBox = $(`msg${which}Err`);
+        if (okBox) okBox.style.display = 'none';
+        if (errBox) errBox.style.display = 'none';
+        if (ok && okBox) { okBox.textContent = text; okBox.style.display = 'block'; }
+        if (!ok && errBox) { errBox.textContent = text; errBox.style.display = 'block'; }
+      }
+
+      function fillSelect(sel, options, valueToSet) {
+        if (!sel) return;
+        sel.innerHTML = options.map(o => `<option value="${o.id}">${o.id} — ${o.name}</option>`).join('');
+        sel.value = String(valueToSet || '').trim();
+      }
+
+      function renderSteps(container, count) {
+        container.innerHTML = '';
+        for (let i = 0; i < count; i++) {
+          const dot = document.createElement('div');
+          dot.className = 'step-dot' + (i === currentPage ? ' active' : '');
+          dot.addEventListener('click', () => goToPage(i));
+          container.appendChild(dot);
+        }
+      }
+
+      function goToPage(n) {
+        const pages = document.querySelectorAll('#detailsPager .page');
+        if (!pages.length) return;
+        currentPage = Math.max(0, Math.min(n, pages.length - 1));
+        pages.forEach((p, i) => p.classList.toggle('active', i === currentPage));
+        $('btnPrev').disabled = (currentPage === 0);
+        $('btnNext').disabled = (currentPage === pages.length - 1);
+        renderSteps($('steps'), pages.length);
+      }
+
+      function buildDetailsFormWithValues(schema) {
+        const pager = $('detailsPager');
+        const cols = schema.columns || [];
+        const fileCols = new Set(schema.fileColumns || []);
+        const existing = schema.existing || {};
+
+        const pieces = cols.map(col => {
+          const label = col.replace(/_/g, ' ');
+          if (fileCols.has(col)) {
+            const cur = existing[col] != null ? String(existing[col]) : '';
+            const noteHtml = cur ? `<div class="hint">Current: ${cur}</div>` : '';
+            return `<label data-col="${col}">${label}</label><input type="file" data-col="${col}" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp,.heic,image/*">${noteHtml}`;
+          }
+          const val = existing[col] != null ? String(existing[col]) : '';
+          const isTextArea = /ADDRESS/i.test(col);
+          if (isTextArea) return `<label data-col="${col}">${label}</label><textarea data-col="${col}">${val}</textarea>`;
+          const type = /EMAIL/i.test(col) ? 'email' : (/PHONE|CONTACT/i.test(col) ? 'tel' : 'text');
+          return `<label data-col="${col}">${label}</label><input type="${type}" data-col="${col}" value="${val}">`;
+        });
+
+        pager.innerHTML = '';
+        totalPages = Math.ceil(pieces.length / PAGE_SIZE) || 1;
+        for (let i = 0; i < totalPages; i++) {
+          const page = document.createElement('div');
+          page.className = 'page';
+          page.innerHTML = pieces.slice(i * PAGE_SIZE, (i + 1) * PAGE_SIZE).join('');
+          pager.appendChild(page);
+        }
+        currentPage = 0;
+        goToPage(0);
+      }
+
+      async function loadUserById(id) {
+        setMsg(0, true, ''); setMsg(0, false, '');
+        try {
+          const res = await NAVI.API.users.get(id);
+          if (!res || !res.ok) { setMsg(0, false, res?.msg || 'Not found.'); return; }
+          
+          const b = res.basic;
+          CUR_USER_ID = b.USER_ID;
+          CUR_GROUP_ID = String(b.USER_GROUP || '').trim();
+          SNAPSHOT_BASIC = b;
+
+          $('hUserId').textContent = CUR_USER_ID;
+          $('userIdDisplay').value = CUR_USER_ID;
+          $('username').value = b.USERNAME || '';
+          $('password').value = '';
+          
+          const [levelsRes, groupsRes] = await Promise.all([NAVI.API.meta.levels(), NAVI.API.meta.groups()]);
+          if (levelsRes.ok) fillSelect($('level'), levelsRes.levels, b.USER_LEVELID || '');
+          if (groupsRes.ok) fillSelect($('group'), groupsRes.groups, CUR_GROUP_ID);
+
+          $('card1').style.display = 'block';
+          $('card2').style.display = 'block';
+
+          // Mock detail schema - implement backend endpoint
+          DETAIL_SCHEMA = { ok: true, columns: ['FULL_NAME', 'ADDRESS'], fileColumns: [], existing: {} };
+          buildDetailsFormWithValues(DETAIL_SCHEMA);
+        } catch (err) {
+          setMsg(0, false, err?.message || 'Unexpected error.');
+        }
+      }
+
+      // Load user list
+      async function loadUserList() {
+        try {
+          const res = await NAVI.API.users.list('editable');
+          if (!res || !res.ok) { $('selUser').innerHTML = '<option value="">(Failed to load)</option>'; return; }
+          $('selUser').innerHTML = '<option value="">— Choose a user —</option>' +
+            res.users.map(u => `<option value="${u.userId}">${u.userId} — ${u.username} (Level ${u.levelId}: ${u.levelName})</option>`).join('');
+        } catch (err) {
+          $('selUser').innerHTML = '<option value="">(Failed to load)</option>';
+        }
+      }
+
+      loadUserList();
+
+      $('selUser').addEventListener('change', (e) => {
+        const id = e.target.value;
+        if (!id) return;
+        if (DIRTY1 || DIRTY2) { if (!confirm('You have unsaved changes. Switch user?')) return; }
+        loadUserById(id);
+      });
+
+      $('togglePw').addEventListener('click', () => {
+        const pw = $('password');
+        const hidden = pw.type === 'password';
+        pw.type = hidden ? 'text' : 'password';
+        $('togglePw').textContent = hidden ? 'Hide' : 'Show';
+      });
+
+      ['password', 'level', 'group'].forEach(id => {
+        const el = $(id);
+        if (el) ['input', 'change'].forEach(ev => el.addEventListener(ev, () => { DIRTY1 = true; }));
+      });
+
+      $('btnSave1').addEventListener('click', async () => {
+        setMsg(1, true, ''); setMsg(1, false, '');
+        if (!CUR_USER_ID) { setMsg(1, false, 'Choose a user first.'); return; }
+
+        const payload = {
+          userId: CUR_USER_ID,
+          username: $('username').value.trim(),
+          password: $('password').value.trim() || null,
+          levelId: $('level').value.trim(),
+          groupId: $('group').value.trim()
+        };
+
+        try {
+          const res = await NAVI.API.users.update(payload);
+          if (!res || !res.ok) { setMsg(1, false, res?.msg || 'Failed to save.'); return; }
+          setMsg(1, true, res.msg || 'Saved.');
+          DIRTY1 = false;
+          $('password').value = '';
+        } catch (err) {
+          setMsg(1, false, err?.message || 'Unexpected error.');
+        }
+      });
+
+      $('btnReset1').addEventListener('click', () => {
+        if (!SNAPSHOT_BASIC) return;
+        $('userIdDisplay').value = SNAPSHOT_BASIC.USER_ID || '';
+        $('username').value = SNAPSHOT_BASIC.USERNAME || '';
+        $('password').value = '';
+        DIRTY1 = false;
+        setMsg(1, true, ''); setMsg(1, false, '');
+      });
+
+      $('btnDelete').addEventListener('click', async () => {
+        if (!CUR_USER_ID) { setMsg(1, false, 'Choose a user first.'); return; }
+        if (!confirm(`Delete USER_ID ${CUR_USER_ID}?`)) return;
+        try {
+          const res = await NAVI.API.users.delete(CUR_USER_ID);
+          if (!res || !res.ok) { setMsg(1, false, res?.msg || 'Delete failed.'); return; }
+          alert('User deleted.');
+          window.location.href = './dashboard.html';
+        } catch (err) {
+          setMsg(1, false, err?.message || 'Unexpected error.');
+        }
+      });
+
+      $('btnSave2').addEventListener('click', async () => {
+        setMsg(2, true, ''); setMsg(2, false, '');
+        // Implement detail save logic
+        setMsg(2, true, 'Details saved (placeholder).');
+      });
+
+      $('btnReset2').addEventListener('click', () => {
+        if (DETAIL_SCHEMA) buildDetailsFormWithValues(DETAIL_SCHEMA);
+        DIRTY2 = false;
+        setMsg(2, true, ''); setMsg(2, false, '');
+      });
+
+      $('btnPrev').addEventListener('click', () => goToPage(currentPage - 1));
+      $('btnNext').addEventListener('click', () => goToPage(currentPage + 1));
+      $('btnBack').addEventListener('click', () => {
+        if (DIRTY1 || DIRTY2) { if (!confirm('You have unsaved changes. Leave?')) return; }
+        window.location.href = './dashboard.html';
+      });
+    })();
+  </script>
+</body>
+</html>
