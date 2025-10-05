@@ -11,29 +11,27 @@ const Bridge = (() => {
   const clearToken = () => localStorage.removeItem(API_CONFIG.TOKEN_KEY);
 
   async function call(action, options = {}) {
-    const { body = null, query = {} } = options;
+    const { body = null } = options;
     const token = getToken();
     
+    // Build URL with all parameters (GET request to avoid CORS preflight)
     const url = new URL(API_CONFIG.BASE_URL);
     url.searchParams.set('action', action);
     if (token) url.searchParams.set('token', token);
     
-    Object.entries(query).forEach(([k, v]) => {
-      if (v !== undefined && v !== null) {
-        url.searchParams.set(k, v);
-      }
-    });
-
-    const requestOptions = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: body ? JSON.stringify({ action, token, ...body }) : JSON.stringify({ action, token })
-    };
+    // Encode body as JSON string in URL parameter
+    if (body && Object.keys(body).length > 0) {
+      url.searchParams.set('data', JSON.stringify(body));
+    }
 
     try {
-      const response = await fetch(url.toString(), requestOptions);
+      // Use GET to avoid CORS preflight issues
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
