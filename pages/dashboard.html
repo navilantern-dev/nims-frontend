@@ -146,17 +146,24 @@
   <script src="../assets/js/bridge.js"></script>
   <script>
   (async () => {
-    const session = await Bridge.requireAuth({
-      logoSel:  'img.app-logo',
-      nameSel:  '.js-user-name',
-      levelSel: '.js-user-level',
-      groupSel: '.js-user-group',
-      idSel:    '.js-user-id'
+    const user = await NAVI.Guards.requireAuth({
+      logoSel:  '#userLogo',
+      // (the others are not used on this page, but harmless if left)
     });
-    if (!session) return; // redirected
+    if (!user) return; // redirected
 
-    // safe to render cards here
-    // await Bridge.api.vessels.list() ...
+    // Populate user info
+    document.getElementById('welcomeText').textContent = `Welcome, ${user.username}`;
+    document.getElementById('userLevel').textContent   = user.levelName || '—';
+    document.getElementById('userGroup').textContent   = user.groupName || '—';
+    document.getElementById('userId').textContent      = user.userId    || '—';
+
+    // Render modules based on user level
+    const levelId = parseInt(user.levelId) || 999;
+    const groupId = String(user.groupId || '').trim();
+    const modulesHtml = [];
+    // …(your existing module-building code unchanged)…
+    document.getElementById('modulesContainer').innerHTML = `<div class="modules">${modulesHtml.join('')}</div>`;
   })();
   </script>
   <script>
@@ -188,7 +195,9 @@
       // Logout
       document.getElementById('btnLogout').addEventListener('click', () => {
         if (confirm('Are you sure you want to logout?')) {
-          NAVI.API.auth.logout();
+          NAVI.API.auth.logout().finally(() => {
+            window.location.href = '../index.html';
+          });
         }
       });
 

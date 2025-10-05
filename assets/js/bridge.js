@@ -1,6 +1,6 @@
 // ===== API Configuration =====
 const API_CONFIG = {
-  BASE_URL: 'https://script.google.com/macros/s/AKfycbyrvPQGZCM-s2k-qWoltE9eFMeEfpsO0Xr77BJoZ48y3jcbHicZ1L38Q3xQ1rj_j3_y6A/exec',
+  BASE_URL: 'https://script.google.com/macros/s/AKfycbyg3LaDcxBwuxXLkDIj3YCIt1-o3U5cP2u3whzExMCz7jLqdwlnXv98VwjhidOxv44n_g/exec',
   TOKEN_KEY: 'navi_token'
 };
 
@@ -119,13 +119,13 @@ const Bridge = (() => {
   const Guards = {
     async requireAuth(selectors = {}) {
       try {
-        const session = await api.auth.getSession();
-        if (!session || !session.ok) throw new Error('Not authenticated');
-        // hydrate DOM if selectors provided
-        await hydrateIdentity(selectors, session);
-        return session;
+        const s = await api.auth.getSession();
+        if (!s || !s.ok) throw new Error('Not authenticated');
+        // (Optional) paint header chips, logo, etc.
+        await hydrateIdentity(selectors, s);
+        // ✅ return ONLY the user object so dashboard logic is simple
+        return s.user || null;
       } catch (_) {
-        // send to login
         window.location.href = '../index.html?err=' + encodeURIComponent('Please sign in');
         return null;
       }
