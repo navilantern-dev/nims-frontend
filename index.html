@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Cache-Control" content="no-store, max-age=0">
-  <meta http-equiv="Content-Security-Policy" 
-        content="default-src 'self'; 
-                 script-src 'self' 'unsafe-inline'; 
-                 connect-src *;
-                 style-src 'self' 'unsafe-inline';
-                 img-src 'self' data: https:;">
   <title>NAVI-SIMS — Secure Login</title>
+  
+  <!-- Google Fonts for Banner -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Oswald:wght@700&display=swap" rel="stylesheet">
+  
   <style>
 /* ===== NAVI-SIMS Design System (enhanced login) ===== */
 :root {
@@ -72,26 +72,52 @@ body {
   box-shadow: var(--shadow);
 }
 
+/* ===== Banner Styles (embedded from banner.html) ===== */
+.banner-container {
+  width: 100%;
+  text-align: center;
+  padding: 2rem 1rem;
+  background-color: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 1rem;
+}
+
+.banner-heading {
+  font-family: "Arial Unicode MS", Arial, sans-serif;
+  font-weight: 700;
+  font-size: clamp(2.5rem, 10vw, 4.5rem);
+  letter-spacing: 0.5vw;
+  margin: 0;
+  margin-bottom: -0.5rem;
+  padding: 0;
+}
+
+.banner-heading .part-one {
+  color: #231F20;
+}
+
+.banner-heading .part-two {
+  color: #965A37;
+}
+
+.banner-subheading {
+  font-family: 'Montserrat', sans-serif;
+  text-transform: uppercase;
+  color: #231F20;
+  letter-spacing: 4px;
+  margin-top: 0.5rem;
+  font-weight: 500;
+  font-size: clamp(0.55rem, 2vw, 0.75rem);
+}
+
 .logo-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 14px;
   margin-bottom: 12px;
-}
-
-.logo-banner {
-  width: min(80vw, 280px);
-  height: auto;
-  display: block;
-  object-fit: contain;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 0 0 1px var(--border), 0 4px 14px rgba(0, 0, 0, .08);
-}
-
-.logo-banner.hidden {
-  display: none;
 }
 
 h1 {
@@ -133,7 +159,7 @@ input[type="password"] {
   border-radius: 12px;
   background: #fff;
   outline: none;
-  font-size: 16px; /* Prevent zoom on iOS */
+  font-size: 16px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -141,6 +167,13 @@ input[type="password"] {
   input[type="password"] {
     background: #0F172A;
     color: var(--text);
+  }
+  .banner-container {
+    background-color: #1a1a1a;
+  }
+  .banner-heading .part-one,
+  .banner-subheading {
+    color: #E5E7EB;
   }
 }
 
@@ -319,7 +352,6 @@ input:focus {
   text-decoration: underline;
 }
 
-/* Loading spinner */
 .spinner {
   display: inline-block;
   width: 16px;
@@ -340,7 +372,16 @@ input:focus {
 <body>
   <div class="card">
     <div class="logo-wrap">
-      <img class="logo-banner hidden" id="logo" src="" alt="NAVI-SIMS Logo" onerror="this.classList.add('hidden')">
+      <!-- Embedded Banner -->
+      <div class="banner-container">
+        <h1 class="banner-heading">
+          <span class="part-one">NAVI</span><span class="part-two">LANTERN</span>
+        </h1>
+        <p class="banner-subheading">
+          NAVAL ARCHITECTURE • MARINE SURVEY • MARINE ENGINEERING
+        </p>
+      </div>
+      
       <div style="text-align:center">
         <h1>Secure Sign In</h1>
         <div class="subtitle">NAVI-SIMS Maritime Management System</div>
@@ -410,11 +451,11 @@ input:focus {
     </div>
   </div>
 
-  <!-- Load API Client FIRST -->
+  <!-- Load NAVI API Client -->
   <script src="./assets/js/bridge.js"></script>
   
   <script>
-    // Robust waiting function
+    // Wait for NAVI to load
     function waitForNAVI(callback, maxAttempts = 100) {
       let attempts = 0;
       
@@ -435,7 +476,7 @@ input:focus {
       checkNAVI();
     }
 
-    // Wait for NAVI, then initialize
+    // Initialize login form
     waitForNAVI(function() {
       (async function () {
         'use strict';
@@ -450,18 +491,6 @@ input:focus {
         const btn = $('btnLogin');
         const form = $('loginForm');
         const strengthIndicator = $('passwordStrength');
-        const logoImg = $('logo');
-
-        // Load logo
-        try {
-          const logoRes = await NAVI.API.meta.logo();
-          if (logoRes.ok && logoRes.logoUrl) {
-            logoImg.src = logoRes.logoUrl;
-            logoImg.classList.remove('hidden');
-          }
-        } catch (e) {
-          console.warn('Failed to load logo:', e);
-        }
 
         // Password visibility toggle
         togglePw.addEventListener('click', () => {
@@ -545,6 +574,10 @@ input:focus {
               return;
             }
             
+            // Store token and redirect
+            if (result.token) {
+              NAVI.Storage.setToken(result.token);
+            }
             window.location.href = './pages/dashboard.html';
             
           } catch (err) {
@@ -558,7 +591,7 @@ input:focus {
         });
 
         // Forgot password
-        document.getElementById('forgotLink').addEventListener('click', (e) => {
+        $('forgotLink').addEventListener('click', (e) => {
           e.preventDefault();
           alert('Please contact your system administrator to reset your password.');
         });
@@ -590,7 +623,6 @@ input:focus {
             }
           } catch (e) {
             NAVI.Storage.clearToken();
-            NAVI.Storage.clearSessionData();
           }
         }
 

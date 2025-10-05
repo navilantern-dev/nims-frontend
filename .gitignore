@@ -5,3 +5,4 @@ appscript.json
 .DS_Store
 node_modules/
 *.log
+old_code/

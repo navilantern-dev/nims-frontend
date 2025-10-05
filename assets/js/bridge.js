@@ -1,6 +1,5 @@
 // ===== API Configuration =====
 const API_CONFIG = {
-  // REPLACE THIS with your deployed Apps Script Web App URL
   BASE_URL: 'https://script.google.com/macros/s/AKfycbwxW6nCkYfVXzKDAw8krg-IJsn6vWhG5wFocMx_NxB3bOYWek4OU8dMucGMmYTIADBntQ/exec',
   TOKEN_KEY: 'navi_token'
 };
@@ -52,51 +51,84 @@ const Bridge = (() => {
   // API Methods
   const api = {
     // Auth
-    login: (username, password) => call('login', { body: { username, password } }),
-    session: () => call('session'),
-    logout: () => { clearToken(); return call('logout'); },
-    changePassword: (currentPassword, newPassword) => 
-      call('changePassword', { body: { currentPassword, newPassword } }),
+    auth: {
+      login: (username, password) => call('login', { body: { username, password } }),
+      getSession: () => call('session'),
+      logout: () => { clearToken(); return call('logout'); },
+      changePassword: (currentPassword, newPassword) => 
+        call('changePassword', { body: { currentPassword, newPassword } })
+    },
 
     // Metadata
-    logo: () => call('logo'),
+    meta: {
+      logo: () => call('logo')
+    },
     levels: () => call('levels'),
     groups: () => call('groups'),
     companies: () => call('companies'),
 
     // Users
-    listUsers: () => call('listUsers'),
-    getUser: (userId) => call('getUser', { body: { userId } }),
-    createUserLogin: (payload) => call('createUserLogin', { body: payload }),
-    updateUser: (payload) => call('updateUser', { body: payload }),
-    deleteUser: (userId) => call('deleteUser', { body: { userId } }),
-    saveUserDetails: (payload) => call('saveUserDetails', { body: payload }),
-    getDetailFormSchema: (groupId) => call('getDetailFormSchema', { body: { groupId } }),
-    getDetailFormSchemaWithValues: (userId, groupId) => 
-      call('getDetailFormSchemaWithValues', { body: { userId, groupId } }),
-    saveDetailFormUpdate: (payload) => call('saveDetailFormUpdate', { body: payload }),
-    getMyProfile: (userId, username) => call('getMyProfile', { body: { userId, username } }),
+    users: {
+      list: () => call('listUsers'),
+      get: (userId) => call('getUser', { body: { userId } }),
+      create: (payload) => call('createUserLogin', { body: payload }),
+      update: (payload) => call('updateUser', { body: payload }),
+      delete: (userId) => call('deleteUser', { body: { userId } }),
+      saveDetails: (payload) => call('saveUserDetails', { body: payload }),
+      getDetailFormSchema: (groupId) => call('getDetailFormSchema', { body: { groupId } }),
+      getDetailFormSchemaWithValues: (userId, groupId) => 
+        call('getDetailFormSchemaWithValues', { body: { userId, groupId } }),
+      saveDetailFormUpdate: (payload) => call('saveDetailFormUpdate', { body: payload }),
+      getMyProfile: (userId, username) => call('getMyProfile', { body: { userId, username } })
+    },
 
     // Clients
-    saveClientRegistration: (values, files) => 
-      call('saveClientRegistration', { body: { values, files } }),
-    getClientList: (searchQuery) => call('getClientList', { body: { searchQuery } }),
-    getClientProfile: (clientId) => call('getClientProfile', { body: { clientId } }),
-    getVesselsByCompName: (compName) => call('getVesselsByCompName', { body: { compName } }),
-    updateClientProfile: (clientId, data, files) => 
-      call('updateClientProfile', { body: { clientId, data, files } }),
+    clients: {
+      save: (values, files) => call('saveClientRegistration', { body: { values, files } }),
+      list: (searchQuery) => call('getClientList', { body: { searchQuery } }),
+      getProfile: (clientId) => call('getClientProfile', { body: { clientId } }),
+      getVesselsByCompName: (compName) => call('getVesselsByCompName', { body: { compName } }),
+      update: (clientId, data, files) => 
+        call('updateClientProfile', { body: { clientId, data, files } })
+    },
 
     // Vessels
-    getNewShipId: () => call('getNewShipId'),
-    getOwnerNames: () => call('getOwnerNames'),
-    getInventoryNames: () => call('getInventoryNames'),
-    getVesselKeys: () => call('getVesselKeys'),
-    getVesselByKey: (keyType, keyValue) => 
-      call('getVesselByKey', { body: { keyType, keyValue } }),
-    saveVesselAll: (payload) => call('saveVesselAll', { body: payload }),
-    updateVesselAll: (payload) => call('updateVesselAll', { body: payload }),
-    listVesselsForUser: () => call('listVesselsForUser'),
-    getVesselDetail: (shipId) => call('getVesselDetail', { body: { shipId } }),
+    vessels: {
+      newShipId: () => call('getNewShipId'),
+      getOwnerNames: () => call('getOwnerNames'),
+      getInventoryNames: () => call('getInventoryNames'),
+      getKeys: () => call('getVesselKeys'),
+      getByKey: (keyType, keyValue) => 
+        call('getVesselByKey', { body: { keyType, keyValue } }),
+      save: (payload) => call('saveVesselAll', { body: payload }),
+      update: (payload) => call('updateVesselAll', { body: payload }),
+      list: () => call('listVesselsForUser'),
+      getDetail: (shipId) => call('getVesselDetail', { body: { shipId } })
+    }
+  };
+
+  // Guards - authentication helpers
+  const Guards = {
+    async requireAuth(selectors = {}) {
+      try {
+        const session = await hydrateIdentity(selectors);
+        if (!session?.username) {
+          throw new Error('Not authenticated');
+        }
+        return session;
+      } catch (error) {
+        window.location.href = '../index.html';
+        return null;
+      }
+    }
+  };
+
+  // Storage helpers
+  const Storage = {
+    getToken,
+    setToken,
+    clearToken,
+    clearSessionData: () => localStorage.clear()
   };
 
   // Utility functions
@@ -104,7 +136,7 @@ const Bridge = (() => {
     const { logoSel, nameSel, levelSel, groupSel, idSel } = selectors;
     
     try {
-      const session = await api.session();
+      const session = await api.auth.getSession();
       
       if (session?.token) setToken(session.token);
       
@@ -118,7 +150,7 @@ const Bridge = (() => {
       }
       if (levelSel) {
         document.querySelectorAll(levelSel).forEach(el => 
-          el.textContent = session.userLevel || '—'
+          el.textContent = session.levelName || session.userLevel || '—'
         );
       }
       if (groupSel) {
@@ -139,28 +171,21 @@ const Bridge = (() => {
     }
   }
 
-  async function requireAuth(selectors) {
-    try {
-      const session = await hydrateIdentity(selectors);
-      if (!session?.username) {
-        throw new Error('Not authenticated');
-      }
-      return session;
-    } catch (error) {
-      window.location.href = 'login.html';
-      return null;
-    }
-  }
-
   return {
     api,
+    API: api,  // Alias for compatibility
+    Guards,
+    Storage,
     setToken,
     getToken,
     clearToken,
     hydrateIdentity,
-    requireAuth
+    requireAuth: Guards.requireAuth
   };
 })();
 
 // Make Bridge available globally
 window.Bridge = Bridge;
+
+// IMPORTANT: Create NAVI alias for backward compatibility
+window.NAVI = Bridge;
